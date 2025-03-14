@@ -2,7 +2,7 @@ import dataclasses
 import re as py_re
 import typing
 
-from faststruct import base
+from fastarch import base
 
 
 _IN_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(post|put|patch|delete)\b", flags=base.TYPICAL_RE_FLAGS)

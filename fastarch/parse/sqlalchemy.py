@@ -2,7 +2,7 @@ import dataclasses
 import re as py_re
 import typing
 
-from faststruct import base
+from fastarch import base
 
 
 _ASYNC_ENGINE_PATTERN: typing.Final = py_re.compile(r"sqlalchemy\.ext\.asyncio", base.TYPICAL_RE_FLAGS)

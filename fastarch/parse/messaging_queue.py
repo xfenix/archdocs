@@ -1,6 +1,6 @@
 import re as py_re
 
-from faststruct import base
+from fastarch import base
 
 
 SUBSCRIBER_DECORATOR_RE: py_re.Pattern = py_re.compile(r"@\w+\.subscriber\(", flags=base.TYPICAL_RE_FLAGS)

@@ -1,4 +1,4 @@
-FastStruct
+fastarch
 ===
 
 This project allows you to achieve something like OpenAPI + SwaggerUI in fastapi/litestar only for architecture.
@@ -8,10 +8,19 @@ Core principles are:
 
 Quickstart
 ===
-* install package `uv add faststruct`
+* install package `uv add fastarch`
+* connect it to your application:
+    ```python
+    ```
+* go to <a href="http://127.0.0.1:8000/docs/architecture/">/docs/architecture/</a>
+* enjoy your schemas
+
+Other use cases
+===
+Using in gitlab: embed it like THIS
 
 How it looks
 ===
-screenshot of fastapi + faststruct
+screenshot of fastapi + fastarch
 screenshot of mermaid output
 screenshot of mermaid js output

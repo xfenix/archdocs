@@ -1,5 +1,5 @@
-from faststruct import base
-from faststruct.parse.http_api import HTTPApiFeatures
+from fastarch import base
+from fastarch.parse.http_api import HTTPApiFeatures
 
 
 def draw_http_api_features(features_to_draw: HTTPApiFeatures, service_name: str) -> str:
