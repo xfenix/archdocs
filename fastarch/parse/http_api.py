@@ -2,11 +2,11 @@ import dataclasses
 import re as py_re
 import typing
 
-from fastarch import base
+from experimental.fastarch import settings
 
 
-_IN_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(post|put|patch|delete)\b", flags=base.TYPICAL_RE_FLAGS)
-_OUT_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(get|head|options|trace)\b", flags=base.TYPICAL_RE_FLAGS)
+_IN_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(post|put|patch|delete)\b", flags=settings.TYPICAL_RE_FLAGS)
+_OUT_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(get|head|options|trace)\b", flags=settings.TYPICAL_RE_FLAGS)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
@@ -43,12 +43,12 @@ def draw_http_api_features(features_to_draw: HTTPApiFeatures, service_name: str)
     diagram_parts: list[str] = []
     if features_to_draw.in_methods_existed:
         diagram_parts.append(
-            f"{base.SHIFT_LEFT}{base.EXTERNAL_CLIENT_SCHEMA} --> "
+            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_SCHEMA} --> "
             f"|REST ({', '.join(features_to_draw.in_methods)});| {{{service_name}}}"
         )
     if features_to_draw.out_methods_existed:
         diagram_parts.append(
-            f"{base.SHIFT_LEFT}{base.EXTERNAL_CLIENT_SCHEMA} <-- "
+            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_SCHEMA} <-- "
             f"|REST ({', '.join(features_to_draw.out_methods)});| {{{service_name}}}"
         )
     return "\n".join(diagram_parts)

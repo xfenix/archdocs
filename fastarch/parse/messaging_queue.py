@@ -1,10 +1,10 @@
 import re as py_re
 
-from fastarch import base
+from experimental.fastarch import settings
 
 
-SUBSCRIBER_DECORATOR_RE: py_re.Pattern = py_re.compile(r"@\w+\.subscriber\(", flags=base.TYPICAL_RE_FLAGS)
-PRODUCER_DECORATOR_RE: py_re.Pattern = py_re.compile(r"@\w+\.producer\(", flags=base.TYPICAL_RE_FLAGS)
+SUBSCRIBER_DECORATOR_RE: py_re.Pattern = py_re.compile(r"@\w+\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS)
+PRODUCER_DECORATOR_RE: py_re.Pattern = py_re.compile(r"@\w+\.producer\(", flags=settings.TYPICAL_RE_FLAGS)
 
 
 def find_faststream_features(raw_source: str) -> list[bool, bool]:

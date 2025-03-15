@@ -2,19 +2,19 @@ import dataclasses
 import re as py_re
 import typing
 
-from fastarch import base
+from experimental.fastarch import settings
 
 
-_ASYNC_ENGINE_PATTERN: typing.Final = py_re.compile(r"sqlalchemy\.ext\.asyncio", base.TYPICAL_RE_FLAGS)
-_POOLING_PATTERN: typing.Final = py_re.compile(r"create_engine\(.+pool_", base.TYPICAL_RE_FLAGS)
-_MULTIPLE_HOSTS_PATTERN: typing.Final = py_re.compile(r"@[^/]+,[^/]+/", base.TYPICAL_RE_FLAGS)
+_ASYNC_ENGINE_PATTERN: typing.Final = py_re.compile(r"sqlalchemy\.ext\.asyncio", settings.TYPICAL_RE_FLAGS)
+_POOLING_PATTERN: typing.Final = py_re.compile(r"create_engine\(.+pool_", settings.TYPICAL_RE_FLAGS)
+_MULTIPLE_HOSTS_PATTERN: typing.Final = py_re.compile(r"@[^/]+,[^/]+/", settings.TYPICAL_RE_FLAGS)
 _TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
-    r"target_session_attrs\s*=\s*['\"](\w+)['\"]", base.TYPICAL_RE_FLAGS
+    r"target_session_attrs\s*=\s*['\"](\w+)['\"]", settings.TYPICAL_RE_FLAGS
 )
 _DB_TYPE_PATTERN = py_re.compile(
     r"['\"](postgresql(?:\+[^'\"]*)?|mysql(?:\+[^'\"]*)?|sqlite(?:\+[^'\"]*)?|oracle(?:\+[^'\"]*)?|"
     r"mssql(?:\+[^'\"]*)?|mariadb(?:\+[^'\"]*)?|cockroachdb(?:\+[^'\"]*)?)['\"]",
-    base.TYPICAL_RE_FLAGS,
+    settings.TYPICAL_RE_FLAGS,
 )
 
 
