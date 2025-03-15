@@ -1,7 +1,14 @@
+Metadata-Version: 2.2
+Name: experimental
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.115.11
+Requires-Dist: litestar>=2.15.1
+
 fastarch
 ===
-<img src="./logo.svg" alt="fastarch logo" width="300"/>
-
 
 This project allows you to achieve something like OpenAPI + SwaggerUI in fastapi/litestar only for architecture.
 Core principles are:
