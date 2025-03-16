@@ -1,20 +1,12 @@
-import dataclasses
 import re as py_re
 import typing
 
-from experimental.fastarch import settings
+from fastarch import settings
+from fastarch.features.http_api.const import HTTPApiFeatures
 
 
 _IN_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(post|put|patch|delete)\b", flags=settings.TYPICAL_RE_FLAGS)
 _OUT_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(get|head|options|trace)\b", flags=settings.TYPICAL_RE_FLAGS)
-
-
-@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class HTTPApiFeatures:
-    in_methods: list[str]
-    out_methods: list[str]
-    in_methods_existed: bool
-    out_methods_existed: bool
 
 
 def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:

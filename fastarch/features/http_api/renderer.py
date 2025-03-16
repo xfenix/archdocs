@@ -1,6 +1,5 @@
-from experimental.fastarch import settings
-
-from fastarch.parsers.http_api import HTTPApiFeatures
+from fastarch import settings
+from fastarch.features.http_api.const import HTTPApiFeatures
 
 
 def draw_http_api_features(features_to_draw: HTTPApiFeatures, service_name: str) -> str:
