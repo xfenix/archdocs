@@ -3,7 +3,7 @@ import dataclasses
 import pathlib
 import typing
 
-from features.base import MAP_OF_FEATURES
+from fastarch import settings
 
 
 """ Possible features
@@ -31,6 +31,6 @@ class FeaturesInSourceFinder:
     def search_for_familiar_objects_in_file(self, one_src_file: pathlib.Path) -> {bool, bool}:
         result_map: dict[int, typing.Any] = {}
         raw_src: typing.Final = one_src_file.read_text()
-        for one_search_type, run_search_for_this_type in MAP_OF_FEATURES.items():
+        for one_search_type, run_search_for_this_type in settings.MAP_OF_FEATURES.items():
             result_map[one_search_type] = run_search_for_this_type(raw_src)
         return result_map

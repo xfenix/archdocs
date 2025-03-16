@@ -37,18 +37,3 @@ def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
         in_methods_existed=bool(in_methods),
         out_methods_existed=bool(out_methods),
     )
-
-
-def draw_http_api_features(features_to_draw: HTTPApiFeatures, service_name: str) -> str:
-    diagram_parts: list[str] = []
-    if features_to_draw.in_methods_existed:
-        diagram_parts.append(
-            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_SCHEMA} --> "
-            f"|REST ({', '.join(features_to_draw.in_methods)});| {{{service_name}}}"
-        )
-    if features_to_draw.out_methods_existed:
-        diagram_parts.append(
-            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_SCHEMA} <-- "
-            f"|REST ({', '.join(features_to_draw.out_methods)});| {{{service_name}}}"
-        )
-    return "\n".join(diagram_parts)
