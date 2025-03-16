@@ -1,7 +1,7 @@
 [project]
-name = "experimental"
-version = "0.1.0"
-description = "Add your description here"
+name = "fastarch"
+version = "1.0.0"
+description = "Package for automatic architecture schemas renderers. Includes FastAPI and Litestar integrations"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = ["fastapi>=0.115.11", "litestar>=2.15.1"]

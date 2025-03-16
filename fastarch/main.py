@@ -12,11 +12,11 @@ redis, postgres
 faststream, kafka, rabbitmq, nats brokers
 fastapi, litestar support
 
-Parsing from settings.py typical configuration
+parsers from settings.py typical configuration
 
-Parsing from helm chart/manifests vital k8s information
+parsers from helm chart/manifests vital k8s information
 
-Parsing from docker-compose.yml?
+parsers from docker-compose.yml?
 """
 
 
