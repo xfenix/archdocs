@@ -2,7 +2,7 @@ from fastarch import settings
 from fastarch.features.http_api.const import HTTPApiFeatures
 
 
-def draw_http_api_features(features_to_draw: HTTPApiFeatures, service_name: str) -> str:
+def draw_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures) -> str:
     diagram_parts: list[str] = []
     if features_to_draw.in_methods_existed:
         diagram_parts.append(
