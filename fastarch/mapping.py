@@ -15,8 +15,8 @@ from fastarch.features.sqlalchemy import renderer as sqlalchemy_renderer
 @typing.final
 @dataclass(frozen=True, slots=True, kw_only=True)
 class _FeatureFunctions:
-    parser: typing.Callable[[str], typing.Any]
-    renderer: typing.Callable[[str, typing.Any], str]
+    parse: typing.Callable[[str], typing.Any]
+    render: typing.Callable[[str, typing.Any], str]
 
 
 @typing.final
@@ -29,19 +29,19 @@ class AllCurrentFeatures(enum.IntEnum):
 
 MAPPING_OF_PARSERS_AND_DRAWERS: typing.Final[dict[AllCurrentFeatures, _FeatureFunctions]] = {
     AllCurrentFeatures.FASTAPI_LITESTAR: _FeatureFunctions(
-        parser=httpapi_parser.find_fastapi_and_litestar_features,
-        renderer=httpapi_renderer.draw_http_api_features,
+        parse=httpapi_parser.find_fastapi_and_litestar_features,
+        render=httpapi_renderer.draw_http_api_features,
     ),
     AllCurrentFeatures.FASTSTREAM: _FeatureFunctions(
-        parser=mq_parser.find_faststream_features,
-        renderer=mq_renderer.draw_mq_features,
+        parse=mq_parser.find_faststream_features,
+        render=mq_renderer.draw_mq_features,
     ),
     AllCurrentFeatures.SQLALCHEMY: _FeatureFunctions(
-        parser=sqlalchemy_parser.find_sqlalchemy_features,
-        renderer=sqlalchemy_renderer.draw_sqlalchemy_features,
+        parse=sqlalchemy_parser.find_sqlalchemy_features,
+        render=sqlalchemy_renderer.draw_sqlalchemy_features,
     ),
     AllCurrentFeatures.REDIS: _FeatureFunctions(
-        parser=redis_parser.find_redis_features,
-        renderer=redis_renderer.draw_redis_features,
+        parse=redis_parser.find_redis_features,
+        render=redis_renderer.draw_redis_features,
     ),
 }
