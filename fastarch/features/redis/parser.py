@@ -40,7 +40,7 @@ def find_redis_features(raw_source: str) -> RedisFeatures:
             break
     return RedisFeatures(
         connection_type=connection_type,
-        is_cluster_or_sentinel=connection_type in ("sentinel", "cluster"),
+        cluster_or_sentinel=connection_type in ("sentinel", "cluster"),
         async_used=bool(_ASYNC_REDIS_PATTERN.search(raw_source)),
         retry_used=bool(_REDIS_RETRY_PATTERN.search(raw_source)),
     )

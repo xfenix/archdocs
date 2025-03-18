@@ -17,14 +17,14 @@ def draw_redis_features(service_name: str, features_to_draw: RedisFeatures) -> s
             [
                 "async" if features_to_draw.async_used else "",
                 "retry" if features_to_draw.retry_used else "",
-                features_to_draw.connection_type if features_to_draw.is_cluster_or_sentinel else "",
+                features_to_draw.connection_type if features_to_draw.cluster_or_sentinel else "",
             ],
         ),
     )
     diagram_parts.extend(
         (
             f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{properties_on_arrow}| "
-            f"redisdb{counter if features_to_draw.is_cluster_or_sentinel else ""}"
+            f"redisdb{counter if features_to_draw.cluster_or_sentinel else ""}"
         )
         for counter in range(_VALUE_TO_ILUSTRATE_MASS_CONNECTIONS if features_to_draw.pooling_used else 1)
     )
