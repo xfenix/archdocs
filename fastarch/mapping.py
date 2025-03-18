@@ -27,7 +27,7 @@ class AllCurrentFeatures(enum.IntEnum):
     REDIS = 4
 
 
-MAPPING_OF_PARSERS_AND_DRAWERS: typing.Final[dict[AllCurrentFeatures, _FeatureFunctions]] = {
+MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final[dict[AllCurrentFeatures, _FeatureFunctions]] = {
     AllCurrentFeatures.FASTAPI_LITESTAR: _FeatureFunctions(
         parse=httpapi_parser.find_fastapi_and_litestar_features,
         render=httpapi_renderer.draw_http_api_features,
