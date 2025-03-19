@@ -9,14 +9,8 @@ from fastarch.mapping import MAPPING_OF_PARSERS_AND_RENDERERS
 
 """TODO:
 
-redis, postgres
-faststream, kafka, rabbitmq, nats brokers
-fastapi, litestar support
-
 parsers from settings.py typical configuration
-
 parsers from helm chart/manifests vital k8s information
-
 parsers from docker-compose.yml?
 """
 
