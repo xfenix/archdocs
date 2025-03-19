@@ -6,7 +6,7 @@ from fastarch import settings
 from fastarch.main import FeaturesInSourceFinder
 
 
-def _build_fastapi_arch_doc_route(finder_cls: type[FeaturesInSourceFinder]) -> fastapi.APIRouter:
+def _build_fastapi_arch_doc_route(finder_cls: FeaturesInSourceFinder) -> fastapi.APIRouter:
     async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> None:
         return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(finder_cls.search_features_and_draw_them()))
 
@@ -15,7 +15,9 @@ def _build_fastapi_arch_doc_route(finder_cls: type[FeaturesInSourceFinder]) -> f
 
 def add_architecture_doc_routes(
     fastapi_app: fastapi.FastAPI,
-    finder_cls: type[FeaturesInSourceFinder],
     route_path: str = settings.DEFAULT_PATH,
+    finder_cls: FeaturesInSourceFinder | None = None,
 ) -> None:
+    if finder_cls is None:
+        finder_cls = FeaturesInSourceFinder()
     fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(finder_cls))

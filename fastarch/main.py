@@ -18,8 +18,8 @@ parsers from docker-compose.yml?
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class FeaturesInSourceFinder:
-    root_dir: str | pathlib.Path
-    service_name: str
+    root_dir: str | pathlib.Path = settings.DEFAULT_ROOT_DIR
+    service_name: str = settings.DEFAULT_SERVICE_NAME
 
     def _process_one_file(self, one_src_file: pathlib.Path) -> str:
         raw_file_source: typing.Final = one_src_file.read_text()
