@@ -20,6 +20,7 @@ parsers from docker-compose.yml?
 class FeaturesInSourceFinder:
     root_dir: str | pathlib.Path = settings.DEFAULT_ROOT_DIR
     service_name: str = settings.DEFAULT_SERVICE_NAME
+    _cache: str = ""
 
     def _process_one_file(self, one_src_file: pathlib.Path) -> str:
         raw_file_source: typing.Final = one_src_file.read_text()
@@ -29,8 +30,14 @@ class FeaturesInSourceFinder:
         ).strip()
 
     def search_features_and_draw_them(self) -> str:
+        # "why you doesnt use functools.cache lol"
+        # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
+        if self._cache:
+            return self._cache
         py_files: typing.Final = list(pathlib.Path(self.root_dir).rglob(settings.FILES_SEARCH_PATTERN))
         buffer_of_results: list[str] = []
         with futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
             buffer_of_results = executor.map(self._process_one_file, py_files)
-        return "\n".join(filter(None, buffer_of_results))
+        full_result: typing.Final = "\n".join(filter(None, buffer_of_results))
+        self._cache = full_result
+        return full_result
