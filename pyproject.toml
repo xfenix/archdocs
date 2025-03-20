@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Package for automatic architecture schemas renderers. Includes FastAPI and Litestar integrations"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["fastapi>=0.115.11", "litestar>=2.15.1"]
+dependencies = []
 
 [tool.ruff]
 fix = true
@@ -29,4 +29,8 @@ lines-after-imports = 2
 "tests/*.py" = ["S101", "S311"]
 
 [dependency-groups]
-dev = ["pytest>=8.3.5"]
+dev = [
+    "fastapi>=0.115.11",
+    "litestar>=2.15.1",
+    "pytest>=8.3.5",
+]
