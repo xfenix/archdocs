@@ -10,8 +10,8 @@ _OUT_PATTERN: typing.Final = py_re.compile(r"@(?:\w+\.)?(get|head|options|trace)
 
 
 def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
-    in_methods: set[str] = set()
-    out_methods: set[str] = set()
+    in_methods: typing.Final[set[str]] = set()
+    out_methods: typing.Final[set[str]] = set()
     if ("from fastapi" not in raw_source and "import fastapi" not in raw_source) and (
         "from litestar" not in raw_source and "import litestar" not in raw_source
     ):

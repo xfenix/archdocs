@@ -7,7 +7,7 @@ from fastarch.features.sqlalchemy.const import SQLAlchemyFeatures
 def draw_sqlalchemy_features(service_name: str, features_to_draw: SQLAlchemyFeatures) -> str:
     if not features_to_draw.database_type:
         return ""
-    diagram_parts: list[str] = []
+    diagram_parts: typing.Final[list[str]] = []
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,

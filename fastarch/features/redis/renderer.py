@@ -7,7 +7,7 @@ from fastarch.features.redis.const import RedisFeatures
 def draw_redis_features(service_name: str, features_to_draw: RedisFeatures) -> str:
     if not features_to_draw.connection_type and not features_to_draw.async_used and not features_to_draw.retry_used:
         return ""
-    diagram_parts: list[str] = []
+    diagram_parts: typing.Final[list[str]] = []
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,
