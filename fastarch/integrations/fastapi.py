@@ -3,12 +3,12 @@ from starlette.requests import Request as StarletteRequest
 from starlette.responses import HTMLResponse as StarletteHtmlResponse
 
 from fastarch import settings
-from fastarch.main import FeaturesInSourceFinder
+from fastarch.main import FeaturesInSourceFinder, SettingsForFastarch
 
 
-def _build_fastapi_arch_doc_route(finder_cls: FeaturesInSourceFinder) -> fastapi.APIRouter:
+def _build_fastapi_arch_doc_route(finder_engine: FeaturesInSourceFinder) -> fastapi.APIRouter:
     async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> None:
-        return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(finder_cls.search_features_and_draw_them()))
+        return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(finder_engine.search_features_and_draw_them()))
 
     return _handle_fastapi_arch_doc_route
 
@@ -16,8 +16,11 @@ def _build_fastapi_arch_doc_route(finder_cls: FeaturesInSourceFinder) -> fastapi
 def add_architecture_doc_routes(
     fastapi_app: fastapi.FastAPI,
     route_path: str = settings.DEFAULT_PATH,
-    finder_cls: FeaturesInSourceFinder | None = None,
+    arch_settings: SettingsForFastarch | None = None,
 ) -> None:
-    if finder_cls is None:
-        finder_cls = FeaturesInSourceFinder()
-    fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(finder_cls))
+    if arch_settings is None:
+        arch_settings = SettingsForFastarch(
+            root_dir=settings.DEFAULT_ROOT_DIR,
+            service_name=settings.DEFAULT_SERVICE_NAME,
+        )
+    fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(FeaturesInSourceFinder(arch_settings)))

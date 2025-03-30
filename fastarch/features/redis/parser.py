@@ -32,7 +32,7 @@ _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(
 
 def find_redis_features(raw_source: str) -> RedisFeatures:
     if not _REDIS_IMPORT_PATTERN.search(raw_source):
-        return RedisFeatures(connection_type=None, async_used=False, retry_used=False)
+        return RedisFeatures(cluster_or_sentinel=False, connection_type=None, async_used=False, retry_used=False)
     connection_type: str | None = None
     for connection_type_name, pattern in _REDIS_CONNECTION_PATTERNS.items():
         if pattern.search(raw_source):

@@ -1,6 +1,6 @@
 import pathlib
+import re as py_re
 import typing
-from re import py_re
 
 
 FILES_SEARCH_PATTERN: typing.Final = "*.py"
