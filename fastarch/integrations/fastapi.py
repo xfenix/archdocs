@@ -6,9 +6,9 @@ from fastarch import settings
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
-def _build_fastapi_arch_doc_route(finder_engine: ArchitectureParserAndRenderer) -> fastapi.APIRouter:
+def _build_fastapi_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> fastapi.APIRouter:
     async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> None:
-        return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(finder_engine.search_features_and_draw_them()))
+        return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(arch_engine.search_features_and_draw_them()))
 
     return _handle_fastapi_arch_doc_route
 
