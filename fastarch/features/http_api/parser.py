@@ -16,16 +16,16 @@ def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
         "from litestar" not in raw_source and "import litestar" not in raw_source
     ):
         return HTTPApiFeatures(
-            in_methods=in_methods,
-            out_methods=out_methods,
+            in_methods=frozenset(in_methods),
+            out_methods=frozenset(out_methods),
             in_methods_existed=False,
             out_methods_existed=False,
         )
     in_methods.update(_IN_PATTERN.findall(raw_source))
     out_methods.update(_OUT_PATTERN.findall(raw_source))
     return HTTPApiFeatures(
-        in_methods=list(in_methods),
-        out_methods=list(out_methods),
+        in_methods=frozenset(in_methods),
+        out_methods=frozenset(out_methods),
         in_methods_existed=bool(in_methods),
         out_methods_existed=bool(out_methods),
     )

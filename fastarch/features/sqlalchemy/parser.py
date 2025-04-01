@@ -29,6 +29,6 @@ def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
         async_used=_ASYNC_ENGINE_PATTERN.search(raw_source) is not None,
         pooling_used=_POOLING_PATTERN.search(raw_source) is not None,
         multiple_hosts=_MULTIPLE_HOSTS_PATTERN.search(raw_source) is not None,
-        target_session_attrs=_target_session_attrs_match.group(1) if _target_session_attrs_match else None,
-        database_type=_database_type_match.group(1) if _database_type_match else None,
+        target_session_attrs=_target_session_attrs_match.group(1) if _target_session_attrs_match else "",
+        database_type=_database_type_match.group(1) if _database_type_match else "",
     )

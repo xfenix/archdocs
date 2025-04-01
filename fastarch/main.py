@@ -45,7 +45,7 @@ class ArchitectureParserAndRenderer:
         )
         buffer_of_results: list[str] = []
         with futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
-            buffer_of_results = executor.map(self._process_one_file, py_files)
+            buffer_of_results = list(executor.map(self._process_one_file, py_files))
         full_result: typing.Final = "\n".join(filter(None, buffer_of_results))
         self._cache = full_result
         return full_result
