@@ -23,8 +23,8 @@ class SettingsForFastarch:
 
 
 @typing.final
-@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class FeaturesInSourceFinder:
+@dataclasses.dataclass(slots=True)
+class ArchitectureParserAndRenderer:
     local_settings: SettingsForFastarch
     _cache: str = ""
 
