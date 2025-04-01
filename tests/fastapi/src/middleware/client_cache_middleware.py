@@ -26,6 +26,7 @@ class ClientCacheMiddleware(BaseHTTPMiddleware):
     ----
         - The `Cache-Control` header instructs clients (e.g., browsers)
         to cache the response for the specified duration.
+
     """
 
     def __init__(self, app: FastAPI, max_age: int = 60) -> None:
@@ -50,6 +51,7 @@ class ClientCacheMiddleware(BaseHTTPMiddleware):
         Note
         ----
             - This method is automatically called by Starlette for processing the request-response cycle.
+
         """
         response: Response = await call_next(request)
         response.headers["Cache-Control"] = f"public, max-age={self.max_age}"

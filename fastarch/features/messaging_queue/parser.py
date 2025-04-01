@@ -1,4 +1,5 @@
 import re as py_re
+import types
 import typing
 
 from fastarch import settings
@@ -10,13 +11,15 @@ _PRODUCER_DECORATOR_RE: typing.Final = py_re.compile(
     r"@\w+\.producer\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-_BROKER_PATTERNS: typing.Final = {
-    broker: py_re.compile(
-        rf"\b(?:from\s+faststream(?:\s+import\s+|\.{broker.value}\s+import\s+)|import\s+faststream\.{broker.value}\b)",
-        flags=settings.TYPICAL_RE_FLAGS,
-    )
-    for broker in const.BrokersEnum
-}
+_BROKER_PATTERNS: typing.Final = types.MappingProxyType(
+    {
+        broker: py_re.compile(
+            rf"\b(?:from\s+faststream(?:\s+import\s+|\.{broker.value}\s+import\s+)|import\s+faststream\.{broker.value}\b)",
+            flags=settings.TYPICAL_RE_FLAGS,
+        )
+        for broker in const.BrokersEnum
+    },
+)
 
 
 def find_faststream_features(raw_source: str) -> const.MQFeatures:

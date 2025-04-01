@@ -1,4 +1,5 @@
 import re as py_re
+import types
 import typing
 
 from fastarch import settings
@@ -13,17 +14,19 @@ _ASYNC_REDIS_PATTERN: typing.Final = py_re.compile(
     r"\b(?:from\s+redis\.asyncio\b|import\s+redis\.asyncio\b)",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-_REDIS_CONNECTION_PATTERNS: typing.Final[dict[str, py_re.Pattern]] = {
-    "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b", flags=settings.TYPICAL_RE_FLAGS),
-    "sentinel": py_re.compile(
-        r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b",
-        flags=settings.TYPICAL_RE_FLAGS,
-    ),
-    "cluster": py_re.compile(
-        r"\b(?:redis\.cluster\.|from\s+redis(?:\.cluster)?\s+import\s+).*\bRedisCluster\b",
-        flags=settings.TYPICAL_RE_FLAGS,
-    ),
-}
+_REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType(
+    {
+        "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b", flags=settings.TYPICAL_RE_FLAGS),
+        "sentinel": py_re.compile(
+            r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b",
+            flags=settings.TYPICAL_RE_FLAGS,
+        ),
+        "cluster": py_re.compile(
+            r"\b(?:redis\.cluster\.|from\s+redis(?:\.cluster)?\s+import\s+).*\bRedisCluster\b",
+            flags=settings.TYPICAL_RE_FLAGS,
+        ),
+    },
+)
 _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(
     r"\bredis\.Retry\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,

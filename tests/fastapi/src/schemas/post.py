@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..core.schemas import PersistentDeletion, TimestampSchema, UUIDSchema
+from tests.fastapi.src.core.schemas import PersistentDeletion, TimestampSchema, UUIDSchema
 
 
 class PostBase(BaseModel):

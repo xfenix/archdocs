@@ -4,16 +4,17 @@ from typing import Optional
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.logger import logging
-from ...schemas.rate_limit import sanitize_path
+from tests.fastapi.src.core.logger import logging
+from tests.fastapi.src.schemas.rate_limit import sanitize_path
+
 
 logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
     _instance: Optional["RateLimiter"] = None
-    pool: Optional[ConnectionPool] = None
-    client: Optional[Redis] = None
+    pool: ConnectionPool | None = None
+    client: Redis | None = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -32,7 +33,8 @@ class RateLimiter:
         instance = cls()
         if instance.client is None:
             logger.error("Redis client is not initialized.")
-            raise Exception("Redis client is not initialized.")
+            msg = "Redis client is not initialized."
+            raise Exception(msg)
         return instance.client
 
     async def is_rate_limited(self, db: AsyncSession, user_id: int, path: str, limit: int, period: int) -> bool:
@@ -53,7 +55,7 @@ class RateLimiter:
 
         except Exception as e:
             logger.exception(f"Error checking rate limit for user {user_id} on path {path}: {e}")
-            raise e
+            raise
 
         return False
 

@@ -1,5 +1,5 @@
-from enum import Enum
 from datetime import UTC, datetime, timedelta
+from enum import Enum
 from typing import Any, Literal
 
 import bcrypt
@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud.crud_users import crud_users
+from tests.fastapi.src.crud.crud_users import crud_users
 from .config import settings
 from .db.crud_token_blacklist import crud_token_blacklist
 from .schemas import TokenBlacklistCreate, TokenData
@@ -25,6 +25,7 @@ class TokenType(str, Enum):
     ACCESS = "access"
     REFRESH = "refresh"
 
+
 async def verify_password(plain_password: str, hashed_password: str) -> bool:
     correct_password: bool = bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
     return correct_password
@@ -41,10 +42,7 @@ async def authenticate_user(username_or_email: str, password: str, db: AsyncSess
     else:
         db_user = await crud_users.get(db=db, username=username_or_email, is_deleted=False)
 
-    if not db_user:
-        return False
-
-    elif not await verify_password(password, db_user["hashed_password"]):
+    if not db_user or not await verify_password(password, db_user["hashed_password"]):
         return False
 
     return db_user
@@ -88,6 +86,7 @@ async def verify_token(token: str, expected_token_type: TokenType, db: AsyncSess
     -------
     TokenData | None
         TokenData instance if the token is valid, None otherwise.
+
     """
     is_blacklisted = await crud_token_blacklist.exists(db, token=token)
     if is_blacklisted:
@@ -97,10 +96,10 @@ async def verify_token(token: str, expected_token_type: TokenType, db: AsyncSess
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username_or_email: str = payload.get("sub")
         token_type: str = payload.get("token_type")
-        
+
         if username_or_email is None or token_type != expected_token_type:
             return None
-            
+
         return TokenData(username_or_email=username_or_email)
 
     except JWTError:
@@ -118,25 +117,15 @@ async def blacklist_tokens(access_token: str, refresh_token: str, db: AsyncSessi
         The refresh token to blacklist
     db: AsyncSession
         Database session for performing database operations.
+
     """
     for token in [access_token, refresh_token]:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         expires_at = datetime.fromtimestamp(payload.get("exp"))
-        await crud_token_blacklist.create(
-            db, 
-            object=TokenBlacklistCreate(
-                token=token,
-                expires_at=expires_at
-            )
-        )
+        await crud_token_blacklist.create(db, object=TokenBlacklistCreate(token=token, expires_at=expires_at))
+
 
 async def blacklist_token(token: str, db: AsyncSession) -> None:
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     expires_at = datetime.fromtimestamp(payload.get("exp"))
-    await crud_token_blacklist.create(
-        db, 
-        object=TokenBlacklistCreate(
-            token=token,
-            expires_at=expires_at
-        )
-    )
+    await crud_token_blacklist.create(db, object=TokenBlacklistCreate(token=token, expires_at=expires_at))

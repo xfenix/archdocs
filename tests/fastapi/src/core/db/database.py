@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, sessionmaker
 
-from ..config import settings
+from tests.fastapi.src.core.config import settings
 
 
 class Base(DeclarativeBase, MappedAsDataclass):

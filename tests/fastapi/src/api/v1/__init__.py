@@ -8,6 +8,7 @@ from .tasks import router as tasks_router
 from .tiers import router as tiers_router
 from .users import router as users_router
 
+
 router = APIRouter(prefix="/v1")
 router.include_router(login_router)
 router.include_router(logout_router)

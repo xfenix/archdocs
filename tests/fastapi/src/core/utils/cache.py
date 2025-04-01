@@ -8,7 +8,12 @@ from fastapi import Request, Response
 from fastapi.encoders import jsonable_encoder
 from redis.asyncio import ConnectionPool, Redis
 
-from ..exceptions.cache_exceptions import CacheIdentificationInferenceError, InvalidRequestError, MissingClientError
+from tests.fastapi.src.core.exceptions.cache_exceptions import (
+    CacheIdentificationInferenceError,
+    InvalidRequestError,
+    MissingClientError,
+)
+
 
 pool: ConnectionPool | None = None
 client: Redis | None = None
@@ -33,6 +38,7 @@ def _infer_resource_id(kwargs: dict[str, Any], resource_id_type: type | tuple[ty
     ----
         - When `resource_id_type` is `int`, the function looks for an argument with the key 'id'.
         - When `resource_id_type` is `str`, it attempts to infer the resource ID as a string.
+
     """
     resource_id: int | str | None = None
     for arg_name, arg_value in kwargs.items():
@@ -69,9 +75,9 @@ def _extract_data_inside_brackets(input_string: str) -> list[str]:
     -------
     >>> _extract_data_inside_brackets("The {quick} brown {fox} jumps over the {lazy} dog.")
     ['quick', 'fox', 'lazy']
+
     """
-    data_inside_brackets = re.findall(r"{(.*?)}", input_string)
-    return data_inside_brackets
+    return re.findall(r"{(.*?)}", input_string)
 
 
 def _construct_data_dict(data_inside_brackets: list[str], kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -87,6 +93,7 @@ def _construct_data_dict(data_inside_brackets: list[str], kwargs: dict[str, Any]
     Returns
     -------
     Dict[str, Any]: A dictionary with keys from data_inside_brackets and corresponding values from kwargs.
+
     """
     data_dict = {}
     for key in data_inside_brackets:
@@ -107,11 +114,11 @@ def _format_prefix(prefix: str, kwargs: dict[str, Any]) -> str:
     Returns
     -------
     str: The formatted prefix.
+
     """
     data_inside_brackets = _extract_data_inside_brackets(prefix)
     data_dict = _construct_data_dict(data_inside_brackets, kwargs)
-    formatted_prefix = prefix.format(**data_dict)
-    return formatted_prefix
+    return prefix.format(**data_dict)
 
 
 def _format_extra_data(to_invalidate_extra: dict[str, str], kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -132,6 +139,7 @@ def _format_extra_data(to_invalidate_extra: dict[str, str], kwargs: dict[str, An
     -------
         Dict[str, Any]: A dictionary where keys are formatted templates and values
         are associated keyword argument values.
+
     """
     formatted_extra = {}
     for prefix, id_template in to_invalidate_extra.items():
@@ -170,6 +178,7 @@ async def _delete_keys_by_pattern(pattern: str) -> None:
 
     - Be cautious with patterns that could match a large number of keys, as deleting
       many keys simultaneously may impact the performance of the Redis server.
+
     """
     if client is None:
         raise MissingClientError
@@ -281,6 +290,7 @@ def cache(
     - `to_invalidate_extra` and `pattern_to_invalidate_extra` are used for cache invalidation on methods other than GET.
     - Using `pattern_to_invalidate_extra` can be resource-intensive on large datasets. Use it judiciously and
       consider the potential impact on Redis performance.
+
     """
 
     def wrapper(func: Callable) -> Callable:

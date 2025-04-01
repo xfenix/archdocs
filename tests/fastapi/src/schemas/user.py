@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from ..core.schemas import PersistentDeletion, TimestampSchema, UUIDSchema
+from tests.fastapi.src.core.schemas import PersistentDeletion, TimestampSchema, UUIDSchema
 
 
 class UserBase(BaseModel):
@@ -44,13 +44,16 @@ class UserUpdate(BaseModel):
 
     name: Annotated[str | None, Field(min_length=2, max_length=30, examples=["User Userberg"], default=None)]
     username: Annotated[
-        str | None, Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userberg"], default=None)
+        str | None,
+        Field(min_length=2, max_length=20, pattern=r"^[a-z0-9]+$", examples=["userberg"], default=None),
     ]
     email: Annotated[EmailStr | None, Field(examples=["user.userberg@example.com"], default=None)]
     profile_image_url: Annotated[
         str | None,
         Field(
-            pattern=r"^(https?|ftp)://[^\s/$.?#].[^\s]*$", examples=["https://www.profileimageurl.com"], default=None
+            pattern=r"^(https?|ftp)://[^\s/$.?#].[^\s]*$",
+            examples=["https://www.profileimageurl.com"],
+            default=None,
         ),
     ]
 

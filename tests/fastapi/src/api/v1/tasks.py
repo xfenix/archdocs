@@ -3,9 +3,10 @@ from typing import Any
 from arq.jobs import Job as ArqJob
 from fastapi import APIRouter, Depends
 
-from ...api.dependencies import rate_limiter_dependency
-from ...core.utils import queue
-from ...schemas.job import Job
+from tests.fastapi.src.api.dependencies import rate_limiter_dependency
+from tests.fastapi.src.core.utils import queue
+from tests.fastapi.src.schemas.job import Job
+
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -23,6 +24,7 @@ async def create_task(message: str) -> dict[str, str]:
     -------
     dict[str, str]
         A dictionary containing the ID of the created task.
+
     """
     job = await queue.pool.enqueue_job("sample_background_task", message)  # type: ignore
     return {"id": job.job_id}
@@ -41,6 +43,7 @@ async def get_task(task_id: str) -> dict[str, Any] | None:
     -------
     Optional[dict[str, Any]]
         A dictionary containing information about the task if found, or None otherwise.
+
     """
     job = ArqJob(task_id, queue.pool)
     job_info: dict = await job.info()

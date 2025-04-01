@@ -11,10 +11,10 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
-from ..api.dependencies import get_current_superuser
-from ..core.utils.rate_limit import rate_limiter
-from ..middleware.client_cache_middleware import ClientCacheMiddleware
-from ..models import *
+from tests.fastapi.src.api.dependencies import get_current_superuser
+from tests.fastapi.src.core.utils.rate_limit import rate_limiter
+from tests.fastapi.src.middleware.client_cache_middleware import ClientCacheMiddleware
+from tests.fastapi.src.models import *
 from .config import (
     AppSettings,
     ClientSideCacheSettings,
@@ -175,6 +175,7 @@ def create_application(
     based on the provided settings. It includes setting up database connections, Redis pools
     for caching, queue, and rate limiting, client-side caching, and customizing the API documentation
     based on the environment settings.
+
     """
     # --- before creating application ---
     if isinstance(settings, AppSettings):
@@ -219,3 +220,4 @@ def create_application(
             application.include_router(docs_router)
 
         return application
+    return None

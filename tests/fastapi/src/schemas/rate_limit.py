@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..core.schemas import TimestampSchema
+from tests.fastapi.src.core.schemas import TimestampSchema
 
 
 def sanitize_path(path: str) -> str:
@@ -16,7 +16,7 @@ class RateLimitBase(BaseModel):
     period: Annotated[int, Field(examples=[60])]
 
     @field_validator("path")
-    def validate_and_sanitize_path(cls, v: str) -> str:
+    def validate_and_sanitize_path(self, v: str) -> str:
         return sanitize_path(v)
 
 
@@ -48,7 +48,7 @@ class RateLimitUpdate(BaseModel):
     name: str | None = None
 
     @field_validator("path")
-    def validate_and_sanitize_path(cls, v: str) -> str:
+    def validate_and_sanitize_path(self, v: str) -> str:
         return sanitize_path(v) if v is not None else None
 
 
