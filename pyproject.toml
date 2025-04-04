@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Package for automatic architecture schemas renderers. Includes FastAPI and Litestar integrations"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = ["pytest-cov>=6.1.0"]
 
 [tool.ruff]
 fix = true
@@ -27,6 +27,12 @@ lines-after-imports = 2
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*.py" = ["S101", "S311"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=. --cov-report=term-missing"
+
+[tool.coverage.run]
+omit = ["tests/fastapi/*"]
 
 [dependency-groups]
 dev = [
