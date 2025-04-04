@@ -1,5 +1,4 @@
 default: install lint test
-set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
 install:
     uv lock --upgrade
@@ -9,7 +8,7 @@ lint:
     uv run ruff format
     uv run ruff check --fix
     uv run mypy .
-    uv run flake8 --select=WPS --extend-exclude=tests/fastapi fastarch
+    uv run flake8 --select=WPS --extend-exclude=tests/fastapi fastarch tests
 
 lint-ci:
     uv run ruff format --check
