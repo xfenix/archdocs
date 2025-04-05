@@ -1,6 +1,6 @@
 Fastapi boilerplate
 ==
-This part of project generated only for integration testing.
+This is a part of project generated only for integration testing.
 
 Generated from https://github.com/igorbenav/FastAPI-boilerplate
 
