@@ -55,7 +55,13 @@
         <div class="archdoc__header">Architecture Schema</div>
         <div class="archdoc__diagram-wrapper">
             <pre class="archdoc__diagram">
-                {}
+                flowchart LR
+                    A[🔧 Example Start Node] --> B[📦 Example Process Step]
+                    B --> C{🧪 Example Decision?}
+                    C -- Yes --> D[✅ Example Success Path]
+                    C -- No --> E[❌ Example Failure Path]
+                    D --> F[🚀 Example Final Step]
+                    E --> B
             </pre>
         </div>
     </div>

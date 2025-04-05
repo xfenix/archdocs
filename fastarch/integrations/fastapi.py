@@ -1,3 +1,5 @@
+import re as py_re
+
 import fastapi
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import HTMLResponse as StarletteHtmlResponse
@@ -8,7 +10,13 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 def _build_fastapi_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> fastapi.APIRouter:
     async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> None:
-        return StarletteHtmlResponse(settings.UI_HTML_TEMPLATE.format(arch_engine.search_features_and_draw_them()))
+        return StarletteHtmlResponse(
+            py_re.sub(
+                settings.UI_PLACEHOLDER_PATTER,
+                arch_engine.search_features_and_draw_them(),
+                settings.UI_HTML_TEMPLATE,
+            ),
+        )
 
     return _handle_fastapi_arch_doc_route
 
