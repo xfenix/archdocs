@@ -2,14 +2,74 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Architecture docs</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" async></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            color: #1f2937;
+        }
+
+        .archdoc {
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .archdoc__header {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        .archdoc__diagram-wrapper {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+            visibility: hidden;
+            overflow-x: auto;
+        }
+
+        .archdoc__diagram {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 
 <body>
-    <pre class="mermaid">{}</pre>
+    <div class="archdoc">
+        <div class="archdoc__header">Architecture Schema</div>
+        <div class="archdoc__diagram-wrapper">
+            <pre class="archdoc__diagram">
+                {}
+            </pre>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false });
+        mermaid.run({
+            querySelector: '.archdoc__diagram',
+            postRenderCallback: function () {
+                document.querySelector('.archdoc__diagram-wrapper').style.visibility = 'visible';
+            }
+        });
+    </script>
 </body>
 
 </html>
