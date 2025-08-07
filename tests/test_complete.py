@@ -19,7 +19,7 @@ def fastapi_app() -> FastAPI:
 
 
 def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
-    _root_for_fastapi_example_src: typing.Final = pathlib.Path(__file__).parent.parent
+    _root_for_fastapi_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
     add_architecture_doc_routes(
         fastapi_app,
         arch_settings=SettingsForFastarch(root_dir=_root_for_fastapi_example_src, service_name="kek"),

@@ -10,7 +10,7 @@ from fastarch.integrations.fastapi import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
 
 
-ROOT_FOR_FASTAPI_EXAMPLE: typing.Final = pathlib.Path(__file__).parent.parent
+ROOT_FOR_FASTAPI_EXAMPLE: typing.Final = pathlib.Path(__file__).parent / "fastapi"
 STATUS_OK: typing.Final = 200
 
 
