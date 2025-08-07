@@ -1,4 +1,14 @@
+import pathlib
 import typing
+
+import hypothesis
+import hypothesis.strategies as st
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from fastarch.features.sqlalchemy.parser import find_sqlalchemy_features
+from fastarch.integrations.fastapi import add_architecture_doc_routes
+from fastarch.main import SettingsForFastarch
 
 
 DSN_LIST: typing.Final = {
@@ -10,3 +20,46 @@ DSN_LIST: typing.Final = {
     "postgresql+psycopg2://user:password@/dbname?host=host1,host2,host3&target_session_attrs=any",
     "postgresql+asyncpg://user:password@localhost:5432/dbname",
 }
+
+
+STATUS_OK: typing.Final = 200
+
+
+@hypothesis.given(st.sampled_from(sorted(DSN_LIST)))
+def test_find_sqlalchemy_features_handles_dsn_variants(dsn: str) -> None:
+    is_async = "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
+    import_line = (
+        "from sqlalchemy.ext.asyncio import create_async_engine"
+        if is_async
+        else "from sqlalchemy import create_engine"
+    )
+    call_line = "create_async_engine" if is_async else "create_engine"
+    pool_args = ", pool_size=10" if "pool_" in dsn else ""
+    src = f"{import_line}\n{call_line}('{dsn}'{pool_args})\n"
+    features = find_sqlalchemy_features(src)
+    assert features.database_type == dsn
+    assert features.async_used is is_async
+    assert not features.pooling_used
+    assert features.target_session_attrs == ""
+
+
+@hypothesis.given(
+    service_name=st.text(
+        min_size=1,
+        max_size=10,
+        alphabet=st.characters(whitelist_categories=["Ll", "Lu"], whitelist_characters=["_", "-"]),
+    )
+)
+def test_sqlalchemy_features_are_rendered_via_fastapi(service_name: str) -> None:
+    app = FastAPI()
+    root_dir = pathlib.Path(__file__).parent / "fastapi"
+    add_architecture_doc_routes(
+        app,
+        route_path="/",
+        arch_settings=SettingsForFastarch(root_dir=root_dir, service_name=service_name),
+    )
+    client = TestClient(app)
+    response = client.get("/")
+    assert response.status_code == STATUS_OK
+    assert "sqlite+aiosqlite" in response.text
+    assert service_name in response.text
