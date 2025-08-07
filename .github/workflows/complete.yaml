@@ -2,14 +2,14 @@ name: Lint and Type Check
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   release:
-    types:
-      - published
+    types: [published]
+
+env:
+  PY_MATRIX: '["3.12","3.13"]'
 
 jobs:
   lint:
@@ -20,28 +20,26 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           cache-dependency-glob: "**/pyproject.toml"
-      - run: uv python install ${{ fromJSON(inputs.python-version)[0] }}
+      - run: uv python install ${{ fromJSON(env.PY_MATRIX)[0] }}
       - run: just install lint-ci
 
   lint2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+        with: { persist-credentials: false }
       - uses: wemake-services/wemake-python-styleguide@1.1.0
-        with:
-          reporter: "github-pr-review"
+        with: { reporter: "github-pr-review" }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
-    name: ${{matrix.os}}-${{matrix.python-version}}
+    name: ${{ matrix.os }}-${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(inputs.python-version) }}
+        python-version: ${{ fromJSON(env.PY_MATRIX) }}
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
