@@ -1,6 +1,8 @@
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from fastarch.features.http_api.parser import find_fastapi_and_litestar_features
+
 
 IN_METHODS = ["post", "put", "patch", "delete"]
 OUT_METHODS = ["get", "head", "options", "trace"]

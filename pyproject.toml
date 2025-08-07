@@ -10,14 +10,16 @@ dependencies = ["pytest-cov>=6.1.0"]
 fix = true
 unsafe-fixes = true
 line-length = 120
+exclude = ["tests/fastapi/src/*"]
 
 [tool.ruff.format]
 quote-style = "preserve"
 line-ending = "auto"
+docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["TRY003", "D1", "D203", "D213", "G004"]
+ignore = ["EM", "FBT", "TRY003", "D1", "D203", "D213", "G004", "FA", "COM812", "ISC001"]
 
 [tool.ruff.lint.isort]
 no-lines-before = ["standard-library", "local-folder"]
@@ -34,10 +36,13 @@ addopts = "--cov=. --cov-report=term-missing"
 [tool.coverage.run]
 omit = ["tests/fastapi/*"]
 
+[tool.coverage.report]
+exclude_also = ["if typing.TYPE_CHECKING:"]
 [dependency-groups]
 dev = [
     "auto-typing-final>=0.7.2",
     "fastapi>=0.115.11",
+    "hypothesis>=6.137.1",
     "litestar>=2.15.1",
     "mypy>=1.15.0",
     "pytest>=8.3.5",
