@@ -9,7 +9,9 @@ from fastarch import settings
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
-def _build_fastapi_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> typing.Any:
+def _build_fastapi_arch_doc_route(
+    arch_engine: ArchitectureParserAndRenderer,
+) -> typing.Callable[[StarletteRequest], typing.Awaitable[StarletteHtmlResponse]]:
     async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> StarletteHtmlResponse:
         return StarletteHtmlResponse(
             py_re.sub(
