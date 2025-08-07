@@ -21,7 +21,7 @@ def draw_redis_features(service_name: str, features_to_draw: RedisFeatures) -> s
     diagram_parts.extend(
         (
             f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{properties_on_arrow}| "
-            f"redisdb{counter if features_to_draw.cluster_or_sentinel else ""}"
+            f"redisdb{counter if features_to_draw.cluster_or_sentinel else ''}"
         )
         for counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION)
     )
