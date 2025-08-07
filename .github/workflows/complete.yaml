@@ -1,13 +1,40 @@
-name: Test and Coverage
+name: Lint and Type Check
 
 on:
-  workflow_call:
-    inputs:
-      python-version:
-        required: true
-        type: string
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: astral-sh/setup-uv@v5
+        with:
+          cache-dependency-glob: "**/pyproject.toml"
+      - run: uv python install ${{ fromJSON(inputs.python-version)[0] }}
+      - run: just install lint-ci
+
+  lint2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: wemake-services/wemake-python-styleguide@1.1.0
+        with:
+          reporter: "github-pr-review"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test:
     name: ${{matrix.os}}-${{matrix.python-version}}
     runs-on: ${{ matrix.os }}
