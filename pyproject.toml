@@ -33,6 +33,9 @@ lines-after-imports = 2
 [tool.mypy]
 exclude = ["tests/fastapi/"]
 
+[tool.flake8]
+max-line-length = 120
+
 [tool.pytest.ini_options]
 addopts = "--cov=. --cov-report=term-missing"
 
