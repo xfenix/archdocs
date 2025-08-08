@@ -32,15 +32,11 @@ STATUS_OK: typing.Final = 200
 def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
     is_async = "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
     import_line = (
-        "from sqlalchemy.ext.asyncio import create_async_engine"
-        if is_async
-        else "from sqlalchemy import create_engine"
+        "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
     )
     call_line = "create_async_engine" if is_async else "create_engine"
-    src = (
-        f"{import_line}\n"
-        f"{call_line}('{dsn}'{', pool_size=10' if 'pool_' in dsn else ''})\n"
-    )
+    pool_size_clause = ", pool_size=10" if "pool_" in dsn else ""
+    src = f"{import_line}\n{call_line}('{dsn}'{pool_size_clause})\n"
     features = find_sqlalchemy_features(src)
     assert features.database_type == dsn
     assert features.async_used is is_async
