@@ -19,7 +19,18 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["EM", "FBT", "TRY003", "D1", "D203", "D213", "G004", "FA", "COM812", "ISC001"]
+ignore = [
+    "EM",
+    "FBT",
+    "TRY003",
+    "D1",
+    "D203",
+    "D213",
+    "G004",
+    "FA",
+    "COM812",
+    "ISC001",
+]
 
 [tool.ruff.lint.isort]
 no-lines-before = ["standard-library", "local-folder"]
@@ -32,9 +43,6 @@ lines-after-imports = 2
 
 [tool.mypy]
 exclude = ["tests/fastapi/"]
-
-[tool.flake8]
-max-line-length = 120
 
 [tool.pytest.ini_options]
 addopts = "--cov=. --cov-report=term-missing"
