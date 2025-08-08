@@ -2,38 +2,45 @@ import pathlib
 import typing
 
 import hypothesis
-import hypothesis.strategies as st
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from hypothesis import strategies as st
 
 from fastarch.features.sqlalchemy.parser import find_sqlalchemy_features
 from fastarch.integrations.fastapi import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
 
 
-DSN_LIST: typing.Final = {
+DSN_LIST: typing.Final[tuple[str, ...]] = (
     "postgresql+psycopg2://user:password@localhost:5432/dbname",
     "postgresql+asyncpg://user:password@/dbname?host=host1:5432&host=host2:5432&host=host3:5432",
-    "postgresql+asyncpg://user:password@localhost:5432/dbname?pool_size=10&max_overflow=5&pool_timeout=30&pool_recycle=1800",
+    (
+        "postgresql+asyncpg://user:password@localhost:5432/dbname?pool_size=10&max_overflow=5&pool_timeout=30&"
+        "pool_recycle=1800"
+    ),
     "postgresql+asyncpg://user:password@/dbname?host=host1,host2,host3&target_session_attrs=read-write",
     "postgresql+asyncpg://user:password@/dbname?host=host1,host2,host3&target_session_attrs=read-only",
     "postgresql+psycopg2://user:password@/dbname?host=host1,host2,host3&target_session_attrs=any",
     "postgresql+asyncpg://user:password@localhost:5432/dbname",
-}
+)
 
 
 STATUS_OK: typing.Final = 200
 
 
 @hypothesis.given(st.sampled_from(sorted(DSN_LIST)))
-def test_find_sqlalchemy_features_handles_dsn_variants(dsn: str) -> None:
+def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
     is_async = "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
     import_line = (
-        "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
+        "from sqlalchemy.ext.asyncio import create_async_engine"
+        if is_async
+        else "from sqlalchemy import create_engine"
     )
     call_line = "create_async_engine" if is_async else "create_engine"
-    pool_args = ", pool_size=10" if "pool_" in dsn else ""
-    src = f"{import_line}\n{call_line}('{dsn}'{pool_args})\n"
+    src = (
+        f"{import_line}\n"
+        f"{call_line}('{dsn}'{', pool_size=10' if 'pool_' in dsn else ''})\n"
+    )
     features = find_sqlalchemy_features(src)
     assert features.database_type == dsn
     assert features.async_used is is_async
@@ -48,7 +55,7 @@ def test_find_sqlalchemy_features_handles_dsn_variants(dsn: str) -> None:
         alphabet=st.characters(whitelist_categories=["Ll", "Lu"], whitelist_characters=["_", "-"]),
     )
 )
-def test_sqlalchemy_features_are_rendered_via_fastapi(service_name: str) -> None:
+def test_sqlalchemy_features_rendered_via_fastapi(service_name: str) -> None:
     app = FastAPI()
     root_dir = pathlib.Path(__file__).parent / "fastapi"
     add_architecture_doc_routes(
