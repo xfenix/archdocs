@@ -18,11 +18,13 @@ def draw_sqlalchemy_features(service_name: str, features_to_draw: SQLAlchemyFeat
             ],
         ),
     )
-    diagram_parts.extend(
-        (
-            f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{properties_on_arrow}| "
-            f"{features_to_draw.database_type}db{counter if features_to_draw.multiple_hosts else ''}"
-        )
-        for counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION if features_to_draw.pooling_used else 1)
+    connections_number: typing.Final = (
+        settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION if features_to_draw.pooling_used else 1
     )
+    for counter in range(connections_number):
+        host_suffix = counter if features_to_draw.multiple_hosts else ""
+        diagram_parts.append(
+            f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{properties_on_arrow}|"
+            f" {features_to_draw.database_type}db{host_suffix}",
+        )
     return "\n".join(diagram_parts)

@@ -1,3 +1,4 @@
+import functools
 import re as py_re
 import typing
 
@@ -9,19 +10,23 @@ from fastarch import settings
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
+async def _handle_fastapi_arch_doc_route(
+    _: StarletteRequest,
+    arch_engine: ArchitectureParserAndRenderer,
+) -> StarletteHtmlResponse:
+    return StarletteHtmlResponse(
+        py_re.sub(
+            settings.UI_PLACEHOLDER_PATTER,
+            arch_engine.search_features_and_draw_them(),
+            settings.UI_HTML_TEMPLATE,
+        ),
+    )
+
+
 def _build_fastapi_arch_doc_route(
     arch_engine: ArchitectureParserAndRenderer,
 ) -> typing.Callable[[StarletteRequest], typing.Awaitable[StarletteHtmlResponse]]:
-    async def _handle_fastapi_arch_doc_route(_: StarletteRequest) -> StarletteHtmlResponse:
-        return StarletteHtmlResponse(
-            py_re.sub(
-                settings.UI_PLACEHOLDER_PATTER,
-                arch_engine.search_features_and_draw_them(),
-                settings.UI_HTML_TEMPLATE,
-            ),
-        )
-
-    return _handle_fastapi_arch_doc_route
+    return functools.partial(_handle_fastapi_arch_doc_route, arch_engine=arch_engine)
 
 
 def add_architecture_doc_routes(

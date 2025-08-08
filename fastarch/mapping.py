@@ -22,27 +22,27 @@ class _FeatureFunctions:
 
 @typing.final
 class AllCurrentFeatures(enum.Enum):
-    FASTAPI_LITESTAR = 1
-    FASTSTREAM = 2
-    SQLALCHEMY = 3
-    REDIS = 4
+    fastapi_litestar = 1
+    faststream = 2
+    sqlalchemy = 3
+    redis = 4
 
 
 MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
     {
-        AllCurrentFeatures.FASTAPI_LITESTAR: _FeatureFunctions(
+        AllCurrentFeatures.fastapi_litestar: _FeatureFunctions(
             parse=httpapi_parser.find_fastapi_and_litestar_features,
             render=httpapi_renderer.draw_http_api_features,
         ),
-        AllCurrentFeatures.FASTSTREAM: _FeatureFunctions(
+        AllCurrentFeatures.faststream: _FeatureFunctions(
             parse=mq_parser.find_faststream_features,
             render=mq_renderer.draw_mq_features,
         ),
-        AllCurrentFeatures.SQLALCHEMY: _FeatureFunctions(
+        AllCurrentFeatures.sqlalchemy: _FeatureFunctions(
             parse=sqlalchemy_parser.find_sqlalchemy_features,
             render=sqlalchemy_renderer.draw_sqlalchemy_features,
         ),
-        AllCurrentFeatures.REDIS: _FeatureFunctions(
+        AllCurrentFeatures.redis: _FeatureFunctions(
             parse=redis_parser.find_redis_features,
             render=redis_renderer.draw_redis_features,
         ),

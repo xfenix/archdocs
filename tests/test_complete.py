@@ -19,10 +19,10 @@ def fastapi_app() -> FastAPI:
 
 
 def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
-    _root_for_fastapi_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
+    root_for_fastapi_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
     add_architecture_doc_routes(
         fastapi_app,
-        arch_settings=SettingsForFastarch(root_dir=_root_for_fastapi_example_src, service_name="kek"),
+        arch_settings=SettingsForFastarch(root_dir=root_for_fastapi_example_src, service_name="kek"),
     )
     client_for_test: typing.Final = TestClient(fastapi_app)
     assert client_for_test.get(settings.DEFAULT_PATH).status_code == GOOD_HTTP_CODE

@@ -14,7 +14,10 @@ _PRODUCER_DECORATOR_RE: typing.Final = py_re.compile(
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
     {
         broker: py_re.compile(
-            rf"\b(?:from\s+faststream(?:\s+import\s+|\.{broker.value}\s+import\s+)|import\s+faststream\.{broker.value}\b)",
+            (
+                r"\b(?:from\s+faststream(?:\s+import\s+|\."
+                rf"{broker.value}\s+import\s+)|import\s+faststream\.{broker.value}\b)"
+            ),
             flags=settings.TYPICAL_RE_FLAGS,
         )
         for broker in const.BrokersEnum
