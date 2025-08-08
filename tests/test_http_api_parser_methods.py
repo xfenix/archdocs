@@ -20,22 +20,18 @@ def test_http_api_parser_detects_methods(method: str) -> None:
     )
     features = find_fastapi_and_litestar_features(src)
     if method in IN_METHODS:
-        assert (
-            method in features.in_methods
-        )
-        assert (
-            features.in_methods_existed
-        )
-        assert (
-            not features.out_methods_existed
+        assert all(
+            (
+                method in features.in_methods,
+                features.in_methods_existed,
+                not features.out_methods_existed,
+            ),
         )
     else:
-        assert (
-            method in features.out_methods
-        )
-        assert (
-            features.out_methods_existed
-        )
-        assert (
-            not features.in_methods_existed
+        assert all(
+            (
+                method in features.out_methods,
+                features.out_methods_existed,
+                not features.in_methods_existed,
+            ),
         )

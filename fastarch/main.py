@@ -27,6 +27,7 @@ class SettingsForFastarch:
 class ArchitectureParserAndRenderer:
     local_settings: SettingsForFastarch
     _cache: str = ""
+
     def search_features_and_draw_them(self) -> str:
         # "why you doesnt use functools.cache lol"
         # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
