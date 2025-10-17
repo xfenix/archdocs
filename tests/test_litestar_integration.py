@@ -19,10 +19,10 @@ def litestar_app() -> Litestar:
 
 
 def test_add_architecture_doc_routes(litestar_app: Litestar) -> None:
-    _root_for_litestar_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
+    root_for_litestar_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
     add_architecture_doc_routes(
         litestar_app,
-        arch_settings=SettingsForFastarch(root_dir=_root_for_litestar_example_src, service_name="test"),
+        arch_settings=SettingsForFastarch(root_dir=root_for_litestar_example_src, service_name="test"),
     )
     client_for_test: typing.Final = TestClient(litestar_app)
     assert client_for_test.get(settings.DEFAULT_PATH).status_code == GOOD_HTTP_CODE

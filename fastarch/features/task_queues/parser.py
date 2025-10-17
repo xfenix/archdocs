@@ -65,7 +65,6 @@ _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
 
 def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
     queues_found: typing.Final[set[str]] = set()
-
     for queue_enum, pattern in _QUEUE_IMPORT_PATTERNS.items():
         if pattern.search(raw_source):
             queues_found.add(queue_enum.value)
@@ -78,17 +77,12 @@ def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
             brokers_detected=frozenset(),
         )
 
-    has_tasks: typing.Final = bool(_TASK_DECORATOR_PATTERNS.search(raw_source))
-    has_workers: typing.Final = bool(_WORKER_PATTERNS.search(raw_source))
-
-    brokers_detected: typing.Final[set[str]] = set()
-    for broker_name, pattern in _BROKER_PATTERNS.items():
-        if pattern.search(raw_source):
-            brokers_detected.add(broker_name)
-
+    # Combine all detection into single return statement
     return TaskQueueFeatures(
         queues_used=frozenset(queues_found),
-        has_tasks=has_tasks,
-        has_workers=has_workers,
-        brokers_detected=frozenset(brokers_detected),
+        has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),
+        has_workers=bool(_WORKER_PATTERNS.search(raw_source)),
+        brokers_detected=frozenset(
+            name for name, broker_pattern in _BROKER_PATTERNS.items() if broker_pattern.search(raw_source)
+        ),
     )

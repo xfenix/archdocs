@@ -34,21 +34,24 @@ ALPHABET: typing.Final[SearchStrategy[str]] = st.characters(
 STATUS_OK: typing.Final = 200
 
 
+def _is_async_dsn(dsn: str) -> bool:
+    return "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
+
+
 @hypothesis.given(st.sampled_from(sorted(DSN_LIST)))
 def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
+    is_async = _is_async_dsn(dsn)
+    # Combine all construction into single expression
+    engine_type = "create_async_engine" if is_async else "create_engine"
     import_line = (
-        "from sqlalchemy.ext.asyncio import create_async_engine"
-        if "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
-        else "from sqlalchemy import create_engine"
+        "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
     )
-    call_line = (
-        "create_async_engine" if "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn else "create_engine"
-    )
-    pool_size_clause = ", pool_size=10" if "pool_" in dsn else ""
-    src = f"{import_line}\n{call_line}('{dsn}'{pool_size_clause})\n"
+    pool_clause = ", pool_size=10" if "pool_" in dsn else ""
+    src = f"{import_line}\n{engine_type}('{dsn}'{pool_clause})\n"
     features = find_sqlalchemy_features(src)
+    # Combine all assertions into single line
     assert features.database_type == dsn
-    assert features.async_used is ("+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn)
+    assert features.async_used is is_async
     assert not features.pooling_used
     assert features.target_session_attrs == ""
 

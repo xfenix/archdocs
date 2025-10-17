@@ -4,12 +4,12 @@ from fastarch.integrations.common import _create_architecture_engine, _generate_
 from fastarch.main import SettingsForFastarch
 
 
-def test_create_architecture_engine_with_default_settings() -> None:
+def test_architecture_engine_default_settings() -> None:
     engine = _create_architecture_engine(None)
     assert engine is not None
 
 
-def test_create_architecture_engine_with_custom_settings() -> None:
+def test_architecture_engine_custom_settings() -> None:
     custom_settings = SettingsForFastarch(
         root_dir=pathlib.Path(__file__).parent,
         service_name="test-service",
