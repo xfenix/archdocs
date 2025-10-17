@@ -19,6 +19,7 @@
 fastarch/
 ├── features/           # Модули для различных технологий
 │   ├── http_api/      # FastAPI/Litestar endpoints
+│   ├── http_clients/  # HTTP clients (httpx, aiohttp, requests, niquests)
 │   ├── sqlalchemy/    # Database ORM
 │   ├── redis/         # Caching layer
 │   └── messaging_queue/ # Message queues (FastStream)

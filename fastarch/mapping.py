@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from fastarch.features.http_api import parser as httpapi_parser
 from fastarch.features.http_api import renderer as httpapi_renderer
+from fastarch.features.http_clients import parser as http_clients_parser
+from fastarch.features.http_clients import renderer as http_clients_renderer
 from fastarch.features.messaging_queue import parser as mq_parser
 from fastarch.features.messaging_queue import renderer as mq_renderer
 from fastarch.features.redis import parser as redis_parser
@@ -26,6 +28,7 @@ class AllCurrentFeatures(enum.Enum):
     faststream = 2
     sqlalchemy = 3
     redis = 4
+    http_clients = 5
 
 
 MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
@@ -45,6 +48,10 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
         AllCurrentFeatures.redis: _FeatureFunctions(
             parse=redis_parser.find_redis_features,
             render=redis_renderer.draw_redis_features,
+        ),
+        AllCurrentFeatures.http_clients: _FeatureFunctions(
+            parse=http_clients_parser.find_http_client_features,
+            render=http_clients_renderer.draw_http_client_features,
         ),
     },
 )
