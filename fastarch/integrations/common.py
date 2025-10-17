@@ -1,3 +1,4 @@
+import dataclasses
 import re as py_re
 import typing
 
@@ -25,7 +26,7 @@ def _create_architecture_engine(
 
 
 @typing.final
-@typing.dataclass(slots=True, kw_only=True, frozen=True)
+@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
 class ArchitectureRouteConfig:
     route_path: str
     arch_settings: SettingsForFastarch | None

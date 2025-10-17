@@ -28,8 +28,13 @@ def test_find_http_client_features_detects_imports(client: str) -> None:
 @given(st.sampled_from(ASYNC_CLIENTS))
 def test_find_http_client_features_detects_async_clients(client: str) -> None:
     async_patterns = {
-        "httpx": "import httpx\nasync with httpx.AsyncClient() as client:\n    await client.get('http://example.com')\n",
-        "aiohttp": "import aiohttp\nasync with aiohttp.ClientSession() as session:\n    await session.get('http://example.com')\n",
+        "httpx": (
+            "import httpx\nasync with httpx.AsyncClient() as client:\n    await client.get('http://example.com')\n"
+        ),
+        "aiohttp": (
+            "import aiohttp\nasync with aiohttp.ClientSession() as session:\n"
+            "    await session.get('http://example.com')\n"
+        ),
     }
 
     src = async_patterns[client]
