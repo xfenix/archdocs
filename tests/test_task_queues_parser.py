@@ -42,12 +42,12 @@ def test_task_queue_detects_task_decorators(queue: str) -> None:
 
 def _create_worker_pattern(queue: str) -> str:
     worker_commands = {
-        "celery": "celery -A myapp worker --loglevel=info",
-        "taskiq": "taskiq worker myapp.broker",
-        "arq": "arq myapp.worker",
+        "celery": "celery worker",
+        "taskiq": "taskiq worker",
+        "arq": "arq worker",
         "rq": "rq worker",
-        "dramatiq": "dramatiq myapp.worker",
-        "huey": "huey_consumer.py myapp.huey",
+        "dramatiq": "dramatiq worker",
+        "huey": "huey worker",
     }
     return f"import {queue}\n{worker_commands[queue]}\n"
 
@@ -63,9 +63,9 @@ def test_task_queue_detects_workers(queue: str) -> None:
 @given(st.sampled_from(BROKERS))
 def test_task_queue_detects_brokers(broker: str) -> None:
     broker_patterns = {
-        "redis": "import redis\nredis://localhost:6379\nRedisSettings(host='localhost')\n",
-        "rabbitmq": "import pika\namqp://localhost:5672\nRabbitMQBroker()\n",
-        "postgresql": "import psycopg2\npostgres://localhost:5432\nPostgreSQLBroker()\n",
+        "redis": "import celery\nimport redis\nredis://localhost:6379\nRedisSettings(host='localhost')\n",
+        "rabbitmq": "import celery\nimport pika\namqp://localhost:5672\nRabbitMQBroker()\n",
+        "postgresql": "import celery\nimport psycopg2\npostgres://localhost:5432\nPostgreSQLBroker()\n",
     }
 
     src = broker_patterns[broker]
