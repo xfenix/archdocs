@@ -25,6 +25,9 @@ fastarch/
 │   ├── messaging_queue/ # Message queues (FastStream)
 │   └── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
 ├── integrations/      # Интеграции с веб-фреймворками
+│   ├── common.py     # Общая логика для всех интеграций
+│   ├── fastapi.py    # FastAPI интеграция
+│   └── litestar.py   # Litestar интеграция
 ├── main.py           # Основной движок
 ├── mapping.py        # Регистрация парсеров/рендереров
 └── settings.py       # Конфигурация
@@ -347,6 +350,25 @@ from fastarch.integrations.fastapi import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
 
 app = FastAPI()
+
+# Добавление маршрута архитектурной документации
+add_architecture_doc_routes(
+    app,
+    arch_settings=SettingsForFastarch(
+        root_dir="src/",
+        service_name="my-service"
+    )
+)
+```
+
+### Litestar интеграция
+
+```python
+from litestar import Litestar
+from fastarch.integrations.litestar import add_architecture_doc_routes
+from fastarch.main import SettingsForFastarch
+
+app = Litestar()
 
 # Добавление маршрута архитектурной документации
 add_architecture_doc_routes(

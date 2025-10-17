@@ -1,5 +1,4 @@
 import functools
-import re as py_re
 import typing
 
 import fastapi
@@ -7,24 +6,18 @@ from starlette.requests import Request as StarletteRequest
 from starlette.responses import HTMLResponse as StarletteHtmlResponse
 
 from fastarch import settings
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from fastarch.integrations.common import _create_architecture_engine, _generate_architecture_html
 
 
 async def _handle_fastapi_arch_doc_route(
     _: StarletteRequest,
-    arch_engine: ArchitectureParserAndRenderer,
+    arch_engine: typing.Any,
 ) -> StarletteHtmlResponse:
-    return StarletteHtmlResponse(
-        py_re.sub(
-            settings.UI_PLACEHOLDER_PATTER,
-            arch_engine.search_features_and_draw_them(),
-            settings.UI_HTML_TEMPLATE,
-        ),
-    )
+    return StarletteHtmlResponse(_generate_architecture_html(arch_engine))
 
 
 def _build_fastapi_arch_doc_route(
-    arch_engine: ArchitectureParserAndRenderer,
+    arch_engine: typing.Any,
 ) -> typing.Callable[[StarletteRequest], typing.Awaitable[StarletteHtmlResponse]]:
     return functools.partial(_handle_fastapi_arch_doc_route, arch_engine=arch_engine)
 
@@ -32,11 +25,7 @@ def _build_fastapi_arch_doc_route(
 def add_architecture_doc_routes(
     fastapi_app: fastapi.FastAPI,
     route_path: str = settings.DEFAULT_PATH,
-    arch_settings: SettingsForFastarch | None = None,
+    arch_settings: typing.Any = None,
 ) -> None:
-    if arch_settings is None:
-        arch_settings = SettingsForFastarch(
-            root_dir=settings.DEFAULT_ROOT_DIR,
-            service_name=settings.DEFAULT_SERVICE_NAME,
-        )
-    fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(ArchitectureParserAndRenderer(arch_settings)))
+    arch_engine: typing.Final = _create_architecture_engine(arch_settings)
+    fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(arch_engine))
