@@ -13,6 +13,8 @@ from fastarch.features.redis import parser as redis_parser
 from fastarch.features.redis import renderer as redis_renderer
 from fastarch.features.sqlalchemy import parser as sqlalchemy_parser
 from fastarch.features.sqlalchemy import renderer as sqlalchemy_renderer
+from fastarch.features.task_queues import parser as task_queues_parser
+from fastarch.features.task_queues import renderer as task_queues_renderer
 
 
 @typing.final
@@ -29,6 +31,7 @@ class AllCurrentFeatures(enum.Enum):
     sqlalchemy = 3
     redis = 4
     http_clients = 5
+    task_queues = 6
 
 
 MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
@@ -52,6 +55,10 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
         AllCurrentFeatures.http_clients: _FeatureFunctions(
             parse=http_clients_parser.find_http_client_features,
             render=http_clients_renderer.draw_http_client_features,
+        ),
+        AllCurrentFeatures.task_queues: _FeatureFunctions(
+            parse=task_queues_parser.find_task_queue_features,
+            render=task_queues_renderer.draw_task_queue_features,
         ),
     },
 )

@@ -22,7 +22,8 @@ fastarch/
 │   ├── http_clients/  # HTTP clients (httpx, aiohttp, requests, niquests)
 │   ├── sqlalchemy/    # Database ORM
 │   ├── redis/         # Caching layer
-│   └── messaging_queue/ # Message queues (FastStream)
+│   ├── messaging_queue/ # Message queues (FastStream)
+│   └── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
 ├── integrations/      # Интеграции с веб-фреймворками
 ├── main.py           # Основной движок
 ├── mapping.py        # Регистрация парсеров/рендереров
