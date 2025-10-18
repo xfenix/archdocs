@@ -1,7 +1,7 @@
+import functools
 import typing
 
 from litestar import Litestar, get
-from litestar.handlers import HTTPRouteHandler
 from litestar.response import Response
 
 from fastarch import settings
@@ -9,22 +9,11 @@ from fastarch.integrations.common import _create_architecture_engine, _generate_
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
-def _handle_litestar_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> Response:
+async def _handle_litestar_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> Response:
     return Response(
         _generate_architecture_html(arch_engine),
         media_type="text/html",
     )
-
-
-def _create_litestar_route_handler(
-    route_path: str,
-    arch_engine: ArchitectureParserAndRenderer,
-) -> HTTPRouteHandler:
-    @get(route_path)
-    async def _route_wrapper() -> Response:
-        return _handle_litestar_arch_doc_route(arch_engine)
-
-    return _route_wrapper
 
 
 def add_architecture_doc_routes(
@@ -33,5 +22,6 @@ def add_architecture_doc_routes(
     arch_settings: SettingsForFastarch | None = None,
 ) -> None:
     arch_engine: typing.Final = _create_architecture_engine(arch_settings)
-    route_handler: typing.Final = _create_litestar_route_handler(route_path, arch_engine)
+    handler: typing.Final = functools.partial(_handle_litestar_arch_doc_route, arch_engine)
+    route_handler: typing.Final = get(route_path)(handler)
     litestar_app.register(route_handler)

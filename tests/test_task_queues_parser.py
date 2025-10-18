@@ -11,36 +11,39 @@ BROKERS: typing.Final = ("redis", "rabbitmq", "postgresql")
 _IMPORT_TEMPLATES: typing.Final = ("import {}\n", "from {} import Something\n", "from {}.worker import Worker\n")
 
 
+_TASK_PATTERNS: typing.Final = {
+    "celery": "from celery import Celery\napp = Celery()\n@app.task\ndef my_task():\n    pass\n",
+    "taskiq": "from taskiq import TaskiqScheduler\n@broker.task\ndef my_task():\n    pass\n",
+    "arq": "from arq import create_pool\n@arq.task\ndef my_task():\n    pass\n",
+    "rq": "from rq import Queue\n@job\ndef my_task():\n    pass\n",
+    "dramatiq": "import dramatiq\n@dramatiq.actor\ndef my_task():\n    pass\n",
+    "huey": "from huey import RedisHuey\n@huey.task()\ndef my_task():\n    pass\n",
+}
+_WORKER_COMMANDS: typing.Final = {
+    "celery": "celery worker",
+    "taskiq": "taskiq worker",
+    "arq": "arq worker",
+    "rq": "rq worker",
+    "dramatiq": "dramatiq worker",
+    "huey": "huey worker",
+}
+
+
 @given(st.sampled_from(TASK_QUEUES))
-def test_task_queue_detects_imports_tasks_and_workers(queue: str) -> None:
+def test_task_queue_detects_imports(queue: str) -> None:
     for template in _IMPORT_TEMPLATES:
         src = template.format(queue)
         features = find_task_queue_features(src)
         assert queue in features.queues_used
 
-    task_patterns = {
-        "celery": "from celery import Celery\napp = Celery()\n@app.task\ndef my_task():\n    pass\n",
-        "taskiq": "from taskiq import TaskiqScheduler\n@broker.task\ndef my_task():\n    pass\n",
-        "arq": "from arq import create_pool\n@arq.task\ndef my_task():\n    pass\n",
-        "rq": "from rq import Queue\n@job\ndef my_task():\n    pass\n",
-        "dramatiq": "import dramatiq\n@dramatiq.actor\ndef my_task():\n    pass\n",
-        "huey": "from huey import RedisHuey\n@huey.task()\ndef my_task():\n    pass\n",
-    }
-    worker_commands = {
-        "celery": "celery worker",
-        "taskiq": "taskiq worker",
-        "arq": "arq worker",
-        "rq": "rq worker",
-        "dramatiq": "dramatiq worker",
-        "huey": "huey worker",
-    }
 
-    task_src = task_patterns[queue]
-    task_features = find_task_queue_features(task_src)
+@given(st.sampled_from(TASK_QUEUES))
+def test_task_queue_detects_tasks_and_workers(queue: str) -> None:
+    task_features = find_task_queue_features(_TASK_PATTERNS[queue])
     assert queue in task_features.queues_used
     assert task_features.has_tasks
 
-    worker_src = f"import {queue}\n{worker_commands[queue]}\n"
+    worker_src = f"import {queue}\n{_WORKER_COMMANDS[queue]}\n"
     worker_features = find_task_queue_features(worker_src)
     assert queue in worker_features.queues_used
     assert worker_features.has_workers
@@ -76,7 +79,7 @@ def test_task_queue_detects_multiple_queues(queues: list[str]) -> None:
 
 
 @given(st.text())
-def test_task_queue_handles_empty_and_non_queue_code(src: str) -> None:
+def test_task_queue_handles_non_queue_code(src: str) -> None:
     if not any(queue in src for queue in TASK_QUEUES):
         features = find_task_queue_features(src)
         assert len(features.queues_used) == 0

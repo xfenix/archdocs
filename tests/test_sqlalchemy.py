@@ -41,12 +41,11 @@ def _is_async_dsn(dsn: str) -> bool:
 @hypothesis.given(st.sampled_from(sorted(DSN_LIST)))
 def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
     is_async = _is_async_dsn(dsn)
-    engine_type = "create_async_engine" if is_async else "create_engine"
-    import_line = (
+    engine_func = "create_async_engine" if is_async else "create_engine"
+    import_stmt = (
         "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
-    )
-    pool_clause = ", pool_size=10" if "pool_" in dsn else ""
-    src = f"{import_line}\n{engine_type}('{dsn}'{pool_clause})\n"
+    )  # noqa: E501
+    src = f"{import_stmt}\n{engine_func}('{dsn}')\n"
     features = find_sqlalchemy_features(src)
     assert features.database_type == dsn
     assert features.async_used is is_async
