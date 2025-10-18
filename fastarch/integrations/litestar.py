@@ -9,18 +9,22 @@ from fastarch.integrations.common import _create_architecture_engine, _generate_
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
+def _handle_litestar_arch_doc_route(arch_engine: ArchitectureParserAndRenderer) -> Response:
+    return Response(
+        _generate_architecture_html(arch_engine),
+        media_type="text/html",
+    )
+
+
 def _create_litestar_route_handler(
     route_path: str,
     arch_engine: ArchitectureParserAndRenderer,
 ) -> HTTPRouteHandler:
     @get(route_path)
-    async def _handle_litestar_arch_doc_route() -> Response:
-        return Response(
-            _generate_architecture_html(arch_engine),
-            media_type="text/html",
-        )
+    async def _route_wrapper() -> Response:
+        return _handle_litestar_arch_doc_route(arch_engine)
 
-    return _handle_litestar_arch_doc_route
+    return _route_wrapper
 
 
 def add_architecture_doc_routes(

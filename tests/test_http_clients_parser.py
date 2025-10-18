@@ -58,7 +58,12 @@ def test_http_client_detects_sync_clients(client: str) -> None:
     assert features.has_external_calls
 
 
-_MULTIPLE_CLIENTS_STRATEGY = st.lists(st.sampled_from(HTTP_CLIENTS), min_size=2, max_size=4, unique=True)
+_MULTIPLE_CLIENTS_STRATEGY = st.lists(
+    st.sampled_from(HTTP_CLIENTS),
+    min_size=2,
+    max_size=4,
+    unique=True,
+)
 
 
 @given(_MULTIPLE_CLIENTS_STRATEGY)
@@ -83,7 +88,8 @@ def _has_no_http_clients(text: str) -> bool:
     return not any(client in text for client in HTTP_CLIENTS)
 
 
-_EDGE_CASES_STRATEGY = st.one_of(st.just(""), st.text().filter(_has_no_http_clients))
+_NON_HTTP_TEXT_STRATEGY = st.text().filter(_has_no_http_clients)
+_EDGE_CASES_STRATEGY = st.one_of(st.just(""), _NON_HTTP_TEXT_STRATEGY)
 
 
 @given(_EDGE_CASES_STRATEGY)
