@@ -22,6 +22,6 @@ def add_architecture_doc_routes(
     arch_settings: SettingsForFastarch | None = None,
 ) -> None:
     arch_engine: typing.Final = _create_architecture_engine(arch_settings)
-    handler: typing.Final = functools.partial(_handle_litestar_arch_doc_route, arch_engine)
-    route_handler: typing.Final = get(route_path)(handler)
+    arch_handler: typing.Final = functools.partial(_handle_litestar_arch_doc_route, arch_engine)
+    route_handler: typing.Final = get(route_path)(arch_handler)
     litestar_app.register(route_handler)

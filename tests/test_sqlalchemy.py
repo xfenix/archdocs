@@ -44,7 +44,7 @@ def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
     engine_func = "create_async_engine" if is_async else "create_engine"
     import_stmt = (
         "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
-    )  # noqa: E501
+    )
     src = f"{import_stmt}\n{engine_func}('{dsn}')\n"
     features = find_sqlalchemy_features(src)
     assert features.database_type == dsn

@@ -1,3 +1,4 @@
+import types
 import typing
 
 from hypothesis import given  # type: ignore[import-untyped]
@@ -11,22 +12,26 @@ BROKERS: typing.Final = ("redis", "rabbitmq", "postgresql")
 _IMPORT_TEMPLATES: typing.Final = ("import {}\n", "from {} import Something\n", "from {}.worker import Worker\n")
 
 
-_TASK_PATTERNS: typing.Final = {
-    "celery": "from celery import Celery\napp = Celery()\n@app.task\ndef my_task():\n    pass\n",
-    "taskiq": "from taskiq import TaskiqScheduler\n@broker.task\ndef my_task():\n    pass\n",
-    "arq": "from arq import create_pool\n@arq.task\ndef my_task():\n    pass\n",
-    "rq": "from rq import Queue\n@job\ndef my_task():\n    pass\n",
-    "dramatiq": "import dramatiq\n@dramatiq.actor\ndef my_task():\n    pass\n",
-    "huey": "from huey import RedisHuey\n@huey.task()\ndef my_task():\n    pass\n",
-}
-_WORKER_COMMANDS: typing.Final = {
-    "celery": "celery worker",
-    "taskiq": "taskiq worker",
-    "arq": "arq worker",
-    "rq": "rq worker",
-    "dramatiq": "dramatiq worker",
-    "huey": "huey worker",
-}
+_TASK_PATTERNS: typing.Final = types.MappingProxyType(
+    {
+        "celery": "from celery import Celery\napp = Celery()\n@app.task\ndef my_task():\n    pass\n",
+        "taskiq": "from taskiq import TaskiqScheduler\n@broker.task\ndef my_task():\n    pass\n",
+        "arq": "from arq import create_pool\n@arq.task\ndef my_task():\n    pass\n",
+        "rq": "from rq import Queue\n@job\ndef my_task():\n    pass\n",
+        "dramatiq": "import dramatiq\n@dramatiq.actor\ndef my_task():\n    pass\n",
+        "huey": "from huey import RedisHuey\n@huey.task()\ndef my_task():\n    pass\n",
+    }
+)
+_WORKER_COMMANDS: typing.Final = types.MappingProxyType(
+    {
+        "celery": "celery worker",
+        "taskiq": "taskiq worker",
+        "arq": "arq worker",
+        "rq": "rq worker",
+        "dramatiq": "dramatiq worker",
+        "huey": "huey worker",
+    }
+)
 
 
 @given(st.sampled_from(TASK_QUEUES))
