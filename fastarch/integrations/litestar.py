@@ -1,6 +1,7 @@
 import typing
 
 from litestar import Litestar, get
+from litestar.handlers import HTTPRouteHandler
 from litestar.response import Response
 
 from fastarch import settings
@@ -11,7 +12,7 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 def _create_litestar_route_handler(
     route_path: str,
     arch_engine: ArchitectureParserAndRenderer,
-) -> typing.Callable[[], typing.Awaitable[Response]]:
+) -> HTTPRouteHandler:
     @get(route_path)
     async def _handle_litestar_arch_doc_route() -> Response:
         return Response(
