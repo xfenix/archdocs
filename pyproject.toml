@@ -10,7 +10,7 @@ dependencies = []
 fix = true
 unsafe-fixes = true
 line-length = 120
-exclude = ["tests/fastapi/src/*"]
+exclude = ["tests/fastapi/src/*", "tests/litestar/src/*"]
 
 [tool.ruff.format]
 quote-style = "preserve"
@@ -43,7 +43,7 @@ lines-after-imports = 2
 "tests/*.py" = ["S101", "S311"]
 
 [tool.mypy]
-exclude = ["tests/fastapi/"]
+exclude = ["tests/fastapi/", "tests/litestar/"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=. --cov-report=term-missing"
