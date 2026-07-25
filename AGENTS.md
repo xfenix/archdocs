@@ -46,8 +46,8 @@ fastarch/
 ```python
 MAPPING_OF_PARSERS_AND_RENDERERS = {
     AllCurrentFeatures.FASTAPI_LITESTAR: _FeatureFunctions(
-        parse=httpapi_parser.find_fastapi_and_litestar_features,
-        render=httpapi_renderer.draw_http_api_features,
+        parse_source=httpapi_parser.find_fastapi_and_litestar_features,
+        render_diagram=httpapi_renderer.render_http_api_features,
     ),
     # ... другие фичи
 }
@@ -121,7 +121,7 @@ def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
 #### 4. Функции рендереров
 
 ```python
-def draw_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures) -> str:
+def render_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures) -> str:
     # Early return при отсутствии фич
     if not features_to_draw.in_methods_existed and not features_to_draw.out_methods_existed:
         return ""
@@ -144,6 +144,9 @@ def draw_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures)
 line-length = 120
 select = ["ALL"]
 ignore = ["EM", "FBT", "TRY003", "D1", "D203", "D213", "G004", "FA", "COM812", "ISC001"]
+# WPS (wemake) и COP (community-of-python) — внешние flake8-плагины,
+# ruff не должен ругаться на их коды в # noqa
+external = ["WPS", "COP"]
 
 [tool.ruff.format]
 quote-style = "preserve"  # Сохранять оригинальные кавычки
@@ -155,8 +158,10 @@ quote-style = "preserve"  # Сохранять оригинальные кавы
 lint:
     uv run ruff format
     uv run ruff check --fix
+    uv run auto-typing-final fastarch tests/*.py  # автопростановка typing.Final (без src-фикстур)
     uv run mypy .
     uv run flake8 --select=WPS --extend-exclude=tests/fastapi fastarch tests
+    uv run flake8 --select=COP --extend-exclude=tests/fastapi fastarch tests  # community-of-python
 ```
 
 ## Как добавить новую фичу
@@ -221,7 +226,7 @@ from fastarch import settings
 from fastarch.features.new_technology.const import NewTechnologyFeatures
 
 
-def draw_new_technology_features(service_name: str, features_to_draw: NewTechnologyFeatures) -> str:
+def render_new_technology_features(service_name: str, features_to_draw: NewTechnologyFeatures) -> str:
     if not features_to_draw.feature_detected:
         return ""
 
@@ -242,8 +247,8 @@ MAPPING_OF_PARSERS_AND_RENDERERS = types.MappingProxyType(
     {
         # ... существующие
         AllCurrentFeatures.NEW_TECHNOLOGY: _FeatureFunctions(
-            parse=new_technology_parser.find_new_technology_features,
-            render=new_technology_renderer.draw_new_technology_features,
+            parse_source=new_technology_parser.find_new_technology_features,
+            render_diagram=new_technology_renderer.render_new_technology_features,
         ),
     }
 )
@@ -348,7 +353,9 @@ just publish
 - **mypy**: Статическая проверка типов
 - **pytest**: Фреймворк для тестирования
 - **hypothesis**: Property-based тестирование
-- **wemake-python-styleguide**: Дополнительные правила линтинга
+- **wemake-python-styleguide**: Дополнительные правила линтинга (flake8-плагин WPS)
+- **community-of-python-flake8-plugin**: Правила стиля community-of-python (flake8-плагин COP)
+- **auto-typing-final**: Автоматическая простановка `typing.Final` на неизменяемые переменные
 
 ## Примеры использования
 
@@ -387,7 +394,7 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 engine = ArchitectureParserAndRenderer(SettingsForFastarch(root_dir="/path/to/project", service_name="custom-service"))
 
 # Генерация диаграммы
-mermaid_diagram = engine.search_features_and_draw_them()
+mermaid_diagram = engine.render_architecture_diagram()
 ```
 
 ## Roadmap и TODO

@@ -6,7 +6,7 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
 def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
-    rendered_diagram: typing.Final = arch_engine.search_features_and_draw_them()
+    rendered_diagram: typing.Final = arch_engine.render_architecture_diagram()
     placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTER.search(settings.UI_HTML_TEMPLATE)
     if placeholder_match is None:
         return settings.UI_HTML_TEMPLATE
@@ -26,7 +26,7 @@ def _create_architecture_engine(
             root_dir=settings.DEFAULT_ROOT_DIR,
             service_name=settings.DEFAULT_SERVICE_NAME,
         )
-    return ArchitectureParserAndRenderer(arch_settings)
+    return ArchitectureParserAndRenderer(local_settings=arch_settings)
 
 
 @typing.final

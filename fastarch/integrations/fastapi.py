@@ -25,8 +25,11 @@ def _build_fastapi_arch_doc_route(
 
 def add_architecture_doc_routes(
     fastapi_app: fastapi.FastAPI,
+    *,
     route_path: str = settings.DEFAULT_PATH,
     arch_settings: SettingsForFastarch | None = None,
 ) -> None:
-    arch_engine: typing.Final = _create_architecture_engine(arch_settings)
-    fastapi_app.add_api_route(route_path, _build_fastapi_arch_doc_route(arch_engine))
+    fastapi_app.add_api_route(
+        route_path,
+        _build_fastapi_arch_doc_route(_create_architecture_engine(arch_settings)),
+    )

@@ -24,5 +24,4 @@ def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
         fastapi_app,
         arch_settings=SettingsForFastarch(root_dir=root_for_fastapi_example_src, service_name="kek"),
     )
-    client_for_test: typing.Final = TestClient(fastapi_app)
-    assert client_for_test.get(settings.DEFAULT_PATH).status_code == GOOD_HTTP_CODE
+    assert TestClient(fastapi_app).get(settings.DEFAULT_PATH).status_code == GOOD_HTTP_CODE

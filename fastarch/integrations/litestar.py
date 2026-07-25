@@ -23,10 +23,12 @@ class _LitestarArchDocRoute:
 
 def add_architecture_doc_routes(
     litestar_app: Litestar,
+    *,
     route_path: str = settings.DEFAULT_PATH,
     arch_settings: SettingsForFastarch | None = None,
 ) -> None:
-    arch_engine: typing.Final = _create_architecture_engine(arch_settings)
-    arch_handler: typing.Final = _LitestarArchDocRoute(arch_engine=arch_engine)
-    route_handler: typing.Final = get(route_path)(arch_handler)
-    litestar_app.register(route_handler)
+    litestar_app.register(
+        get(route_path)(
+            _LitestarArchDocRoute(arch_engine=_create_architecture_engine(arch_settings)),
+        ),
+    )

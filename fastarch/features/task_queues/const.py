@@ -5,12 +5,12 @@ import typing
 
 @typing.final
 class TaskQueueEnum(enum.Enum):
-    celery = "celery"
-    taskiq = "taskiq"
-    arq = "arq"
-    rq = "rq"
-    dramatiq = "dramatiq"
-    huey = "huey"
+    celery_queue = "celery"
+    taskiq_queue = "taskiq"
+    arq_queue = "arq"
+    rq_queue = "rq"
+    dramatiq_queue = "dramatiq"
+    huey_queue = "huey"
 
 
 @typing.final

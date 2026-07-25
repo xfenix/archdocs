@@ -53,12 +53,12 @@ _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
 
 _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        TaskQueueEnum.celery: _CELERY_IMPORT_PATTERN,
-        TaskQueueEnum.taskiq: _TASKIQ_IMPORT_PATTERN,
-        TaskQueueEnum.arq: _ARQ_IMPORT_PATTERN,
-        TaskQueueEnum.rq: _RQ_IMPORT_PATTERN,
-        TaskQueueEnum.dramatiq: _DRAMATIQ_IMPORT_PATTERN,
-        TaskQueueEnum.huey: _HUEY_IMPORT_PATTERN,
+        TaskQueueEnum.celery_queue: _CELERY_IMPORT_PATTERN,
+        TaskQueueEnum.taskiq_queue: _TASKIQ_IMPORT_PATTERN,
+        TaskQueueEnum.arq_queue: _ARQ_IMPORT_PATTERN,
+        TaskQueueEnum.rq_queue: _RQ_IMPORT_PATTERN,
+        TaskQueueEnum.dramatiq_queue: _DRAMATIQ_IMPORT_PATTERN,
+        TaskQueueEnum.huey_queue: _HUEY_IMPORT_PATTERN,
     },
 )
 
@@ -83,6 +83,8 @@ def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
         has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),
         has_workers=bool(_WORKER_PATTERNS.search(raw_source)),
         brokers_detected=frozenset(
-            name for name, broker_pattern in _BROKER_PATTERNS.items() if broker_pattern.search(raw_source)
+            one_broker_name
+            for one_broker_name, broker_pattern in _BROKER_PATTERNS.items()
+            if broker_pattern.search(raw_source)
         ),
     )
