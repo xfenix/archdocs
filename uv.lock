@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -213,7 +213,7 @@ dev = [
     { name = "auto-typing-final", specifier = ">=0.7.2" },
     { name = "fastapi", specifier = ">=0.115.11" },
     { name = "hypothesis", specifier = ">=6.137.1" },
-    { name = "litestar", specifier = ">=2.15.1" },
+    { name = "litestar", specifier = ">=2.22.0" },
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-cov", specifier = ">=6.1.0" },
@@ -306,7 +306,7 @@ wheels = [
 
 [[package]]
 name = "litestar"
-version = "2.15.1"
+version = "2.22.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -320,11 +320,12 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
     { name = "rich-click" },
+    { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/7c/099962c10b6f96d8ee7530b12eac48b162a1abbf75ac1388e07f0be306bf/litestar-2.15.1.tar.gz", hash = "sha256:9458ba9c3397c0bc566e649baa5c461145f0c24f4c54451a64ad8adce57cf9de", size = 397383, upload-time = "2025-02-27T17:51:41.079Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/ad/5193bb4c497d7240a83f6adc42b9e08384ef32dccc957456bb5f25d981eb/litestar-2.22.0.tar.gz", hash = "sha256:f92ec689fd25fd1bf25c8593a97830b0aa936490703d60cbace43170adcb64b0", size = 380598, upload-time = "2026-05-20T16:45:27.517Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/72/bd/d52d441222b9b7d9efc36c0f119e62483ef0e55a6b0c5aba546ed743cb24/litestar-2.15.1-py3-none-any.whl", hash = "sha256:3791437e31691eadf8079f70180f3186c1db245e093ad3ff21f5cdbfc7e9df3e", size = 571006, upload-time = "2025-02-27T17:51:38.458Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/58/5a692eb88f964ef84a75f6006ecafa713361cdd0a28f5deb2bea4ef809d7/litestar-2.22.0-py3-none-any.whl", hash = "sha256:9d22a86fd9eae34d692d2d11320a8c2176cc3711cdb593fd7e4537098adf9137", size = 579204, upload-time = "2026-05-20T16:45:25.323Z" },
 ]
 
 [[package]]
