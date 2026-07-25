@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [[package]]
@@ -114,6 +114,15 @@ wheels = [
 ]
 
 [[package]]
+name = "community-of-python-flake8-plugin"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/d4/bf4fbef3a31290ba99d93a2b94b2bdc98a91ebf5130e2c559802ab612710/community_of_python_flake8_plugin-0.6.0.tar.gz", hash = "sha256:fc54dd9de264d1a222baedfefa47afee8f42adba30ffebfb3632461bdbde1eb6", size = 15222, upload-time = "2026-07-10T10:25:11.553Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/62/1632efc7ef65deb866469b886ef3dd3b4c269c04975654d3b44705f24180/community_of_python_flake8_plugin-0.6.0-py3-none-any.whl", hash = "sha256:c4233a743185403ea6e6c8fad22b343669a7fac7a4f10d4fe5f69f61720b0f24", size = 27622, upload-time = "2026-07-10T10:25:10.436Z" },
+]
+
+[[package]]
 name = "coverage"
 version = "7.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -195,6 +204,7 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "auto-typing-final" },
+    { name = "community-of-python-flake8-plugin" },
     { name = "fastapi" },
     { name = "hypothesis" },
     { name = "litestar" },
@@ -211,6 +221,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "auto-typing-final", specifier = ">=0.7.2" },
+    { name = "community-of-python-flake8-plugin", specifier = ">=0.6.0" },
     { name = "fastapi", specifier = ">=0.115.11" },
     { name = "hypothesis", specifier = ">=6.137.1" },
     { name = "litestar", specifier = ">=2.15.1" },

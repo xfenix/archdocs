@@ -29,10 +29,10 @@ _NIQUESTS_IMPORT_PATTERN: typing.Final = py_re.compile(
 
 _CLIENT_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        HttpClientEnum.httpx: _HTTPX_IMPORT_PATTERN,
-        HttpClientEnum.aiohttp: _AIOHTTP_IMPORT_PATTERN,
-        HttpClientEnum.requests: _REQUESTS_IMPORT_PATTERN,
-        HttpClientEnum.niquests: _NIQUESTS_IMPORT_PATTERN,
+        HttpClientEnum.HTTPX: _HTTPX_IMPORT_PATTERN,
+        HttpClientEnum.AIOHTTP: _AIOHTTP_IMPORT_PATTERN,
+        HttpClientEnum.REQUESTS: _REQUESTS_IMPORT_PATTERN,
+        HttpClientEnum.NIQUESTS: _NIQUESTS_IMPORT_PATTERN,
     },
 )
 

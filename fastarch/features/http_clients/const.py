@@ -5,10 +5,10 @@ import typing
 
 @typing.final
 class HttpClientEnum(enum.Enum):
-    httpx = "httpx"
-    aiohttp = "aiohttp"
-    requests = "requests"
-    niquests = "niquests"
+    HTTPX = "httpx"
+    AIOHTTP = "aiohttp"
+    REQUESTS = "requests"
+    NIQUESTS = "niquests"
 
 
 @typing.final

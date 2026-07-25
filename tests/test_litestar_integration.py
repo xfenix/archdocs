@@ -33,8 +33,7 @@ def litestar_app_from_folder(litestar_app_dynamic: Litestar) -> Litestar:
 
 
 def test_real_app_folder_features_detected(litestar_app_from_folder: Litestar) -> None:
-    client_for_test: typing.Final = TestClient(litestar_app_from_folder)
-    response: typing.Final = client_for_test.get(settings.DEFAULT_PATH)
+    response: typing.Final = TestClient(litestar_app_from_folder).get(settings.DEFAULT_PATH)
     assert response.status_code == _GOOD_HTTP_CODE
     assert _CONTENT_TYPE_HTML in response.headers["content-type"]
     response_text: typing.Final = response.text
@@ -58,6 +57,4 @@ def test_dynamic_app_with_custom_path(litestar_app_dynamic: Litestar) -> None:
             service_name="test-custom-path",
         ),
     )
-    client_for_test: typing.Final = TestClient(litestar_app_dynamic)
-    response: typing.Final = client_for_test.get(custom_path)
-    assert response.status_code == _GOOD_HTTP_CODE
+    assert TestClient(litestar_app_dynamic).get(custom_path).status_code == _GOOD_HTTP_CODE

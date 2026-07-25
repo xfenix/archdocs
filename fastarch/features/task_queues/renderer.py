@@ -4,7 +4,7 @@ from fastarch import settings
 from fastarch.features.task_queues.const import TaskQueueFeatures
 
 
-def draw_task_queue_features(service_name: str, features_to_draw: TaskQueueFeatures) -> str:
+def render_task_queue_features(service_name: str, features_to_draw: TaskQueueFeatures) -> str:
     if not features_to_draw.queues_used:
         return ""
 

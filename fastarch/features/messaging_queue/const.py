@@ -5,10 +5,10 @@ import typing
 
 @typing.final
 class BrokersEnum(enum.Enum):
-    rabbit = "rabbit"
-    kafka = "kafka"
-    nats = "nats"
-    redis = "redis"
+    RABBIT = "rabbit"
+    KAFKA = "kafka"
+    NATS = "nats"
+    REDIS = "redis"
 
 
 @typing.final
@@ -16,4 +16,4 @@ class BrokersEnum(enum.Enum):
 class MQFeatures:
     consumers: bool
     producers: bool
-    brokers: list[str]
+    broker_names: list[str]

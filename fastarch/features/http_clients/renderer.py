@@ -4,7 +4,7 @@ from fastarch import settings
 from fastarch.features.http_clients.const import HttpClientFeatures
 
 
-def draw_http_client_features(service_name: str, features_to_draw: HttpClientFeatures) -> str:
+def render_http_client_features(service_name: str, features_to_draw: HttpClientFeatures) -> str:
     if not features_to_draw.has_external_calls or not features_to_draw.clients_used:
         return ""
 

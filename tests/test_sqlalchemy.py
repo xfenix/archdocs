@@ -34,20 +34,19 @@ ALPHABET: typing.Final[SearchStrategy[str]] = st.characters(
 STATUS_OK: typing.Final = 200
 
 
-def _is_async_dsn(dsn: str) -> bool:
-    return "+async" in dsn or "aiosqlite" in dsn or "+aiomysql" in dsn
+def _is_async_dsn(dsn_value: str) -> bool:
+    return "+async" in dsn_value or "aiosqlite" in dsn_value or "+aiomysql" in dsn_value
 
 
 @hypothesis.given(st.sampled_from(sorted(DSN_LIST)))
-def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
-    is_async = _is_async_dsn(dsn)
-    engine_func = "create_async_engine" if is_async else "create_engine"
-    import_stmt = (
+def test_find_sqlalchemy_dsn_variants(dsn_value: str) -> None:
+    is_async: typing.Final = _is_async_dsn(dsn_value)
+    engine_func: typing.Final = "create_async_engine" if is_async else "create_engine"
+    import_stmt: typing.Final = (
         "from sqlalchemy.ext.asyncio import create_async_engine" if is_async else "from sqlalchemy import create_engine"
     )
-    src = f"{import_stmt}\n{engine_func}('{dsn}')\n"
-    features = find_sqlalchemy_features(src)
-    assert features.database_type == dsn
+    features: typing.Final = find_sqlalchemy_features(f"{import_stmt}\n{engine_func}('{dsn_value}')\n")
+    assert features.database_type == dsn_value
     assert features.async_used is is_async
     assert not features.pooling_used
     assert features.target_session_attrs == ""
@@ -61,15 +60,14 @@ def test_find_sqlalchemy_dsn_variants(dsn: str) -> None:
     )
 )
 def test_sqlalchemy_features_rendered_via_fastapi(service_name: str) -> None:
-    app = FastAPI()
-    root_dir = pathlib.Path(__file__).parent / "fastapi"
+    fastapi_app: typing.Final = FastAPI()
+    root_dir: typing.Final = pathlib.Path(__file__).parent / "fastapi"
     add_architecture_doc_routes(
-        app,
+        fastapi_app,
         route_path="/",
         arch_settings=SettingsForFastarch(root_dir=root_dir, service_name=service_name),
     )
-    client = TestClient(app)
-    response = client.get("/")
+    response: typing.Final = TestClient(fastapi_app).get("/")
     assert response.status_code == STATUS_OK
     assert "sqlite+aiosqlite" in response.text
     assert service_name in response.text

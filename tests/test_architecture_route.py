@@ -20,20 +20,19 @@ STATUS_OK: typing.Final = 200
         max_size=10,
         alphabet=st.characters(whitelist_categories=["Ll", "Lu"], whitelist_characters=["_", "-"]),
     ),
-    route=st.text(
+    route_value=st.text(
         min_size=1,
         max_size=10,
         alphabet=st.characters(whitelist_categories=["Ll", "Lu"], whitelist_characters=["_", "-"]),
     ),
 )
-def test_arch_route_handles_random_path_service(service_name: str, route: str) -> None:
-    app = FastAPI()
+def test_arch_route_handles_random_path_service(service_name: str, route_value: str) -> None:
+    fastapi_app: typing.Final = FastAPI()
     add_architecture_doc_routes(
-        app,
-        route_path=f"/{route}",
+        fastapi_app,
+        route_path=f"/{route_value}",
         arch_settings=SettingsForFastarch(root_dir=ROOT_FOR_FASTAPI_EXAMPLE, service_name=service_name),
     )
-    client = TestClient(app)
-    response = client.get(f"/{route}")
+    response: typing.Final = TestClient(fastapi_app).get(f"/{route_value}")
     assert response.status_code == STATUS_OK
     assert service_name in response.text

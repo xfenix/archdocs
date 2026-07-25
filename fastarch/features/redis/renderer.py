@@ -4,7 +4,7 @@ from fastarch import settings
 from fastarch.features.redis.const import RedisFeatures
 
 
-def draw_redis_features(service_name: str, features_to_draw: RedisFeatures) -> str:
+def render_redis_features(service_name: str, features_to_draw: RedisFeatures) -> str:
     if not features_to_draw.connection_type and not features_to_draw.async_used and not features_to_draw.retry_used:
         return ""
     diagram_parts: typing.Final[list[str]] = []
@@ -18,8 +18,8 @@ def draw_redis_features(service_name: str, features_to_draw: RedisFeatures) -> s
             ],
         ),
     )
-    for counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION):
-        db_suffix = counter if features_to_draw.cluster_or_sentinel else ""
+    for one_counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION):
+        db_suffix = one_counter if features_to_draw.cluster_or_sentinel else ""
         diagram_parts.append(
             f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{properties_on_arrow}| redisdb{db_suffix}",
         )

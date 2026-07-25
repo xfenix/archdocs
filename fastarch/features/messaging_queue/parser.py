@@ -13,14 +13,14 @@ _PRODUCER_DECORATOR_RE: typing.Final = py_re.compile(
 )
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        broker: py_re.compile(
+        one_broker: py_re.compile(
             (
                 r"\b(?:from\s+faststream(?:\s+import\s+|\."
-                rf"{broker.value}\s+import\s+)|import\s+faststream\.{broker.value}\b)"
+                rf"{one_broker.value}\s+import\s+)|import\s+faststream\.{one_broker.value}\b)"
             ),
             flags=settings.TYPICAL_RE_FLAGS,
         )
-        for broker in const.BrokersEnum
+        for one_broker in const.BrokersEnum
     },
 )
 
@@ -30,10 +30,12 @@ def find_faststream_features(raw_source: str) -> const.MQFeatures:
         return const.MQFeatures(
             consumers=False,
             producers=False,
-            brokers=[],
+            broker_names=[],
         )
     return const.MQFeatures(
         consumers=bool(_SUBSCRIBER_DECORATOR_RE.search(raw_source)),
         producers=bool(_PRODUCER_DECORATOR_RE.search(raw_source)),
-        brokers=[broker.value for broker, pattern in _BROKER_PATTERNS.items() if pattern.search(raw_source)],
+        broker_names=[
+            one_broker.value for one_broker, pattern in _BROKER_PATTERNS.items() if pattern.search(raw_source)
+        ],
     )
