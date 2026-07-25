@@ -30,6 +30,7 @@ ignore = [
     "FA",
     "COM812",
     "ISC001",
+    "CPY001",
 ]
 external = ["WPS"]
 
