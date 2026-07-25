@@ -7,11 +7,14 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
 def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
-    return py_re.sub(
-        settings.UI_PLACEHOLDER_PATTER,
-        arch_engine.search_features_and_draw_them(),
-        settings.UI_HTML_TEMPLATE,
-    )
+    rendered_diagram: typing.Final = arch_engine.search_features_and_draw_them()
+
+    def _inject_diagram(placeholder_match: py_re.Match[str]) -> str:
+        opening_tag: typing.Final = placeholder_match.group(1)
+        closing_tag: typing.Final = placeholder_match.group(3)
+        return f"{opening_tag}graph LR\n{rendered_diagram}{closing_tag}"
+
+    return settings.UI_PLACEHOLDER_PATTER.sub(_inject_diagram, settings.UI_HTML_TEMPLATE)
 
 
 def _create_architecture_engine(

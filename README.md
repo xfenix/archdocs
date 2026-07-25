@@ -12,17 +12,61 @@ Quickstart
 ===
 * install package `uv add fastarch`
 * connect it to your application:
+
+    FastAPI:
     ```python
+    from fastapi import FastAPI
+    from fastarch.integrations.fastapi import add_architecture_doc_routes
+    from fastarch.main import SettingsForFastarch
+
+    app = FastAPI()
+
+    add_architecture_doc_routes(
+        app,
+        arch_settings=SettingsForFastarch(
+            root_dir="src/",
+            service_name="my-service",
+        ),
+    )
     ```
+
+    Litestar:
+    ```python
+    from litestar import Litestar
+    from fastarch.integrations.litestar import add_architecture_doc_routes
+    from fastarch.main import SettingsForFastarch
+
+    app = Litestar()
+
+    add_architecture_doc_routes(
+        app,
+        arch_settings=SettingsForFastarch(
+            root_dir="src/",
+            service_name="my-service",
+        ),
+    )
+    ```
+
+    `root_dir` is the directory that fastarch scans for your source code, and
+    `service_name` is the label used for your service in the generated diagram.
+    Both integrations expose the same `add_architecture_doc_routes` signature and
+    serve the diagram at `route_path` (defaults to `/docs/architecture/`).
 * go to <a href="http://127.0.0.1:8000/docs/architecture/">/docs/architecture/</a>
 * enjoy your schemas
 
-Other use cases
+Supported technologies
 ===
-Using in gitlab: embed it like THIS
+fastarch scans your source code and automatically detects:
+* **HTTP endpoints** — FastAPI and Litestar routes (incoming REST methods)
+* **HTTP clients** — httpx, aiohttp, requests, niquests (outgoing calls)
+* **Databases** — SQLAlchemy (async engines, pooling, PostgreSQL/asyncpg, and more)
+* **Caching** — Redis (plain and sentinel connections)
+* **Messaging queues** — FastStream
+* **Task queues** — Celery, Taskiq, Arq, RQ, Dramatiq, Huey
 
 How it looks
 ===
-screenshot of fastapi + fastarch
-screenshot of mermaid output
-screenshot of mermaid js output
+fastarch renders your architecture as an interactive Mermaid diagram served
+directly from your application. The page shows your service as the central node
+with edges to every detected dependency: incoming REST clients, outgoing HTTP
+calls, databases, caches, message brokers and task queues.
