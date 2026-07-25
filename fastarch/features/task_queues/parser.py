@@ -53,12 +53,12 @@ _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
 
 _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        TaskQueueEnum.CELERY: _CELERY_IMPORT_PATTERN,
-        TaskQueueEnum.TASKIQ: _TASKIQ_IMPORT_PATTERN,
-        TaskQueueEnum.ARQ: _ARQ_IMPORT_PATTERN,
-        TaskQueueEnum.RQ: _RQ_IMPORT_PATTERN,
-        TaskQueueEnum.DRAMATIQ: _DRAMATIQ_IMPORT_PATTERN,
-        TaskQueueEnum.HUEY: _HUEY_IMPORT_PATTERN,
+        TaskQueueEnum.celery_queue: _CELERY_IMPORT_PATTERN,
+        TaskQueueEnum.taskiq_queue: _TASKIQ_IMPORT_PATTERN,
+        TaskQueueEnum.arq_queue: _ARQ_IMPORT_PATTERN,
+        TaskQueueEnum.rq_queue: _RQ_IMPORT_PATTERN,
+        TaskQueueEnum.dramatiq_queue: _DRAMATIQ_IMPORT_PATTERN,
+        TaskQueueEnum.huey_queue: _HUEY_IMPORT_PATTERN,
     },
 )
 

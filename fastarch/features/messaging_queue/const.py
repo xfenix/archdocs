@@ -5,10 +5,10 @@ import typing
 
 @typing.final
 class BrokersEnum(enum.Enum):
-    RABBIT = "rabbit"
-    KAFKA = "kafka"
-    NATS = "nats"
-    REDIS = "redis"
+    rabbit_broker = "rabbit"
+    kafka_broker = "kafka"
+    nats_broker = "nats"
+    redis_broker = "redis"
 
 
 @typing.final
