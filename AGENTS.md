@@ -68,6 +68,7 @@ _TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
     flags=settings.TYPICAL_RE_FLAGS,
 )
 
+
 # Data-классы должны быть frozen и использовать slots
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
@@ -87,10 +88,12 @@ import types
 import typing
 
 # Используйте MappingProxyType для immutable mappings
-_REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType({
-    "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b"),
-    "sentinel": py_re.compile(r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b"),
-})
+_REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType(
+    {
+        "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b"),
+        "sentinel": py_re.compile(r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b"),
+    }
+)
 ```
 
 #### 3. Функции парсеров
@@ -174,6 +177,7 @@ touch fastarch/features/new_technology/renderer.py
 import dataclasses
 import typing
 
+
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
 class NewTechnologyFeatures:
@@ -196,6 +200,7 @@ _TECHNOLOGY_IMPORT_PATTERN: typing.Final = py_re.compile(
     flags=settings.TYPICAL_RE_FLAGS,
 )
 
+
 def find_new_technology_features(raw_source: str) -> NewTechnologyFeatures:
     if not _TECHNOLOGY_IMPORT_PATTERN.search(raw_source):
         return NewTechnologyFeatures(feature_detected=False)
@@ -215,6 +220,7 @@ import typing
 from fastarch import settings
 from fastarch.features.new_technology.const import NewTechnologyFeatures
 
+
 def draw_new_technology_features(service_name: str, features_to_draw: NewTechnologyFeatures) -> str:
     if not features_to_draw.feature_detected:
         return ""
@@ -230,14 +236,17 @@ class AllCurrentFeatures(enum.Enum):
     # ... существующие
     NEW_TECHNOLOGY = 5
 
+
 # В MAPPING_OF_PARSERS_AND_RENDERERS
-MAPPING_OF_PARSERS_AND_RENDERERS = types.MappingProxyType({
-    # ... существующие
-    AllCurrentFeatures.NEW_TECHNOLOGY: _FeatureFunctions(
-        parse=new_technology_parser.find_new_technology_features,
-        render=new_technology_renderer.draw_new_technology_features,
-    ),
-})
+MAPPING_OF_PARSERS_AND_RENDERERS = types.MappingProxyType(
+    {
+        # ... существующие
+        AllCurrentFeatures.NEW_TECHNOLOGY: _FeatureFunctions(
+            parse=new_technology_parser.find_new_technology_features,
+            render=new_technology_renderer.draw_new_technology_features,
+        ),
+    }
+)
 ```
 
 ## Тестирование
@@ -247,6 +256,7 @@ MAPPING_OF_PARSERS_AND_RENDERERS = types.MappingProxyType({
 ```python
 from hypothesis import given, strategies as st
 from fastarch.features.http_api.parser import find_fastapi_and_litestar_features
+
 
 @given(st.sampled_from(["post", "put", "patch", "delete"]))
 def test_find_fastapi_and_litestar_features_detects_methods(method: str) -> None:
@@ -352,13 +362,7 @@ from fastarch.main import SettingsForFastarch
 app = FastAPI()
 
 # Добавление маршрута архитектурной документации
-add_architecture_doc_routes(
-    app,
-    arch_settings=SettingsForFastarch(
-        root_dir="src/",
-        service_name="my-service"
-    )
-)
+add_architecture_doc_routes(app, arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"))
 ```
 
 ### Litestar интеграция
@@ -371,13 +375,7 @@ from fastarch.main import SettingsForFastarch
 app = Litestar()
 
 # Добавление маршрута архитектурной документации
-add_architecture_doc_routes(
-    app,
-    arch_settings=SettingsForFastarch(
-        root_dir="src/",
-        service_name="my-service"
-    )
-)
+add_architecture_doc_routes(app, arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"))
 ```
 
 ### Кастомные настройки
@@ -386,12 +384,7 @@ add_architecture_doc_routes(
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 # Создание кастомного движка
-engine = ArchitectureParserAndRenderer(
-    SettingsForFastarch(
-        root_dir="/path/to/project",
-        service_name="custom-service"
-    )
-)
+engine = ArchitectureParserAndRenderer(SettingsForFastarch(root_dir="/path/to/project", service_name="custom-service"))
 
 # Генерация диаграммы
 mermaid_diagram = engine.search_features_and_draw_them()

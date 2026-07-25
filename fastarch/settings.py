@@ -12,7 +12,10 @@ TYPICAL_RE_FLAGS: typing.Final = py_re.IGNORECASE | py_re.MULTILINE | py_re.UNIC
 DEFAULT_PATH: typing.Final = "/docs/architecture/"
 DEFAULT_ROOT_DIR: typing.Final = pathlib.Path()
 DEFAULT_SERVICE_NAME: typing.Final = "example-service"
-UI_PLACEHOLDER_PATTER: typing.Final = py_re.compile(r"(<pre[^>]*>)(.*?)(</pre>)", flags=TYPICAL_RE_FLAGS)
+UI_PLACEHOLDER_PATTER: typing.Final = py_re.compile(
+    r"(?P<pre_open><pre[^>]*>)(?P<pre_body>.*?)(?P<pre_close></pre>)",
+    flags=TYPICAL_RE_FLAGS,
+)
 UI_HTML_TEMPLATE: typing.Final = "".join(
     pathlib.Path(__file__).parent.joinpath("template.html").read_text().strip().split(),
 )

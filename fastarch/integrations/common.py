@@ -1,5 +1,4 @@
 import dataclasses
-import re as py_re
 import typing
 
 from fastarch import settings
@@ -8,13 +7,17 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
     rendered_diagram: typing.Final = arch_engine.search_features_and_draw_them()
-
-    def _inject_diagram(placeholder_match: py_re.Match[str]) -> str:
-        opening_tag: typing.Final = placeholder_match.group(1)
-        closing_tag: typing.Final = placeholder_match.group(3)
-        return f"{opening_tag}graph LR\n{rendered_diagram}{closing_tag}"
-
-    return settings.UI_PLACEHOLDER_PATTER.sub(_inject_diagram, settings.UI_HTML_TEMPLATE)
+    placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTER.search(settings.UI_HTML_TEMPLATE)
+    if placeholder_match is None:
+        return settings.UI_HTML_TEMPLATE
+    diagram_block: typing.Final = (
+        f"{placeholder_match.group('pre_open')}graph LR\n{rendered_diagram}{placeholder_match.group('pre_close')}"
+    )
+    return (
+        settings.UI_HTML_TEMPLATE[: placeholder_match.start()]
+        + diagram_block
+        + settings.UI_HTML_TEMPLATE[placeholder_match.end() :]
+    )
 
 
 def _create_architecture_engine(
