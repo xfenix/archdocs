@@ -10,14 +10,12 @@ def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> s
     placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTER.search(settings.UI_HTML_TEMPLATE)
     if placeholder_match is None:
         return settings.UI_HTML_TEMPLATE
+    prefix_end: typing.Final = placeholder_match.start()
+    suffix_start: typing.Final = placeholder_match.end()
     diagram_block: typing.Final = (
         f"{placeholder_match.group('pre_open')}graph LR\n{rendered_diagram}{placeholder_match.group('pre_close')}"
     )
-    return (
-        settings.UI_HTML_TEMPLATE[: placeholder_match.start()]
-        + diagram_block
-        + settings.UI_HTML_TEMPLATE[placeholder_match.end() :]
-    )
+    return settings.UI_HTML_TEMPLATE[:prefix_end] + diagram_block + settings.UI_HTML_TEMPLATE[suffix_start:]
 
 
 def _create_architecture_engine(
