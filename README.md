@@ -63,6 +63,28 @@ fastarch scans your source code and automatically detects:
 * **Caching** — Redis (plain and sentinel connections)
 * **Messaging queues** — FastStream
 * **Task queues** — Celery, Taskiq, Arq, RQ, Dramatiq, Huey
+* **Kubernetes / Helm** — ingress hosts and TLS, service type, replica count and HPA range
+
+Helm charts are read straight from your repository, no `helm template` run and no extra
+dependency: fastarch looks for a `Chart.yaml` under `root_dir` and, failing that, in the
+usual sibling locations (`deploy/`, `helm/`, `charts/`, `.helm/`). Point it somewhere
+explicitly with `helm_chart_dir` when your layout differs:
+
+```python
+add_architecture_doc_routes(
+    app,
+    arch_settings=SettingsForFastarch(
+        root_dir="src/",
+        service_name="my-service",
+        helm_chart_dir="deploy/my-chart/",
+    ),
+)
+```
+
+The chart contributes the real external entrypoint (`User/Client -->|HTTPS api.example.com|`)
+and annotates your service node with its scaling posture, for example
+`my-service (replicas 3, HPA 2-10, target CPU 70%)`. Both attach to the same service node
+the code parsers use, so the chart confirms and enriches the picture instead of duplicating it.
 
 How it looks
 ===

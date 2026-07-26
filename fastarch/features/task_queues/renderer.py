@@ -1,10 +1,10 @@
 import typing
 
-from fastarch import settings
+from fastarch import mermaid_syntax, settings
 from fastarch.features.task_queues.const import TaskQueueFeatures
 
 
-def render_task_queue_features(service_name: str, features_to_draw: TaskQueueFeatures) -> str:
+def render_task_queue_features(features_to_draw: TaskQueueFeatures) -> str:
     if not features_to_draw.queues_used:
         return ""
 
@@ -19,4 +19,4 @@ def render_task_queue_features(service_name: str, features_to_draw: TaskQueueFea
         ),
     )
 
-    return f"{settings.SHIFT_LEFT}{{{service_name}}} --> |Tasks ({properties_on_arrow})| TaskQueue_Worker"
+    return mermaid_syntax.render_edge(settings.SERVICE_NODE_ID, f"Tasks ({properties_on_arrow})", "TaskQueue_Worker")

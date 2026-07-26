@@ -23,15 +23,26 @@ fastarch/
 │   ├── sqlalchemy/    # Database ORM
 │   ├── redis/         # Caching layer
 │   ├── messaging_queue/ # Message queues (FastStream)
-│   └── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
+│   ├── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
+│   └── helm/          # Helm chart: ingress, service type, replicas, HPA
 ├── integrations/      # Интеграции с веб-фреймворками
 │   ├── common.py     # Общая логика для всех интеграций
 │   ├── fastapi.py    # FastAPI интеграция
 │   └── litestar.py   # Litestar интеграция
 ├── main.py           # Основной движок
 ├── mapping.py        # Регистрация парсеров/рендереров
+├── mermaid_syntax.py # Построение валидного Mermaid (узлы, рёбра, подписи)
 └── settings.py       # Конфигурация
 ```
+
+### Два реестра: исходники и манифесты
+
+`MAPPING_OF_PARSERS_AND_RENDERERS` прогоняет каждый парсер по каждому `*.py` файлу.
+Манифесты (Helm) живут в отдельном `MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS`, потому
+что они относятся ко всему чарту, а не к файлу, и потому что прогон `values.yaml` через
+файловые парсеры давал бы ложные рёбра (`redis://` в значениях, строка `postgresql` в DSN
+сабчарта). Манифестный реестр дополнительно отдаёт `render_node_annotations` — подписи,
+которые попадают в лейбл узла сервиса.
 
 ### Паттерн Parser/Renderer
 
@@ -226,12 +237,23 @@ from fastarch import settings
 from fastarch.features.new_technology.const import NewTechnologyFeatures
 
 
-def render_new_technology_features(service_name: str, features_to_draw: NewTechnologyFeatures) -> str:
+def render_new_technology_features(features_to_draw: NewTechnologyFeatures) -> str:
     if not features_to_draw.feature_detected:
         return ""
 
-    return f"{settings.SHIFT_LEFT}{{{service_name}}} --> |{features_to_draw.specific_property}| new_tech_service"
+    return mermaid_syntax.render_edge(
+        settings.SERVICE_NODE_ID,
+        features_to_draw.specific_property,
+        "new_tech_service",
+    )
 ```
+
+**Никогда не собирайте рёбра вручную через f-строку.** Узел сервиса — это всегда
+`settings.SERVICE_NODE_ID`, а рёбра строятся только через `mermaid_syntax.render_edge`:
+Mermaid не умеет разбирать безымянный узел `{name}`, незакавыченные скобки в подписи
+рёбра (`|REST (get);|`), пустую подпись (`|""|`) и стрелку `<--`. Каждая из этих
+ошибок делает диаграмму нерендерящейся молча, потому что страница прячет контейнер
+до срабатывания `postRenderCallback`. Инварианты закреплены в `tests/test_mermaid_validity.py`.
 
 ### Шаг 5: Регистрация в mapping.py
 
@@ -318,8 +340,9 @@ def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
 
 ### 5. Mermaid Generation
 
-- Генерируйте валидный Mermaid синтаксис
-- Используйте `settings.SHIFT_LEFT` для отступов
+- Стройте рёбра только через `mermaid_syntax.render_edge`, узел сервиса — `settings.SERVICE_NODE_ID`
+- Определение узла сервиса выводится ровно один раз, движком, первой строкой диаграммы
+- Не подставляйте в id узла сырые значения: DSN и подобное прогоняйте через `mermaid_syntax.render_node_id`
 - Проверяйте диаграммы в Mermaid Live Editor
 
 ### 6. Testing Strategy
@@ -407,7 +430,8 @@ mermaid_diagram = engine.render_architecture_diagram()
 
 ### Среднесрочные цели
 
-- [ ] Реализовать парсинг Helm charts и docker-compose
+- [x] Реализовать парсинг Helm charts (ingress, service type, replicas, HPA)
+- [ ] Реализовать парсинг docker-compose
 - [ ] AST-based парсинг вместо/вместе с regex
 - [ ] Поддержка других фреймворков (Django, Flask, Sanic)
 
