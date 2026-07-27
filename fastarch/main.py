@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import pathlib
 import typing
 from concurrent import futures
@@ -23,6 +24,7 @@ class SettingsForFastarch:
 
 
 def _render_manifest_features(
+    service_node_id: str,
     root_path: pathlib.Path,
     configured_manifest_dir: str | pathlib.Path | None,
     /,
@@ -46,12 +48,29 @@ def _render_manifest_features(
             filter(
                 None,
                 (
-                    one_manifest_functions.render_diagram(one_parsed_manifest)
+                    one_manifest_functions.render_diagram(service_node_id, one_parsed_manifest)
                     for one_manifest_functions, one_parsed_manifest in all_parsed_manifests
                 ),
             ),
         ),
     )
+
+
+def _render_unique_edge_lines(manifest_diagram: str, source_files_diagram: str, /) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            filter(None, (*manifest_diagram.split("\n"), *source_files_diagram.split("\n"))),
+        ),
+    )
+
+
+def _render_external_client_definition(all_edge_lines: typing.Iterable[str], /) -> str:
+    if any(settings.EXTERNAL_CLIENT_NODE_ID in one_edge_line for one_edge_line in all_edge_lines):
+        return mermaid_syntax.render_node_definition(
+            settings.EXTERNAL_CLIENT_NODE_ID,
+            settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA,
+        )
+    return ""
 
 
 @typing.final
@@ -65,29 +84,50 @@ class ArchitectureParserAndRenderer:
         # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
         if self._cache:
             return self._cache[0]
-        root_path: typing.Final = pathlib.Path(self.local_settings.root_dir).resolve()
-        node_annotations, manifest_diagram = _render_manifest_features(root_path, self.local_settings.helm_chart_dir)
-        all_diagram_lines: typing.Final = [
-            mermaid_syntax.render_service_node_definition(self.local_settings.service_name, node_annotations),
-            *manifest_diagram.split("\n"),
-            *self._process_source_files(root_path).split("\n"),
-        ]
-        full_result: typing.Final = "\n".join(dict.fromkeys(filter(None, all_diagram_lines)))
+        full_result: typing.Final = self._render_every_diagram_line()
         self._cache.append(full_result)
         return full_result
 
-    def _process_source_files(self, root_path: pathlib.Path) -> str:
+    def _render_every_diagram_line(self) -> str:
+        root_path: typing.Final = pathlib.Path(self.local_settings.root_dir).resolve()
+        service_node_id: typing.Final = mermaid_syntax.render_service_node_id(self.local_settings.service_name)
+        node_annotations, manifest_diagram = _render_manifest_features(
+            service_node_id,
+            root_path,
+            self.local_settings.helm_chart_dir,
+        )
+        all_edge_lines: typing.Final = _render_unique_edge_lines(
+            manifest_diagram,
+            self._process_source_files(service_node_id, root_path),
+        )
+        return "\n".join(
+            filter(
+                None,
+                (
+                    mermaid_syntax.render_service_node_definition(self.local_settings.service_name, node_annotations),
+                    _render_external_client_definition(all_edge_lines),
+                    *all_edge_lines,
+                ),
+            ),
+        )
+
+    def _process_source_files(self, service_node_id: str, root_path: pathlib.Path, /) -> str:
         py_files: typing.Final = sorted(root_path.rglob(settings.FILES_SEARCH_PATTERN))
         with futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
-            return "\n".join(filter(None, executor.map(self._process_one_file, py_files)))
+            all_rendered_files: typing.Final = executor.map(
+                functools.partial(self._process_one_file, service_node_id),
+                py_files,
+            )
+            return "\n".join(filter(None, all_rendered_files))
 
-    def _process_one_file(self, one_src_file: pathlib.Path) -> str:
+    def _process_one_file(self, service_node_id: str, one_src_file: pathlib.Path, /) -> str:
         raw_file_source: typing.Final = one_src_file.read_text()
         return "\n".join(
             filter(
                 None,
                 (
                     one_feature_functions.render_diagram(
+                        service_node_id,
                         one_feature_functions.parse_source(raw_file_source),
                     )
                     for one_feature_functions in MAPPING_OF_PARSERS_AND_RENDERERS.values()

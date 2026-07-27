@@ -4,16 +4,19 @@ import typing
 
 import pytest
 
-from fastarch import settings
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from fastarch import mermaid_syntax, settings
+from fastarch.main import SettingsForFastarch
+from tests.served_page import extract_diagram, render_architecture_page
 
 
 # These invariants encode the mermaid syntax rules the renderers used to break silently:
 # an id-less `{name}` node, an unquoted or empty edge label, a `<--` arrow that mermaid
-# has no production for, and two edges glued onto a single physical line.
+# has no production for, and two edges glued onto a single physical line. They are read
+# back off the served page, because a diagram that only holds together inside the engine
+# proves nothing about what the browser is handed.
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
-_NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_./-]+$")
+_NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_]+$")
 _EDGE_PATTERN: typing.Final = py_re.compile(r"^(?P<source>\S+)\s+-->\s+(?:\|(?P<label>.*)\|\s+)?(?P<target>\S+)$")
 _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
 _ALL_DIAGRAM_SETTINGS: typing.Final = (
@@ -29,7 +32,7 @@ _ALL_DIAGRAM_SETTINGS: typing.Final = (
 
 
 def _render(arch_settings: SettingsForFastarch) -> str:
-    return ArchitectureParserAndRenderer(local_settings=arch_settings).render_architecture_diagram()
+    return extract_diagram(render_architecture_page(arch_settings))
 
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
@@ -80,11 +83,10 @@ def test_credentials_never_reach_diagram() -> None:
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
 def test_service_node_defined_exactly_once(arch_settings: SettingsForFastarch) -> None:
+    service_node_id: typing.Final = mermaid_syntax.render_service_node_id(arch_settings.service_name)
     all_lines: typing.Final = _render(arch_settings).split("\n")
     node_definitions: typing.Final = [
-        one_line
-        for one_line in all_lines
-        if one_line.strip().startswith(settings.SERVICE_NODE_ID) and " --> " not in one_line
+        one_line for one_line in all_lines if one_line.strip().startswith(service_node_id) and " --> " not in one_line
     ]
     assert len(node_definitions) == 1
     assert node_definitions[0] == all_lines[0]

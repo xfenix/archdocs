@@ -25,7 +25,7 @@ from fastarch.features.task_queues import renderer as task_queues_renderer
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _FeatureFunctions:
     parse_source: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[typing.Any], str]
+    render_diagram: typing.Callable[[str, typing.Any], str]
 
 
 @typing.final
@@ -73,7 +73,7 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
 class _ManifestFeatureFunctions:
     read_source: typing.Callable[[pathlib.Path, str | pathlib.Path | None], str]
     parse_manifests: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[typing.Any], str]
+    render_diagram: typing.Callable[[str, typing.Any], str]
     render_node_annotations: typing.Callable[[typing.Any], tuple[str, ...]]
 
 
