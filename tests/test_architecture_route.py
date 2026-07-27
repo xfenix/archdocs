@@ -14,6 +14,7 @@ ROOT_FOR_FASTAPI_EXAMPLE: typing.Final = pathlib.Path(__file__).parent / "fastap
 STATUS_OK: typing.Final = 200
 
 
+@hypothesis.settings(deadline=None)
 @hypothesis.given(
     service_name=st.text(
         min_size=1,

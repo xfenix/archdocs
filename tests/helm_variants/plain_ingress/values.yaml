@@ -1,0 +1,9 @@
+replicaCount: 1
+
+ingress:
+  enabled: true
+  hosts:
+    - host: plain.example.com
+
+imagePullSecrets:
+  - secretName: registry-credentials

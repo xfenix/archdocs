@@ -9,11 +9,10 @@ from fastarch.features.helm.const import (
 
 
 _INGRESS_ENTRYPOINT_LABEL: typing.Final = "Ingress"
+_EXPOSED_SERVICE_TYPES: typing.Final = frozenset((LOAD_BALANCER_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE))
 
 
 def render_helm_node_annotations(features_to_draw: HelmChartFeatures) -> tuple[str, ...]:
-    if not features_to_draw.chart_detected:
-        return ()
     return tuple(
         filter(
             None,
@@ -21,7 +20,7 @@ def render_helm_node_annotations(features_to_draw: HelmChartFeatures) -> tuple[s
                 f"replicas {features_to_draw.replica_count}" if features_to_draw.replica_count else "",
                 (
                     f"HPA {features_to_draw.min_replicas}-{features_to_draw.max_replicas}"
-                    if features_to_draw.autoscaling_enabled and features_to_draw.max_replicas
+                    if features_to_draw.max_replicas
                     else ""
                 ),
                 (
@@ -37,15 +36,12 @@ def render_helm_node_annotations(features_to_draw: HelmChartFeatures) -> tuple[s
 def _render_entrypoint_label(features_to_draw: HelmChartFeatures) -> str:
     if features_to_draw.ingress_enabled:
         return _INGRESS_ENTRYPOINT_LABEL
-    # A ClusterIP only chart has no external entrypoint at all, so nothing is drawn for it.
-    if features_to_draw.service_type in (LOAD_BALANCER_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE):
+    if features_to_draw.service_type in _EXPOSED_SERVICE_TYPES:
         return features_to_draw.service_type
     return ""
 
 
 def render_helm_features(features_to_draw: HelmChartFeatures) -> str:
-    if not features_to_draw.chart_detected:
-        return ""
     if features_to_draw.ingress_enabled and features_to_draw.ingress_hosts:
         scheme_on_arrow: typing.Final = "HTTPS" if features_to_draw.ingress_tls_enabled else "HTTP"
         return "\n".join(

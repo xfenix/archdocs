@@ -25,6 +25,8 @@ fastarch/
 │   ├── messaging_queue/ # Message queues (FastStream)
 │   ├── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
 │   └── helm/          # Helm chart: ingress, service type, replicas, HPA
+│       ├── discovery.py # Поиск чарта на диске и чтение манифестов
+│       └── values.py    # Чтение подмножества YAML: блок -> ключ -> значение
 ├── integrations/      # Интеграции с веб-фреймворками
 │   ├── common.py     # Общая логика для всех интеграций
 │   ├── fastapi.py    # FastAPI интеграция
@@ -41,8 +43,14 @@ fastarch/
 Манифесты (Helm) живут в отдельном `MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS`, потому
 что они относятся ко всему чарту, а не к файлу, и потому что прогон `values.yaml` через
 файловые парсеры давал бы ложные рёбра (`redis://` в значениях, строка `postgresql` в DSN
-сабчарта). Манифестный реестр дополнительно отдаёт `render_node_annotations` — подписи,
-которые попадают в лейбл узла сервиса.
+сабчарта). Манифестный реестр дополнительно отдаёт `read_source` (поиск и чтение файлов)
+и `render_node_annotations` (подписи в лейбле узла сервиса). Благодаря `read_source`
+движок в `main.py` ничего не знает про helm: вся специфика живёт в `features/helm/`.
+
+Все нужные значения лежат в `values.yaml`, поэтому парсер не разбирает Go-шаблоны:
+`values.py` читает подмножество YAML в плоский список `(блок, ключ, значение)`, а
+`parser.py` только достаёт оттуда нужные ключи. Значения с `{{` отбрасываются, а
+`kind:` из шаблона служит запасным признаком, только если тумблер `enabled` не задан.
 
 ### Паттерн Parser/Renderer
 

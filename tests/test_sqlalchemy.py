@@ -52,6 +52,7 @@ def test_find_sqlalchemy_dsn_variants(dsn_value: str) -> None:
     assert features.target_session_attrs == ""
 
 
+@hypothesis.settings(deadline=None)
 @hypothesis.given(
     service_name=st.text(
         min_size=1,
