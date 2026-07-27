@@ -45,7 +45,6 @@ def _build_project(
     chart_path: pathlib.Path | None = None,
     chart_values: str = _SIBLING_CHART_VALUES,
 ) -> pathlib.Path:
-    """Lay out sources inside `project_path` and a chart next to them (or at `chart_path`), return the dir to scan."""
     source_dir: typing.Final = project_path / _SOURCES_RELATIVE_PATH
     source_dir.mkdir(parents=True)
     (source_dir / "main.py").write_text("import fastapi\n\napp = fastapi.FastAPI()\n")

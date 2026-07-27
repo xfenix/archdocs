@@ -10,7 +10,6 @@ def _has_project_root_marker(checked_dir_path: pathlib.Path, /) -> bool:
 
 
 def _iter_lookup_dirs(root_path: pathlib.Path, /) -> typing.Iterator[pathlib.Path]:
-    """Yield the user root dir first, then a few parents, never leaving the project the root dir belongs to."""
     yield root_path
     if _has_project_root_marker(root_path):
         return
@@ -48,7 +47,6 @@ def _resolve_configured_chart_dir(
     configured_chart_dir: str | pathlib.Path,
     /,
 ) -> pathlib.Path | None:
-    """Resolve an explicit chart dir against the user root dir, not against the current working directory."""
     configured_path: typing.Final = pathlib.Path(configured_chart_dir)
     if configured_path.is_absolute():
         return configured_path if configured_path.is_dir() else None
