@@ -65,8 +65,6 @@ def _render_unique_edge_lines(manifest_diagram: str, source_files_diagram: str, 
 
 
 def _render_external_client_definition(all_edge_lines: typing.Iterable[str], /) -> str:
-    # The node carries a slash in its title, which is not a legal mermaid id, so the edges
-    # reference a sanitised id and the title arrives here, once, as a quoted label.
     if any(settings.EXTERNAL_CLIENT_NODE_ID in one_edge_line for one_edge_line in all_edge_lines):
         return mermaid_syntax.render_node_definition(
             settings.EXTERNAL_CLIENT_NODE_ID,

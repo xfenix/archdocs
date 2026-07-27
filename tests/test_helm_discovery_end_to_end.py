@@ -2,15 +2,12 @@ import pathlib
 import typing
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from fastarch import mermaid_syntax
-from fastarch.integrations.fastapi import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
+from tests.served_page import render_architecture_page
 
 
-_GOOD_HTTP_CODE: typing.Final = 200
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _CHART_RELATIVE_PATH: typing.Final = "deploy/mychart"
 _SOURCES_RELATIVE_PATH: typing.Final = "src"
@@ -28,14 +25,6 @@ ingress:
   hosts:
     - host: decoy.example.com
 """
-
-
-def _render_page(arch_settings: SettingsForFastarch) -> str:
-    fastapi_app: typing.Final = FastAPI()
-    add_architecture_doc_routes(fastapi_app, route_path="/", arch_settings=arch_settings)
-    response: typing.Final = TestClient(fastapi_app).get("/")
-    assert response.status_code == _GOOD_HTTP_CODE
-    return response.text
 
 
 def _build_project(
@@ -58,7 +47,7 @@ def _build_project(
 @pytest.mark.parametrize("sources_subpath", [".", "one", "one/two"])
 def test_chart_found_next_to_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
     expected_node: typing.Final = mermaid_syntax.render_service_node_definition("sibling-svc", ("replicas 4",)).strip()
-    response_text: typing.Final = _render_page(
+    response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
             service_name="sibling-svc",
@@ -69,7 +58,7 @@ def test_chart_found_next_to_sources(tmp_path: pathlib.Path, sources_subpath: st
 
 
 def test_explicit_dir_wins_over_lookup(tmp_path: pathlib.Path) -> None:
-    response_text: typing.Final = _render_page(
+    response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path),
             service_name="explicit-svc",
@@ -84,7 +73,7 @@ def test_relative_dir_resolved_from_root_dir(tmp_path: pathlib.Path, monkeypatch
     decoy_project_path: typing.Final = tmp_path / "elsewhere"
     _build_project(decoy_project_path, chart_values=_DECOY_CHART_VALUES)
     monkeypatch.chdir(decoy_project_path)
-    response_text: typing.Final = _render_page(
+    response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path / "project"),
             service_name="relative-svc",
@@ -108,7 +97,7 @@ def test_far_away_chart_is_never_picked(tmp_path: pathlib.Path, project_subpath:
     )
     if root_marker_name:
         (project_path / root_marker_name).write_text("[project]\nname = 'neighbour'\n")
-    response_text: typing.Final = _render_page(
+    response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(root_dir=source_dir, service_name="far-svc"),
     )
     assert "decoy.example.com" not in response_text
@@ -116,7 +105,7 @@ def test_far_away_chart_is_never_picked(tmp_path: pathlib.Path, project_subpath:
 
 
 def test_missing_explicit_dir_is_ignored(tmp_path: pathlib.Path) -> None:
-    response_text: typing.Final = _render_page(
+    response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path),
             service_name="missing-svc",

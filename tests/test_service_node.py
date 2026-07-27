@@ -3,51 +3,58 @@ import typing
 
 import pytest
 
-from fastarch import mermaid_syntax, settings
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from fastarch import settings
+from fastarch.main import SettingsForFastarch
+from tests.served_page import extract_diagram, render_architecture_page
 
 
 # The service name used to reach the diagram once, as the label of a node whose id was a
-# fixed `fastarch_service`, so every edge named the constant and the name was nowhere to be
-# seen in the mermaid source. The id is derived from the name again, and the two node titles
-# that are not legal mermaid ids travel as quoted labels.
-_TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
-_SETTINGS_ARGUMENT: typing.Final = "arch_settings"
+# fixed `fastarch_service`, so every edge named the constant and the name was nowhere to
+# be seen in the mermaid source. Expected ids are spelled out here on purpose: deriving
+# them with the code under test would assert nothing.
+_LITESTAR_ROOT: typing.Final = pathlib.Path(__file__).parent / "litestar"
 _EDGE_ARROW: typing.Final = " --> "
-_ALL_DIAGRAM_SETTINGS: typing.Final = (
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="fastapi-svc"),
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc"),
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "helm_fixtures", service_name="helm-svc"),
+_EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{settings.SHIFT_LEFT}external_client["User/Client"]'
+
+
+def _render_diagram(service_name: str) -> str:
+    return extract_diagram(
+        render_architecture_page(SettingsForFastarch(root_dir=_LITESTAR_ROOT, service_name=service_name)),
+    )
+
+
+@pytest.mark.parametrize(
+    ("service_name", "expected_node_id"),
+    [("payments-api", "payments_api"), ("svc.v2", "svc_v2"), ("Billing Service", "Billing_Service")],
 )
-
-
-def _render(arch_settings: SettingsForFastarch) -> str:
-    return ArchitectureParserAndRenderer(local_settings=arch_settings).render_architecture_diagram()
-
-
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
-def test_service_name_is_the_node_id(arch_settings: SettingsForFastarch) -> None:
-    service_node_id: typing.Final = mermaid_syntax.render_service_node_id(arch_settings.service_name)
-    all_lines: typing.Final = _render(arch_settings).split("\n")
-    assert service_node_id == mermaid_syntax.render_node_id(arch_settings.service_name)
-    assert arch_settings.service_name in all_lines[0]
+def test_service_name_is_the_node_id(service_name: str, expected_node_id: str) -> None:
+    all_lines: typing.Final = _render_diagram(service_name).split("\n")
+    all_service_edges: typing.Final = [
+        one_line for one_line in all_lines if _EDGE_ARROW in one_line and expected_node_id in one_line
+    ]
+    assert all_lines[0] == f'{settings.SHIFT_LEFT}{expected_node_id}{{"{service_name}"}}'
     assert settings.FALLBACK_SERVICE_NODE_ID not in "\n".join(all_lines)
-    assert any(_EDGE_ARROW in one_line and service_node_id in one_line for one_line in all_lines)
+    assert len(all_service_edges) == len([one_line for one_line in all_lines if _EDGE_ARROW in one_line])
 
 
 def test_node_id_falls_back_for_symbol_name() -> None:
-    # `render_node_id` can legitimately reduce a name to nothing, and an empty mermaid id is
-    # a parse error, so the constant takes over while the label keeps the name as given.
-    first_line: typing.Final = _render(
-        SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="***"),
-    ).split("\n")[0]
-    assert first_line == f'{settings.SHIFT_LEFT}{settings.FALLBACK_SERVICE_NODE_ID}{{"***"}}'
+    all_lines: typing.Final = _render_diagram("!!!").split("\n")
+    assert all_lines[0] == f'{settings.SHIFT_LEFT}{settings.FALLBACK_SERVICE_NODE_ID}{{"!!!"}}'
+    assert any(_EDGE_ARROW in one_line and settings.FALLBACK_SERVICE_NODE_ID in one_line for one_line in all_lines)
 
 
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
-def test_external_client_is_labelled(arch_settings: SettingsForFastarch) -> None:
-    all_lines: typing.Final = _render(arch_settings).split("\n")
+def test_external_client_is_labelled() -> None:
+    all_lines: typing.Final = _render_diagram("client-svc").split("\n")
     all_edge_lines: typing.Final = [one_line for one_line in all_lines if _EDGE_ARROW in one_line]
+    assert all_lines[1] == _EXTERNAL_CLIENT_DEFINITION
     assert settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA not in "\n".join(all_edge_lines)
     assert any(settings.EXTERNAL_CLIENT_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)
-    assert all_lines[1] == f'{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_NODE_ID}["User/Client"]'
+
+
+def test_markup_characters_reach_mermaid_intact() -> None:
+    page_html: typing.Final = render_architecture_page(
+        SettingsForFastarch(root_dir=_LITESTAR_ROOT, service_name="svc<b>&x"),
+    )
+    assert 'svc&lt;b>&amp;x"}' in page_html
+    assert "svc<b>" not in page_html
+    assert extract_diagram(page_html).split("\n")[0].endswith('{"svc<b>&x"}')

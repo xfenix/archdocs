@@ -5,12 +5,15 @@ import typing
 import pytest
 
 from fastarch import mermaid_syntax, settings
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from fastarch.main import SettingsForFastarch
+from tests.served_page import extract_diagram, render_architecture_page
 
 
 # These invariants encode the mermaid syntax rules the renderers used to break silently:
 # an id-less `{name}` node, an unquoted or empty edge label, a `<--` arrow that mermaid
-# has no production for, and two edges glued onto a single physical line.
+# has no production for, and two edges glued onto a single physical line. They are read
+# back off the served page, because a diagram that only holds together inside the engine
+# proves nothing about what the browser is handed.
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_]+$")
@@ -29,7 +32,7 @@ _ALL_DIAGRAM_SETTINGS: typing.Final = (
 
 
 def _render(arch_settings: SettingsForFastarch) -> str:
-    return ArchitectureParserAndRenderer(local_settings=arch_settings).render_architecture_diagram()
+    return extract_diagram(render_architecture_page(arch_settings))
 
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)

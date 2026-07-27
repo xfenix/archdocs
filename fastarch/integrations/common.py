@@ -6,9 +6,6 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
 def _escape_for_html_text(rendered_diagram: str) -> str:
-    # The diagram lands inside <pre> as text, so an unescaped `&` or `<` in a service name,
-    # a dsn or an ingress host is markup to the browser and mermaid never sees that label.
-    # `>` needs no escaping in text, and leaving it alone keeps the `-->` arrows readable.
     return rendered_diagram.replace("&", "&amp;").replace("<", "&lt;")
 
 
