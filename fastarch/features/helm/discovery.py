@@ -5,29 +5,63 @@ import typing
 from fastarch.features.helm import const
 
 
-def _find_chart_dir_near_parents(root_path: pathlib.Path) -> pathlib.Path | None:
+def _has_project_root_marker(checked_dir_path: pathlib.Path, /) -> bool:
+    return any((checked_dir_path / one_marker_name).exists() for one_marker_name in const.PROJECT_ROOT_MARKERS)
+
+
+def _iter_lookup_dirs(root_path: pathlib.Path, /) -> typing.Iterator[pathlib.Path]:
+    """Yield the user root dir first, then a few parents, never leaving the project the root dir belongs to."""
+    yield root_path
+    if _has_project_root_marker(root_path):
+        return
     for one_parent_path in list(root_path.parents)[: const.PARENT_LOOKUP_DEPTH]:
-        for one_search_dir in const.CHART_SEARCH_DIRS:
-            candidate_chart_files = sorted(
-                itertools.chain.from_iterable(
-                    (one_parent_path / one_search_dir).glob(one_chart_pattern)
-                    for one_chart_pattern in const.PARENT_LOOKUP_PATTERNS
-                ),
-            )
-            if candidate_chart_files:
-                return candidate_chart_files[0].parent
-    return None
+        if one_parent_path == one_parent_path.parent:
+            return
+        yield one_parent_path
+        if _has_project_root_marker(one_parent_path):
+            return
+
+
+def _find_first_chart_dir(search_path: pathlib.Path, search_patterns: tuple[str, ...], /) -> pathlib.Path | None:
+    candidate_chart_files: typing.Final = sorted(
+        itertools.chain.from_iterable(search_path.glob(one_chart_pattern) for one_chart_pattern in search_patterns),
+    )
+    return candidate_chart_files[0].parent if candidate_chart_files else None
+
+
+def _find_chart_dir_by_lookup(root_path: pathlib.Path, /) -> pathlib.Path | None:
+    nested_chart_dir: typing.Final = _find_first_chart_dir(root_path, const.NESTED_LOOKUP_PATTERNS)
+    if nested_chart_dir is not None:
+        return nested_chart_dir
+    all_parent_chart_dirs: typing.Final = (
+        _find_first_chart_dir(one_lookup_dir / one_search_dir, const.PARENT_LOOKUP_PATTERNS)
+        for one_lookup_dir, one_search_dir in itertools.product(
+            tuple(_iter_lookup_dirs(root_path))[1:],
+            const.CHART_SEARCH_DIRS,
+        )
+    )
+    return next((one_chart_dir for one_chart_dir in all_parent_chart_dirs if one_chart_dir is not None), None)
+
+
+def _resolve_configured_chart_dir(
+    root_path: pathlib.Path,
+    configured_chart_dir: str | pathlib.Path,
+    /,
+) -> pathlib.Path | None:
+    """Resolve an explicit chart dir against the user root dir, not against the current working directory."""
+    configured_path: typing.Final = pathlib.Path(configured_chart_dir)
+    if configured_path.is_absolute():
+        return configured_path if configured_path.is_dir() else None
+    all_candidate_chart_dirs: typing.Final = (
+        (one_lookup_dir / configured_path).resolve() for one_lookup_dir in _iter_lookup_dirs(root_path)
+    )
+    return next((one_chart_dir for one_chart_dir in all_candidate_chart_dirs if one_chart_dir.is_dir()), None)
 
 
 def _find_chart_dir(root_path: pathlib.Path, configured_chart_dir: str | pathlib.Path | None, /) -> pathlib.Path | None:
     if configured_chart_dir is not None:
-        explicit_chart_dir: typing.Final = pathlib.Path(configured_chart_dir).resolve()
-        return explicit_chart_dir if explicit_chart_dir.is_dir() else None
-    for one_nested_pattern in const.NESTED_LOOKUP_PATTERNS:
-        nested_chart_files = sorted(root_path.glob(one_nested_pattern))
-        if nested_chart_files:
-            return nested_chart_files[0].parent
-    return _find_chart_dir_near_parents(root_path)
+        return _resolve_configured_chart_dir(root_path, configured_chart_dir)
+    return _find_chart_dir_by_lookup(root_path)
 
 
 def read_helm_chart_source(root_path: pathlib.Path, configured_chart_dir: str | pathlib.Path | None, /) -> str:

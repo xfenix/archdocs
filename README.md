@@ -66,9 +66,13 @@ fastarch scans your source code and automatically detects:
 * **Kubernetes / Helm** — ingress hosts and TLS, service type, replica count and HPA range
 
 Helm charts are read straight from your repository, no `helm template` run and no extra
-dependency: fastarch looks for a `Chart.yaml` under `root_dir` and, failing that, in the
-usual sibling locations (`deploy/`, `helm/`, `charts/`, `.helm/`). Point it somewhere
-explicitly with `helm_chart_dir` when your layout differs:
+dependency: fastarch looks for a `Chart.yaml` under `root_dir` first and, failing that, in
+the usual locations (`deploy/`, `helm/`, `charts/`, `.helm/`) up to three levels above it.
+The search never climbs past the project `root_dir` belongs to — a directory with `.git`,
+`pyproject.toml`, `setup.py` or `setup.cfg` in it ends the walk — so a chart of a neighbour
+project is never picked up by accident. Point it somewhere explicitly with `helm_chart_dir`
+when your layout differs; a relative path is resolved against `root_dir` and the same levels
+above it, never against the current working directory of the process:
 
 ```python
 add_architecture_doc_routes(
