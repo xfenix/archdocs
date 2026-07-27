@@ -46,3 +46,17 @@ def test_rendered_page_keeps_mermaid_script() -> None:
     rendered_html: typing.Final = _generate_architecture_html(_create_architecture_engine(None))
     assert "<script src=" in rendered_html
     assert "graph LR" in rendered_html
+
+
+def test_diagram_text_is_escaped_for_html() -> None:
+    # Inside <pre> the diagram is text, so `<` and `&` have to arrive as entities, otherwise
+    # the browser reads them as markup and mermaid gets a truncated label or none at all.
+    rendered_html: typing.Final = _generate_architecture_html(
+        _create_architecture_engine(
+            SettingsForFastarch(root_dir=pathlib.Path(__file__).parent / "fastapi", service_name="svc<b>&x"),
+        ),
+    )
+    assert "svc&lt;b&gt;&amp;x" not in rendered_html
+    assert "svc&lt;b>&amp;x" in rendered_html
+    assert "svc<b>" not in rendered_html
+    assert " --> " in rendered_html

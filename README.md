@@ -81,7 +81,7 @@ add_architecture_doc_routes(
 )
 ```
 
-The chart contributes the real external entrypoint (`User/Client -->|HTTPS api.example.com|`)
+The chart contributes the real external entrypoint (`external_client -->|"HTTPS api.example.com"| my_service`)
 and annotates your service node with its scaling posture, for example
 `my-service (replicas 3, HPA 2-10, target CPU 70%)`. Both attach to the same service node
 the code parsers use, so the chart confirms and enriches the picture instead of duplicating it.
@@ -92,3 +92,15 @@ fastarch renders your architecture as an interactive Mermaid diagram served
 directly from your application. The page shows your service as the central node
 with edges to every detected dependency: incoming REST clients, outgoing HTTP
 calls, databases, caches, message brokers and task queues.
+
+`service_name` names that central node in both senses: it is the label drawn inside
+it and, sanitised down to the characters Mermaid accepts in an identifier, the node id
+every edge of the diagram points at. So `service_name="my-service"` renders as:
+
+```
+graph LR
+    my_service{"my-service"}
+    external_client["User/Client"]
+    external_client --> |"REST (get, post);"| my_service
+    my_service --> |"async"| redisdb
+```

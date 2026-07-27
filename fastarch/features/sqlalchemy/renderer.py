@@ -20,7 +20,7 @@ def _render_database_node_id(raw_database_type: str, host_suffix: int | str) -> 
     )
 
 
-def render_sqlalchemy_features(features_to_draw: SQLAlchemyFeatures) -> str:
+def render_sqlalchemy_features(service_node_id: str, features_to_draw: SQLAlchemyFeatures, /) -> str:
     if not features_to_draw.database_type:
         return ""
     diagram_parts: typing.Final[list[str]] = []
@@ -41,7 +41,7 @@ def render_sqlalchemy_features(features_to_draw: SQLAlchemyFeatures) -> str:
         host_suffix = one_counter if features_to_draw.multiple_hosts else ""
         diagram_parts.append(
             mermaid_syntax.render_edge(
-                settings.SERVICE_NODE_ID,
+                service_node_id,
                 properties_on_arrow,
                 _render_database_node_id(features_to_draw.database_type, host_suffix),
             ),

@@ -41,14 +41,14 @@ def _render_entrypoint_label(features_to_draw: HelmChartFeatures) -> str:
     return ""
 
 
-def render_helm_features(features_to_draw: HelmChartFeatures) -> str:
+def render_helm_features(service_node_id: str, features_to_draw: HelmChartFeatures, /) -> str:
     if features_to_draw.ingress_enabled and features_to_draw.ingress_hosts:
         scheme_on_arrow: typing.Final = "HTTPS" if features_to_draw.ingress_tls_enabled else "HTTP"
         return "\n".join(
             mermaid_syntax.render_edge(
-                settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA,
+                settings.EXTERNAL_CLIENT_NODE_ID,
                 f"{scheme_on_arrow} {one_ingress_host}",
-                settings.SERVICE_NODE_ID,
+                service_node_id,
             )
             for one_ingress_host in features_to_draw.ingress_hosts
         )
@@ -56,7 +56,7 @@ def render_helm_features(features_to_draw: HelmChartFeatures) -> str:
     if not entrypoint_label:
         return ""
     return mermaid_syntax.render_edge(
-        settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA,
+        settings.EXTERNAL_CLIENT_NODE_ID,
         entrypoint_label,
-        settings.SERVICE_NODE_ID,
+        service_node_id,
     )

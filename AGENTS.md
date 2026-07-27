@@ -140,7 +140,7 @@ def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
 #### 4. Функции рендереров
 
 ```python
-def render_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures) -> str:
+def render_http_api_features(service_node_id: str, features_to_draw: HTTPApiFeatures, /) -> str:
     # Early return при отсутствии фич
     if not features_to_draw.in_methods_existed and not features_to_draw.out_methods_existed:
         return ""
@@ -148,11 +148,17 @@ def render_http_api_features(service_name: str, features_to_draw: HTTPApiFeature
     diagram_parts: typing.Final[list[str]] = []
     if features_to_draw.in_methods_existed:
         diagram_parts.append(
-            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA} --> "
-            f"|REST ({', '.join(features_to_draw.in_methods)});| {{{service_name}}}",
+            mermaid_syntax.render_edge(
+                settings.EXTERNAL_CLIENT_NODE_ID,
+                f"REST ({', '.join(sorted(features_to_draw.in_methods))});",
+                service_node_id,
+            ),
         )
     return "\n".join(diagram_parts)
 ```
+
+Первый аргумент рендерера — id узла сервиса, движок выводит его из `service_name`
+через `mermaid_syntax.render_service_node_id`. Рендереры не собирают этот id сами.
 
 ### Конфигурация инструментов
 
@@ -245,23 +251,24 @@ from fastarch import settings
 from fastarch.features.new_technology.const import NewTechnologyFeatures
 
 
-def render_new_technology_features(features_to_draw: NewTechnologyFeatures) -> str:
+def render_new_technology_features(service_node_id: str, features_to_draw: NewTechnologyFeatures, /) -> str:
     if not features_to_draw.feature_detected:
         return ""
 
     return mermaid_syntax.render_edge(
-        settings.SERVICE_NODE_ID,
+        service_node_id,
         features_to_draw.specific_property,
         "new_tech_service",
     )
 ```
 
 **Никогда не собирайте рёбра вручную через f-строку.** Узел сервиса — это всегда
-`settings.SERVICE_NODE_ID`, а рёбра строятся только через `mermaid_syntax.render_edge`:
-Mermaid не умеет разбирать безымянный узел `{name}`, незакавыченные скобки в подписи
-рёбра (`|REST (get);|`), пустую подпись (`|""|`) и стрелку `<--`. Каждая из этих
-ошибок делает диаграмму нерендерящейся молча, потому что страница прячет контейнер
-до срабатывания `postRenderCallback`. Инварианты закреплены в `tests/test_mermaid_validity.py`.
+`service_node_id` из первого аргумента, а рёбра строятся только через
+`mermaid_syntax.render_edge`: Mermaid не умеет разбирать безымянный узел `{name}`,
+незакавыченные скобки в подписи рёбра (`|REST (get);|`), пустую подпись (`|""|`) и
+стрелку `<--`. Каждая из этих ошибок делает диаграмму нерендерящейся молча, потому
+что страница прячет контейнер до срабатывания `postRenderCallback`. Инварианты
+закреплены в `tests/test_mermaid_validity.py` и `tests/test_service_node.py`.
 
 ### Шаг 5: Регистрация в mapping.py
 
@@ -348,9 +355,16 @@ def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
 
 ### 5. Mermaid Generation
 
-- Стройте рёбра только через `mermaid_syntax.render_edge`, узел сервиса — `settings.SERVICE_NODE_ID`
+- Стройте рёбра только через `mermaid_syntax.render_edge`, узел сервиса — аргумент `service_node_id`
 - Определение узла сервиса выводится ровно один раз, движком, первой строкой диаграммы
-- Не подставляйте в id узла сырые значения: DSN и подобное прогоняйте через `mermaid_syntax.render_node_id`
+- id узла сервиса — это `service_name`, прогнанное через `mermaid_syntax.render_node_id`;
+  `settings.FALLBACK_SERVICE_NODE_ID` подставляется, только если от имени не осталось ни одного
+  допустимого символа
+- Не подставляйте в id узла сырые значения: DSN, `User/Client` и подобное прогоняйте через
+  `mermaid_syntax.render_node_id`, а человекочитаемое имя отдавайте подписью через
+  `mermaid_syntax.render_node_definition`
+- Диаграмма попадает в страницу внутрь `<pre>` как текст, поэтому `&` и `<` экранируются
+  перед вставкой: иначе браузер прочитает их как разметку и Mermaid не увидит подпись
 - Проверяйте диаграммы в Mermaid Live Editor
 
 ### 6. Testing Strategy
