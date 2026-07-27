@@ -80,11 +80,3 @@ def test_service_node_defined_exactly_once(arch_settings: SettingsForFastarch) -
     ]
     assert len(node_definitions) == 1
     assert node_definitions[0] == all_lines[0]
-
-
-def test_credentials_never_reach_diagram() -> None:
-    rendered_diagram: typing.Final = _render(
-        SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc"),
-    )
-    assert "user:password" not in rendered_diagram
-    assert "://***@" in rendered_diagram

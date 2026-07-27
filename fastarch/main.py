@@ -48,13 +48,13 @@ def _find_helm_chart_dir(
     if configured_chart_dir is not None:
         explicit_chart_dir: typing.Final = pathlib.Path(configured_chart_dir).resolve()
         return explicit_chart_dir if explicit_chart_dir.is_dir() else None
-    # Shallowest then lexicographic keeps multi chart repositories deterministic.
-    nested_chart_files: typing.Final = sorted(
-        root_path.rglob(settings.HELM_CHART_MARKER_FILE_NAME),
-        key=lambda one_chart_file: (len(one_chart_file.parts), str(one_chart_file)),
-    )
-    if nested_chart_files:
-        return nested_chart_files[0].parent
+    # Depth by depth instead of one rglob: this returns the shallowest chart, stays
+    # deterministic through the per depth sort, and stops as soon as it finds one
+    # rather than collecting every match in the tree first.
+    for one_nested_pattern in settings.HELM_NESTED_LOOKUP_PATTERNS:
+        nested_chart_files = sorted(root_path.glob(one_nested_pattern))
+        if nested_chart_files:
+            return nested_chart_files[0].parent
     return _find_helm_chart_near_parents(root_path)
 
 

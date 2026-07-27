@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 import re as py_re
 import typing
@@ -11,7 +12,14 @@ EXTERNAL_CLIENT_TITLE_FOR_SCHEMA: typing.Final = "User/Client"
 SERVICE_NODE_ID: typing.Final = "fastarch_service"
 HELM_CHART_MARKER_FILE_NAME: typing.Final = "Chart.yaml"
 HELM_CHART_SEARCH_DIRS: typing.Final = ("deploy", "helm", "charts", ".helm")
-HELM_CHART_LOOKUP_PATTERNS: typing.Final = ("Chart.yaml", "*/Chart.yaml")
+HELM_NESTED_LOOKUP_DEPTH: typing.Final = 4
+# Ordered shallowest first so the search returns the top most chart and stops there,
+# instead of walking an entire monorepo the way an unbounded rglob would.
+HELM_NESTED_LOOKUP_PATTERNS: typing.Final = tuple(
+    "/".join([*itertools.repeat("*", one_depth), HELM_CHART_MARKER_FILE_NAME])
+    for one_depth in range(HELM_NESTED_LOOKUP_DEPTH)
+)
+HELM_CHART_LOOKUP_PATTERNS: typing.Final = HELM_NESTED_LOOKUP_PATTERNS[:2]
 HELM_PARENT_LOOKUP_DEPTH: typing.Final = 3
 HELM_MANIFEST_SEARCH_PATTERNS: typing.Final = (
     "Chart.yaml",

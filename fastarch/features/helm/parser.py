@@ -30,12 +30,18 @@ _ENABLED_TRUE_PATTERN: typing.Final = py_re.compile(
     r"^[ \t]+enabled:[ \t]*[\"']?(?:true|yes|on)[\"']?[ \t]*$",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+_ENABLED_FALSE_PATTERN: typing.Final = py_re.compile(
+    r"^[ \t]+enabled:[ \t]*[\"']?(?:false|no|off)[\"']?[ \t]*$",
+    flags=settings.TYPICAL_RE_FLAGS,
+)
 _INGRESS_HOST_PATTERN: typing.Final = py_re.compile(
     r"^[ \t]*-?[ \t]*host:[ \t]*[\"']?(?P<ingress_host>[A-Za-z0-9*][A-Za-z0-9.\-]*)[\"']?[ \t]*$",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _INGRESS_TLS_PATTERN: typing.Final = py_re.compile(
     # `secretName` shows up both as a plain key and as the first key of a list item.
+    # Only ever searched inside the `ingress:` block: a `secretName` belonging to some
+    # other resource must not flip the entrypoint edge to HTTPS.
     r"^[ \t]*-?[ \t]*secretName:[ \t]*\S",
     flags=settings.TYPICAL_RE_FLAGS,
 )
@@ -107,6 +113,19 @@ def _extract_ingress_hosts(raw_source: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(_INGRESS_HOST_PATTERN.findall(raw_source)))
 
 
+def _read_feature_toggle(values_block_body: str, manifest_kind_pattern: py_re.Pattern[str], raw_source: str, /) -> bool:
+    # `enabled` is tri state. A chart template carries `kind: Ingress` inside a
+    # `{{- if .Values.ingress.enabled }}` guard, so its presence proves the chart
+    # supports the feature, never that the values switched it on. An explicit
+    # `enabled: false` therefore wins, and the manifest is only a fallback for
+    # charts that omit the toggle entirely.
+    if _ENABLED_TRUE_PATTERN.search(values_block_body):
+        return True
+    if _ENABLED_FALSE_PATTERN.search(values_block_body):
+        return False
+    return bool(manifest_kind_pattern.search(raw_source))
+
+
 def find_helm_features(raw_source: str) -> HelmChartFeatures:
     if not _CHART_MARKER_PATTERN.search(raw_source):
         return HelmChartFeatures(chart_detected=False)
@@ -115,14 +134,12 @@ def find_helm_features(raw_source: str) -> HelmChartFeatures:
     autoscaling_block_body: typing.Final = _extract_block_body(_AUTOSCALING_BLOCK_PATTERN, raw_source)
     return HelmChartFeatures(
         chart_detected=True,
-        ingress_enabled=bool(_ENABLED_TRUE_PATTERN.search(ingress_block_body))
-        or bool(_INGRESS_KIND_PATTERN.search(raw_source)),
+        ingress_enabled=_read_feature_toggle(ingress_block_body, _INGRESS_KIND_PATTERN, raw_source),
         ingress_hosts=_extract_ingress_hosts(raw_source),
-        ingress_tls_enabled=bool(_INGRESS_TLS_PATTERN.search(raw_source)),
+        ingress_tls_enabled=bool(_INGRESS_TLS_PATTERN.search(ingress_block_body)),
         service_type=_extract_named_group(_SERVICE_TYPE_PATTERN, service_block_body, "service_type"),
         replica_count=_extract_replica_count(raw_source),
-        autoscaling_enabled=bool(_ENABLED_TRUE_PATTERN.search(autoscaling_block_body))
-        or bool(_AUTOSCALER_KIND_PATTERN.search(raw_source)),
+        autoscaling_enabled=_read_feature_toggle(autoscaling_block_body, _AUTOSCALER_KIND_PATTERN, raw_source),
         min_replicas=_extract_positive_int(_MIN_REPLICAS_PATTERN, autoscaling_block_body, "min_replicas"),
         max_replicas=_extract_positive_int(_MAX_REPLICAS_PATTERN, autoscaling_block_body, "max_replicas"),
         target_cpu_utilization=_extract_positive_int(_TARGET_CPU_PATTERN, autoscaling_block_body, "target_cpu"),

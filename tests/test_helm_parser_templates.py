@@ -45,6 +45,25 @@ def test_templated_values_do_not_leak() -> None:
     assert "{{" not in features.service_type
 
 
+def test_explicit_disable_beats_manifest() -> None:
+    # `kind: Ingress` lives inside a `{{- if .Values.ingress.enabled }}` guard, so it
+    # proves the chart supports ingress, never that the values switched it on.
+    features: typing.Final = find_helm_features(
+        f"replicaCount: 1\ningress:\n  enabled: false\nautoscaling:\n  enabled: false\n---\n{_TEMPLATED_SOURCE}",
+    )
+    assert not features.ingress_enabled
+    assert not features.autoscaling_enabled
+
+
+def test_foreign_secret_is_not_ingress_tls() -> None:
+    features: typing.Final = find_helm_features(
+        "replicaCount: 1\ningress:\n  enabled: true\n  hosts:\n    - host: api.example.com\n"
+        "imagePullSecrets:\n  - secretName: registry-creds\n",
+    )
+    assert features.ingress_enabled
+    assert not features.ingress_tls_enabled
+
+
 @hypothesis.given(st.integers(min_value=1, max_value=_MAX_TESTED_REPLICAS))
 def test_replica_count_round_trips(replica_count: int) -> None:
     assert find_helm_features(f"replicaCount: {replica_count}\n").replica_count == replica_count

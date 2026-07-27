@@ -17,11 +17,8 @@ def test_tree_without_chart_is_empty() -> None:
     assert _find_helm_chart_dir(_TESTS_ROOT / "fastapi", None) is None
 
 
-def test_explicit_chart_dir_wins() -> None:
+def test_explicit_dir_wins_and_validates() -> None:
     assert _find_helm_chart_dir(_TESTS_ROOT / "fastapi", _CHART_DIR) == _CHART_DIR
-
-
-def test_explicit_missing_dir_is_empty() -> None:
     assert _find_helm_chart_dir(_HELM_FIXTURES_ROOT, _TESTS_ROOT / "there-is-no-such-chart") is None
 
 
@@ -31,6 +28,14 @@ def test_chart_found_from_sibling_dir(tmp_path: pathlib.Path) -> None:
     (chart_dir / "Chart.yaml").write_text("apiVersion: v2\nname: mychart\n")
     (tmp_path / "src").mkdir()
     assert _find_helm_chart_dir(tmp_path / "src", None) == chart_dir
+
+
+def test_shallowest_chart_wins(tmp_path: pathlib.Path) -> None:
+    shallow_chart_dir: typing.Final = tmp_path / "chart"
+    for one_chart_dir in (shallow_chart_dir, tmp_path / "nested" / "inner" / "chart"):
+        one_chart_dir.mkdir(parents=True)
+        (one_chart_dir / "Chart.yaml").write_text("apiVersion: v2\nname: c\n")
+    assert _find_helm_chart_dir(tmp_path, None) == shallow_chart_dir
 
 
 def test_chart_source_has_every_manifest() -> None:

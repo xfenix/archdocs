@@ -5,9 +5,10 @@ from fastarch import mermaid_syntax, settings
 from fastarch.features.sqlalchemy.const import SQLAlchemyFeatures
 
 
-# The parser captures the whole quoted dsn, which routinely carries `user:password@`.
-# That must never reach the served page, so it is masked before it is drawn.
-_DSN_CREDENTIALS_PATTERN: typing.Final = py_re.compile(r"://[^/@\s]*:[^/@\s]*@", flags=settings.TYPICAL_RE_FLAGS)
+# The parser captures the whole quoted dsn, which routinely carries userinfo. That must
+# never reach the served page, so every `://<userinfo>@` is masked before it is drawn,
+# including the colon free `://token@host` form.
+_DSN_CREDENTIALS_PATTERN: typing.Final = py_re.compile(r"://[^/@\s]*@", flags=settings.TYPICAL_RE_FLAGS)
 _DSN_SCHEME_PATTERN: typing.Final = py_re.compile(r"^[^:/\s]+", flags=settings.TYPICAL_RE_FLAGS)
 
 
