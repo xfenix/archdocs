@@ -88,6 +88,18 @@ just publish
 Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
 community-of-python-flake8-plugin (COP), auto-typing-final.
 
+Джоба `lint2` гоняет WPS не из dev-зависимостей: образ экшена
+`wemake-services/wemake-python-styleguide@1.1.0` несёт внутри WPS **1.0.0**, а `uv` ставит
+локально свежую версию. Метрики вроде Jones Complexity считаются по-разному, поэтому
+локально зелёный `just lint` не гарантирует зелёный `lint2`. Если джоба упала на коде,
+который локально проходит, проверяйтесь той же версией:
+
+```bash
+uv venv /tmp/wps10 --python 3.12
+VIRTUAL_ENV=/tmp/wps10 uv pip install 'flake8==7.3.0' 'wemake-python-styleguide==1.0.0'
+/tmp/wps10/bin/flake8 fastarch tests
+```
+
 ## Roadmap и TODO
 
 ### Краткосрочные цели
