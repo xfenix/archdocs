@@ -11,9 +11,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+      - uses: astral-sh/setup-uv@v9
         with:
           cache-dependency-glob: "**/pyproject.toml"
       - run: uv python install ${{ fromJSON(inputs.python-version)[0] }}
@@ -22,9 +22,9 @@ jobs:
   lint2:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { persist-credentials: false }
-      - uses: wemake-services/wemake-python-styleguide@1.1.0
+      - uses: wemake-services/wemake-python-styleguide@1.7.0
         with: { reporter: "github-pr-review" }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,15 +38,15 @@ jobs:
         python-version: ${{ fromJSON(inputs.python-version) }}
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+      - uses: astral-sh/setup-uv@v9
         with:
           cache-dependency-glob: "**/pyproject.toml"
       - run: uv python install ${{ matrix.python-version }}
       - run: just install
       - run: just test . --cov=. --cov-report xml
-      - uses: codecov/codecov-action@v4.0.1
+      - uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
