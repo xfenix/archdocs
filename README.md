@@ -66,9 +66,10 @@ fastarch scans your source code and automatically detects:
 * **Kubernetes / Helm** — ingress hosts and TLS, service type, replica count and HPA range
 
 Helm charts are read straight from your repository, no `helm template` run and no extra
-dependency: fastarch looks for a `Chart.yaml` under `root_dir` and, failing that, in the
-usual sibling locations (`deploy/`, `helm/`, `charts/`, `.helm/`). Point it somewhere
-explicitly with `helm_chart_dir` when your layout differs:
+dependency. The chart is found next to your code — inside `root_dir` or in the usual
+neighbour locations (`deploy/`, `helm/`, `charts/`, `.helm/`) — and never outside of the
+project `root_dir` belongs to. Set `helm_chart_dir` when your layout differs; a relative
+path is taken from `root_dir`, not from the working directory of the process:
 
 ```python
 add_architecture_doc_routes(
@@ -81,26 +82,9 @@ add_architecture_doc_routes(
 )
 ```
 
-The chart contributes the real external entrypoint (`external_client -->|"HTTPS api.example.com"| my_service`)
-and annotates your service node with its scaling posture, for example
-`my-service (replicas 3, HPA 2-10, target CPU 70%)`. Both attach to the same service node
-the code parsers use, so the chart confirms and enriches the picture instead of duplicating it.
-
 How it looks
 ===
 fastarch renders your architecture as an interactive Mermaid diagram served
 directly from your application. The page shows your service as the central node
 with edges to every detected dependency: incoming REST clients, outgoing HTTP
 calls, databases, caches, message brokers and task queues.
-
-`service_name` names that central node in both senses: it is the label drawn inside
-it and, sanitised down to the characters Mermaid accepts in an identifier, the node id
-every edge of the diagram points at. So `service_name="my-service"` renders as:
-
-```
-graph LR
-    my_service{"my-service"}
-    external_client["User/Client"]
-    external_client --> |"REST (get, post);"| my_service
-    my_service --> |"async"| redisdb
-```
