@@ -1,0 +1,5 @@
+replicaCount: 5
+
+service:
+  type: LoadBalancer
+  port: 8080

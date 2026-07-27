@@ -1,10 +1,10 @@
 import typing
 
-from fastarch import settings
+from fastarch import mermaid_syntax, settings
 from fastarch.features.http_clients.const import HttpClientFeatures
 
 
-def render_http_client_features(service_name: str, features_to_draw: HttpClientFeatures) -> str:
+def render_http_client_features(features_to_draw: HttpClientFeatures) -> str:
     if not features_to_draw.has_external_calls or not features_to_draw.clients_used:
         return ""
 
@@ -18,4 +18,4 @@ def render_http_client_features(service_name: str, features_to_draw: HttpClientF
         ),
     )
 
-    return f"{settings.SHIFT_LEFT}{{{service_name}}} --> |HTTP ({properties_on_arrow})| External_API"
+    return mermaid_syntax.render_edge(settings.SERVICE_NODE_ID, f"HTTP ({properties_on_arrow})", "External_API")

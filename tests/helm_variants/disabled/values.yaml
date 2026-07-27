@@ -1,0 +1,19 @@
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  hosts:
+    - host: never.example.com
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+imagePullSecrets:
+  - secretName: registry-credentials

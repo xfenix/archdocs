@@ -1,0 +1,6 @@
+apiVersion: v2
+name: helm-test-chart
+description: Chart fixture used by the fastarch helm parser tests
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

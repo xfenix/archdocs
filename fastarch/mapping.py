@@ -1,8 +1,12 @@
 import dataclasses
 import enum
+import pathlib
 import types
 import typing
 
+from fastarch.features.helm import discovery as helm_discovery
+from fastarch.features.helm import parser as helm_parser
+from fastarch.features.helm import renderer as helm_renderer
 from fastarch.features.http_api import parser as httpapi_parser
 from fastarch.features.http_api import renderer as httpapi_renderer
 from fastarch.features.http_clients import parser as http_clients_parser
@@ -21,7 +25,7 @@ from fastarch.features.task_queues import renderer as task_queues_renderer
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _FeatureFunctions:
     parse_source: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[str, typing.Any], str]
+    render_diagram: typing.Callable[[typing.Any], str]
 
 
 @typing.final
@@ -59,6 +63,32 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
         AllCurrentFeatures.task_queues: _FeatureFunctions(
             parse_source=task_queues_parser.find_task_queue_features,
             render_diagram=task_queues_renderer.render_task_queue_features,
+        ),
+    },
+)
+
+
+@typing.final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _ManifestFeatureFunctions:
+    read_source: typing.Callable[[pathlib.Path, str | pathlib.Path | None], str]
+    parse_manifests: typing.Callable[[str], typing.Any]
+    render_diagram: typing.Callable[[typing.Any], str]
+    render_node_annotations: typing.Callable[[typing.Any], tuple[str, ...]]
+
+
+@typing.final
+class AllCurrentManifestFeatures(enum.Enum):
+    helm_chart = 1
+
+
+MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
+    {
+        AllCurrentManifestFeatures.helm_chart: _ManifestFeatureFunctions(
+            read_source=helm_discovery.read_helm_chart_source,
+            parse_manifests=helm_parser.find_helm_features,
+            render_diagram=helm_renderer.render_helm_features,
+            render_node_annotations=helm_renderer.render_helm_node_annotations,
         ),
     },
 )
