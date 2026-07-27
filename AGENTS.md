@@ -11,422 +11,70 @@
 - **Визуализация**: Использует Mermaid.js для создания интерактивных диаграмм
 - **Модульность**: Легко расширяется новыми фичами
 
-## Архитектура проекта
+## Документация не дублирует логику пакета
 
-### Структура модулей
+Единственный источник правды о поведении — код и тесты. `AGENTS.md` и `README.md` не
+пересказывают алгоритмы, сигнатуры и списки поддерживаемых паттернов: такой пересказ
+устаревает первым же коммитом и начинает противоречить коду. В `README.md` — только то,
+что нужно пользователю библиотеки (как подключить, какие опции есть, что он увидит), в
+`AGENTS.md` — договорённости и грабли, которых в коде не видно. Меняя поведение, правьте
+код и тесты; документацию — только если поменялся публичный контракт.
+
+## Карта репозитория
 
 ```
 fastarch/
-├── features/           # Модули для различных технологий
-│   ├── http_api/      # FastAPI/Litestar endpoints
-│   ├── http_clients/  # HTTP clients (httpx, aiohttp, requests, niquests)
-│   ├── sqlalchemy/    # Database ORM
-│   ├── redis/         # Caching layer
-│   ├── messaging_queue/ # Message queues (FastStream)
-│   ├── task_queues/   # Task queues (Celery, Taskiq, Arq, RQ, Dramatiq, Huey)
-│   └── helm/          # Helm chart: ingress, service type, replicas, HPA
-│       ├── discovery.py # Поиск чарта на диске и чтение манифестов
-│       └── values.py    # Чтение подмножества YAML: блок -> ключ -> значение
-├── integrations/      # Интеграции с веб-фреймворками
-│   ├── common.py     # Общая логика для всех интеграций
-│   ├── fastapi.py    # FastAPI интеграция
-│   └── litestar.py   # Litestar интеграция
-├── main.py           # Основной движок
-├── mapping.py        # Регистрация парсеров/рендереров
-├── mermaid_syntax.py # Построение валидного Mermaid (узлы, рёбра, подписи)
-└── settings.py       # Конфигурация
+├── features/      # По модулю на технологию: const.py, parser.py, renderer.py
+├── integrations/  # Привязки к фреймворкам: common.py, fastapi.py, litestar.py
+├── main.py        # Движок: обход файлов и сборка диаграммы
+├── mapping.py     # Реестры парсеров/рендереров
+├── mermaid_syntax.py
+└── settings.py
+tests/             # End-to-end тесты через реальное приложение + фикстуры чартов
 ```
 
-### Два реестра: исходники и манифесты
-
-`MAPPING_OF_PARSERS_AND_RENDERERS` прогоняет каждый парсер по каждому `*.py` файлу.
-Манифесты (Helm) живут в отдельном `MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS`, потому
-что они относятся ко всему чарту, а не к файлу, и потому что прогон `values.yaml` через
-файловые парсеры давал бы ложные рёбра (`redis://` в значениях, строка `postgresql` в DSN
-сабчарта). Манифестный реестр дополнительно отдаёт `read_source` (поиск и чтение файлов)
-и `render_node_annotations` (подписи в лейбле узла сервиса). Благодаря `read_source`
-движок в `main.py` ничего не знает про helm: вся специфика живёт в `features/helm/`.
-
-Все нужные значения лежат в `values.yaml`, поэтому парсер не разбирает Go-шаблоны:
-`values.py` читает подмножество YAML в плоский список `(блок, ключ, значение)`, а
-`parser.py` только достаёт оттуда нужные ключи. Значения с `{{` отбрасываются, а
-`kind:` из шаблона служит запасным признаком, только если тумблер `enabled` не задан.
-
-### Паттерн Parser/Renderer
-
-Каждая фича следует единому паттерну:
-
-1. **`const.py`** - Data-классы для хранения найденных фич
-2. **`parser.py`** - Regex-парсинг исходного кода
-3. **`renderer.py`** - Генерация Mermaid диаграмм
-
-### Система маппинга
-
-```python
-MAPPING_OF_PARSERS_AND_RENDERERS = {
-    AllCurrentFeatures.FASTAPI_LITESTAR: _FeatureFunctions(
-        parse_source=httpapi_parser.find_fastapi_and_litestar_features,
-        render_diagram=httpapi_renderer.render_http_api_features,
-    ),
-    # ... другие фичи
-}
-```
+Новая фича — это новый каталог в `features/` по образцу соседнего (`const.py` с
+dataclass фич, `parser.py` с regex-парсингом, `renderer.py` с рендером) и запись в
+реестре в `mapping.py`. Файловые парсеры прогоняются по каждому `*.py`, манифестные
+(helm) — по всему чарту, у них свой реестр и свой `read_source`.
 
 ## Стиль кодирования
 
-### Основные принципы
+Проект следует [pylines code-style](https://github.com/community-of-python/pylines/blob/main/code-style.md).
+Ключевое:
 
-Проект следует строгим правилам кодирования, основанным на [pylines code-style](https://github.com/community-of-python/pylines/blob/main/code-style.md):
+- `typing.Final` на все переменные и константы, `@typing.final` + `frozen=True` +
+  `slots=True` + `kw_only=True` на dataclasses, `types.MappingProxyType` на словари-константы
+- Полная типизация под `mypy --strict`, имена от восьми символов, функции — глаголы
+- Early return вместо вложенности, без временных переменных ради одной строки
+- Комментарии и докстринги внутри функций не пишем: код должен читаться сам
+- `import re as py_re`, паттерны компилируются на уровне модуля с `settings.TYPICAL_RE_FLAGS`
 
-#### 1. Type Hints и Immutability
+### Грабли Mermaid
 
-```python
-# Всегда используйте typing.Final для констант
-_TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
-    r"target_session_attrs\s*=\s*['\"](\w+)['\"]",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-
-
-# Data-классы должны быть frozen и использовать slots
-@typing.final
-@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class HTTPApiFeatures:
-    in_methods: frozenset[str]
-    out_methods: frozenset[str]
-    in_methods_existed: bool
-    out_methods_existed: bool
-```
-
-#### 2. Импорты и именование
-
-```python
-# Избегайте конфликтов имен
-import re as py_re
-import types
-import typing
-
-# Используйте MappingProxyType для immutable mappings
-_REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType(
-    {
-        "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b"),
-        "sentinel": py_re.compile(r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b"),
-    }
-)
-```
-
-#### 3. Функции парсеров
-
-```python
-def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
-    # Early return при отсутствии нужных паттернов
-    if not _ASYNC_ENGINE_PATTERN.search(raw_source):
-        return SQLAlchemyFeatures(
-            async_used=False,
-            pooling_used=False,
-            multiple_hosts=False,
-            target_session_attrs="",
-            database_type="",
-        )
-
-    # Обработка найденных паттернов
-    _target_session_attrs_match: typing.Final = _TARGET_SESSION_ATTRS_PATTERN.search(raw_source)
-    return SQLAlchemyFeatures(
-        target_session_attrs=_target_session_attrs_match.group(1) if _target_session_attrs_match else "",
-        # ... другие поля
-    )
-```
-
-#### 4. Функции рендереров
-
-```python
-def render_http_api_features(service_name: str, features_to_draw: HTTPApiFeatures) -> str:
-    # Early return при отсутствии фич
-    if not features_to_draw.in_methods_existed and not features_to_draw.out_methods_existed:
-        return ""
-
-    diagram_parts: typing.Final[list[str]] = []
-    if features_to_draw.in_methods_existed:
-        diagram_parts.append(
-            f"{settings.SHIFT_LEFT}{settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA} --> "
-            f"|REST ({', '.join(features_to_draw.in_methods)});| {{{service_name}}}",
-        )
-    return "\n".join(diagram_parts)
-```
-
-### Конфигурация инструментов
-
-#### Ruff (pyproject.toml)
-
-```toml
-[tool.ruff]
-line-length = 120
-select = ["ALL"]
-ignore = ["EM", "FBT", "TRY003", "D1", "D203", "D213", "G004", "FA", "COM812", "ISC001"]
-# WPS (wemake) и COP (community-of-python) — внешние flake8-плагины,
-# ruff не должен ругаться на их коды в # noqa
-external = ["WPS", "COP"]
-
-[tool.ruff.format]
-quote-style = "preserve"  # Сохранять оригинальные кавычки
-```
-
-#### Justfile
-
-```justfile
-lint:
-    uv run ruff format
-    uv run ruff check --fix
-    uv run auto-typing-final fastarch tests/*.py  # автопростановка typing.Final (без src-фикстур)
-    uv run mypy .
-    uv run flake8 --select=WPS --extend-exclude=tests/fastapi fastarch tests
-    uv run flake8 --select=COP --extend-exclude=tests/fastapi fastarch tests  # community-of-python
-```
-
-## Как добавить новую фичу
-
-### Шаг 1: Создание структуры
-
-```bash
-mkdir fastarch/features/new_technology
-touch fastarch/features/new_technology/__init__.py
-touch fastarch/features/new_technology/const.py
-touch fastarch/features/new_technology/parser.py
-touch fastarch/features/new_technology/renderer.py
-```
-
-### Шаг 2: Реализация const.py
-
-```python
-import dataclasses
-import typing
-
-
-@typing.final
-@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class NewTechnologyFeatures:
-    feature_detected: bool
-    specific_property: str = ""
-    another_property: int = 0
-```
-
-### Шаг 3: Реализация parser.py
-
-```python
-import re as py_re
-import typing
-
-from fastarch import settings
-from fastarch.features.new_technology.const import NewTechnologyFeatures
-
-_TECHNOLOGY_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+new_tech\b|import\s+new_tech\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-
-
-def find_new_technology_features(raw_source: str) -> NewTechnologyFeatures:
-    if not _TECHNOLOGY_IMPORT_PATTERN.search(raw_source):
-        return NewTechnologyFeatures(feature_detected=False)
-
-    # Анализ специфичных паттернов
-    return NewTechnologyFeatures(
-        feature_detected=True,
-        specific_property="detected_value",
-    )
-```
-
-### Шаг 4: Реализация renderer.py
-
-```python
-import typing
-
-from fastarch import settings
-from fastarch.features.new_technology.const import NewTechnologyFeatures
-
-
-def render_new_technology_features(features_to_draw: NewTechnologyFeatures) -> str:
-    if not features_to_draw.feature_detected:
-        return ""
-
-    return mermaid_syntax.render_edge(
-        settings.SERVICE_NODE_ID,
-        features_to_draw.specific_property,
-        "new_tech_service",
-    )
-```
-
-**Никогда не собирайте рёбра вручную через f-строку.** Узел сервиса — это всегда
-`settings.SERVICE_NODE_ID`, а рёбра строятся только через `mermaid_syntax.render_edge`:
-Mermaid не умеет разбирать безымянный узел `{name}`, незакавыченные скобки в подписи
-рёбра (`|REST (get);|`), пустую подпись (`|""|`) и стрелку `<--`. Каждая из этих
-ошибок делает диаграмму нерендерящейся молча, потому что страница прячет контейнер
+Рёбра собираются только через `mermaid_syntax.render_edge`, узел сервиса — всегда
+`settings.SERVICE_NODE_ID`, сырые значения (DSN и подобное) прогоняются через
+`mermaid_syntax.render_node_id`. Безымянный узел `{name}`, незакавыченные скобки в подписи
+ребра, пустая подпись `|""|` и стрелка `<--` ломают рендер молча: страница прячет контейнер
 до срабатывания `postRenderCallback`. Инварианты закреплены в `tests/test_mermaid_validity.py`.
-
-### Шаг 5: Регистрация в mapping.py
-
-```python
-# В AllCurrentFeatures enum
-class AllCurrentFeatures(enum.Enum):
-    # ... существующие
-    NEW_TECHNOLOGY = 5
-
-
-# В MAPPING_OF_PARSERS_AND_RENDERERS
-MAPPING_OF_PARSERS_AND_RENDERERS = types.MappingProxyType(
-    {
-        # ... существующие
-        AllCurrentFeatures.NEW_TECHNOLOGY: _FeatureFunctions(
-            parse_source=new_technology_parser.find_new_technology_features,
-            render_diagram=new_technology_renderer.render_new_technology_features,
-        ),
-    }
-)
-```
 
 ## Тестирование
 
-### Unit-тесты для парсеров
-
-```python
-from hypothesis import given, strategies as st
-from fastarch.features.http_api.parser import find_fastapi_and_litestar_features
-
-
-@given(st.sampled_from(["post", "put", "patch", "delete"]))
-def test_find_fastapi_and_litestar_features_detects_methods(method: str) -> None:
-    src = (
-        "from fastapi import APIRouter\n"
-        "router = APIRouter()\n"
-        f"@router.{method}('/x')\n"
-        "async def endpoint() -> None:\n"
-        "    pass\n"
-    )
-    features = find_fastapi_and_litestar_features(src)
-    assert method in features.in_methods
-    assert features.in_methods_existed
-```
-
-### Интеграционные тесты
-
-```python
-def test_add_architecture_doc_routes(fastapi_app: FastAPI) -> None:
-    _root_for_fastapi_example_src: typing.Final = pathlib.Path(__file__).parent / "fastapi"
-    add_architecture_doc_routes(
-        fastapi_app,
-        arch_settings=SettingsForFastarch(root_dir=_root_for_fastapi_example_src, service_name="test"),
-    )
-    client_for_test: typing.Final = TestClient(fastapi_app)
-    assert client_for_test.get(settings.DEFAULT_PATH).status_code == 200
-```
-
-## Важные замечания для AI-агентов
-
-### 1. Immutability First
-
-- Всегда используйте `frozen=True` для dataclasses
-- Предпочитайте `frozenset` вместо `set`
-- Используйте `types.MappingProxyType` для immutable mappings
-
-### 2. Type Safety
-
-- Всегда аннотируйте типы с `typing.Final`
-- Используйте `@typing.final` для классов, которые не должны наследоваться
-- Предпочитайте `kw_only=True` для dataclasses
-
-### 3. Performance
-
-- Используйте `slots=True` для dataclasses
-- Применяйте `ThreadPoolExecutor` для обработки множества файлов
-- Кэшируйте результаты парсинга
-
-### 4. Regex Patterns
-
-- Всегда используйте `settings.TYPICAL_RE_FLAGS`
-- Компилируйте паттерны как `typing.Final`
-- Избегайте конфликтов имен с `import re as py_re`
-
-### 5. Mermaid Generation
-
-- Стройте рёбра только через `mermaid_syntax.render_edge`, узел сервиса — `settings.SERVICE_NODE_ID`
-- Определение узла сервиса выводится ровно один раз, движком, первой строкой диаграммы
-- Не подставляйте в id узла сырые значения: DSN и подобное прогоняйте через `mermaid_syntax.render_node_id`
-- Проверяйте диаграммы в Mermaid Live Editor
-
-### 6. Testing Strategy
-
-- Используйте Hypothesis для property-based тестирования
-- Тестируйте edge cases (пустые строки, отсутствие паттернов)
-- Покрывайте все ветки кода
+- Предпочитаем end-to-end тесты через реальное приложение юнит-тестам на функцию
+- AAA, `@pytest.mark.parametrize` вместо копипасты, hypothesis для property-based кейсов
+- Покрываем edge cases: пустой ввод, отсутствие паттернов, чужие и отсутствующие каталоги
 
 ## Инструменты разработки
 
-### Основные команды
-
 ```bash
-# Установка зависимостей
-just install
-
-# Линтинг и форматирование
-just lint
-
-# Запуск тестов
-just test
-
-# Публикация пакета
+just install  # uv lock + uv sync
+just lint     # ruff, auto-typing-final, mypy, flake8 (WPS и COP)
+just test     # pytest
 just publish
 ```
 
-### Зависимости
-
-- **uv**: Управление зависимостями и виртуальными окружениями
-- **Ruff**: Линтинг и форматирование кода
-- **mypy**: Статическая проверка типов
-- **pytest**: Фреймворк для тестирования
-- **hypothesis**: Property-based тестирование
-- **wemake-python-styleguide**: Дополнительные правила линтинга (flake8-плагин WPS)
-- **community-of-python-flake8-plugin**: Правила стиля community-of-python (flake8-плагин COP)
-- **auto-typing-final**: Автоматическая простановка `typing.Final` на неизменяемые переменные
-
-## Примеры использования
-
-### FastAPI интеграция
-
-```python
-from fastapi import FastAPI
-from fastarch.integrations.fastapi import add_architecture_doc_routes
-from fastarch.main import SettingsForFastarch
-
-app = FastAPI()
-
-# Добавление маршрута архитектурной документации
-add_architecture_doc_routes(app, arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"))
-```
-
-### Litestar интеграция
-
-```python
-from litestar import Litestar
-from fastarch.integrations.litestar import add_architecture_doc_routes
-from fastarch.main import SettingsForFastarch
-
-app = Litestar()
-
-# Добавление маршрута архитектурной документации
-add_architecture_doc_routes(app, arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"))
-```
-
-### Кастомные настройки
-
-```python
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
-
-# Создание кастомного движка
-engine = ArchitectureParserAndRenderer(SettingsForFastarch(root_dir="/path/to/project", service_name="custom-service"))
-
-# Генерация диаграммы
-mermaid_diagram = engine.render_architecture_diagram()
-```
+Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
+community-of-python-flake8-plugin (COP), auto-typing-final.
 
 ## Roadmap и TODO
 
@@ -448,7 +96,3 @@ mermaid_diagram = engine.render_architecture_diagram()
 - [ ] Интерактивная схема с zoom и фильтрами
 - [ ] Анализ потоков данных и зависимостей
 - [ ] Интеграция с системами мониторинга
-
----
-
-Этот документ служит полным руководством для AI-агентов при работе с проектом fastarch. Следуйте указанным принципам и паттернам для обеспечения консистентности и качества кода.

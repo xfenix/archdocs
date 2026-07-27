@@ -10,6 +10,7 @@ AUTOSCALER_MANIFEST_KIND: typing.Final = "HorizontalPodAutoscaler"
 CHART_MARKER_FILE_NAME: typing.Final = "Chart.yaml"
 CHART_SEARCH_DIRS: typing.Final = ("deploy", "helm", "charts", ".helm")
 PARENT_LOOKUP_DEPTH: typing.Final = 3
+PROJECT_ROOT_MARKERS: typing.Final = (".git", "pyproject.toml", "setup.py", "setup.cfg")
 NESTED_LOOKUP_PREFIXES: typing.Final = ("", "*/", "*/*/", "*/*/*/")
 NESTED_LOOKUP_PATTERNS: typing.Final = tuple(
     f"{one_prefix}{CHART_MARKER_FILE_NAME}" for one_prefix in NESTED_LOOKUP_PREFIXES
