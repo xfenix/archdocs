@@ -56,15 +56,15 @@ omit = ["tests/fastapi/*"]
 exclude_also = ["if typing.TYPE_CHECKING:"]
 [dependency-groups]
 dev = [
-    "auto-typing-final>=0.7.2",
+    "auto-typing-final>=1.0.4",
     "community-of-python-flake8-plugin>=0.6.0",
-    "fastapi>=0.115.11",
-    "hypothesis>=6.137.1",
-    "litestar>=2.15.1",
-    "mypy>=1.15.0",
-    "pytest>=8.3.5",
-    "pytest-cov>=6.1.0",
-    "pytest-xdist>=3.6.1",
-    "ruff>=0.11.2",
-    "wemake-python-styleguide>=1.1.0",
+    "fastapi>=0.140.7",
+    "hypothesis>=6.161.8",
+    "litestar>=2.24.0",
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.16.0",
+    "wemake-python-styleguide>=1.7.0",
 ]
