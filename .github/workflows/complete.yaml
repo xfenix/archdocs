@@ -17,15 +17,3 @@ jobs:
     with:
       python-version: '["3.12","3.13"]'
     secrets: inherit
-
-  lint2:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: wemake-services/wemake-python-styleguide@1.7.0
-        with:
-          reporter: "github-pr-review"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -17,17 +17,8 @@ jobs:
         with:
           cache-dependency-glob: "**/pyproject.toml"
       - run: uv python install ${{ fromJSON(inputs.python-version)[0] }}
-      - run: just install lint-ci
-
-  lint2:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with: { persist-credentials: false }
-      - uses: wemake-services/wemake-python-styleguide@1.7.0
-        with: { reporter: "github-pr-review" }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: just install
+      - run: just lint check
 
   test:
     name: ${{matrix.os}}-${{matrix.python-version}}
@@ -45,7 +36,7 @@ jobs:
           cache-dependency-glob: "**/pyproject.toml"
       - run: uv python install ${{ matrix.python-version }}
       - run: just install
-      - run: just test . --cov=. --cov-report xml
+      - run: just test
       - uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -79,26 +79,23 @@ dataclass фич, `parser.py` с regex-парсингом, `renderer.py` с ре
 ## Инструменты разработки
 
 ```bash
-just install  # uv lock + uv sync
-just lint     # ruff, auto-typing-final, mypy, flake8 (WPS и COP)
-just test     # pytest
+just install     # uv lock + uv sync
+just lint        # ruff, auto-typing-final, mypy, flake8 (WPS и COP) с автоправками
+just lint check  # тот же список проверок без правок — так линтует пайплайн
+just test        # pytest
 just publish
 ```
 
 Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
 community-of-python-flake8-plugin (COP), auto-typing-final.
 
-Джоба `lint2` гоняет WPS не из dev-зависимостей: образ экшена
-`wemake-services/wemake-python-styleguide@1.1.0` несёт внутри WPS **1.0.0**, а `uv` ставит
-локально свежую версию. Метрики вроде Jones Complexity считаются по-разному, поэтому
-локально зелёный `just lint` не гарантирует зелёный `lint2`. Если джоба упала на коде,
-который локально проходит, проверяйтесь той же версией:
-
-```bash
-uv venv /tmp/wps10 --python 3.12
-VIRTUAL_ENV=/tmp/wps10 uv pip install 'flake8==7.3.0' 'wemake-python-styleguide==1.0.0'
-/tmp/wps10/bin/flake8 fastarch tests
-```
+Пайплайн не знает других команд, кроме `just`: джобы гоняют ровно `just install`,
+`just lint check` и `just test`. Набор проверок в `lint` один, режим `check` отличается
+только флагами `--check`/`--no-fix`, так что зелёный `just lint check` локально означает
+зелёный линт в CI. Версии линтеров приходят из dev-зависимостей и там, и там — WPS больше
+не запускается отдельным экшеном со своей вкомпилированной версией. Флаги покрытия живут в
+`addopts` в `pyproject.toml`, поэтому `coverage.xml` для codecov появляется и локально.
+Добавляя проверку, добавляйте её в `lint` — новых шагов в workflow быть не должно.
 
 ## Roadmap и TODO
 
