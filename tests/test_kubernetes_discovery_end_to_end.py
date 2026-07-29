@@ -11,12 +11,20 @@ from tests.served_page import render_architecture_page
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _CHART_RELATIVE_PATH: typing.Final = "deploy/mychart"
 _SOURCES_RELATIVE_PATH: typing.Final = "src"
-_SIBLING_CHART_VALUES: typing.Final = """replicaCount: 4
+_NEIGHBOUR_CHART_VALUES: typing.Final = """replicaCount: 4
 
 ingress:
   enabled: true
   hosts:
-    - host: sibling.example.com
+    - host: neighbour.example.com
+"""
+_RAW_INGRESS_MANIFEST: typing.Final = """apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mychart
+spec:
+  rules:
+    - host: from-templates.example.com
 """
 _DECOY_CHART_VALUES: typing.Final = """replicaCount: 9
 
@@ -32,7 +40,7 @@ def _build_project(
     /,
     *,
     chart_path: pathlib.Path | None = None,
-    chart_values: str = _SIBLING_CHART_VALUES,
+    chart_values: str = _NEIGHBOUR_CHART_VALUES,
 ) -> pathlib.Path:
     source_dir: typing.Final = project_path / _SOURCES_RELATIVE_PATH
     source_dir.mkdir(parents=True)
@@ -44,17 +52,27 @@ def _build_project(
     return source_dir
 
 
-@pytest.mark.parametrize("sources_subpath", [".", "one", "one/two"])
-def test_chart_found_next_to_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
-    expected_node: typing.Final = mermaid_syntax.render_service_node_definition("sibling-svc", ("replicas 4",)).strip()
+@pytest.mark.parametrize("sources_subpath", [".", "one"])
+def test_manifests_found_above_the_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
+    expected_node: typing.Final = mermaid_syntax.render_service_node_definition("above-svc", ("replicas 4",)).strip()
     response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
-            service_name="sibling-svc",
+            service_name="above-svc",
         ),
     )
-    assert "HTTP sibling.example.com" in response_text
+    assert "HTTP neighbour.example.com" in response_text
     assert expected_node in response_text
+
+
+def test_chart_found_by_its_templates(tmp_path: pathlib.Path) -> None:
+    templates_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH / "templates"
+    templates_dir.mkdir(parents=True)
+    (templates_dir / "ingress.yaml").write_text(_RAW_INGRESS_MANIFEST)
+    response_text: typing.Final = render_architecture_page(
+        SettingsForFastarch(root_dir=tmp_path, service_name="templates-svc"),
+    )
+    assert "HTTP from-templates.example.com" in response_text
 
 
 def test_explicit_dir_wins_over_lookup(tmp_path: pathlib.Path) -> None:
@@ -62,10 +80,10 @@ def test_explicit_dir_wins_over_lookup(tmp_path: pathlib.Path) -> None:
         SettingsForFastarch(
             root_dir=_build_project(tmp_path),
             service_name="explicit-svc",
-            helm_chart_dir=_TESTS_ROOT / "helm_variants" / "loadbalancer",
+            kubernetes_dir=_TESTS_ROOT / "kubernetes_variants" / "loadbalancer",
         ),
     )
-    assert "sibling.example.com" not in response_text
+    assert "neighbour.example.com" not in response_text
     assert "LoadBalancer" in response_text
 
 
@@ -77,31 +95,11 @@ def test_relative_dir_resolved_from_root_dir(tmp_path: pathlib.Path, monkeypatch
         SettingsForFastarch(
             root_dir=_build_project(tmp_path / "project"),
             service_name="relative-svc",
-            helm_chart_dir=_CHART_RELATIVE_PATH,
+            kubernetes_dir=_CHART_RELATIVE_PATH,
         ),
     )
-    assert "HTTP sibling.example.com" in response_text
+    assert "HTTP neighbour.example.com" in response_text
     assert "decoy.example.com" not in response_text
-
-
-@pytest.mark.parametrize(
-    ("project_subpath", "root_marker_name"),
-    [("project", "pyproject.toml"), ("one/two/three/four", "")],
-)
-def test_far_away_chart_is_never_picked(tmp_path: pathlib.Path, project_subpath: str, root_marker_name: str) -> None:
-    project_path: typing.Final = tmp_path / project_subpath
-    source_dir: typing.Final = _build_project(
-        project_path,
-        chart_path=tmp_path / _CHART_RELATIVE_PATH,
-        chart_values=_DECOY_CHART_VALUES,
-    )
-    if root_marker_name:
-        (project_path / root_marker_name).write_text("[project]\nname = 'neighbour'\n")
-    response_text: typing.Final = render_architecture_page(
-        SettingsForFastarch(root_dir=source_dir, service_name="far-svc"),
-    )
-    assert "decoy.example.com" not in response_text
-    assert mermaid_syntax.render_service_node_definition("far-svc").strip() in response_text
 
 
 def test_missing_explicit_dir_is_ignored(tmp_path: pathlib.Path) -> None:
@@ -109,8 +107,31 @@ def test_missing_explicit_dir_is_ignored(tmp_path: pathlib.Path) -> None:
         SettingsForFastarch(
             root_dir=_build_project(tmp_path),
             service_name="missing-svc",
-            helm_chart_dir=tmp_path / "there-is-no-such-chart",
+            kubernetes_dir=tmp_path / "there-is-no-such-chart",
         ),
     )
     assert mermaid_syntax.render_service_node_definition("missing-svc").strip() in response_text
-    assert "sibling.example.com" not in response_text
+    assert "neighbour.example.com" not in response_text
+
+
+# Two guards keep the lookup off a chart that belongs to somebody else: the repository the
+# sources live in, and the two levels the lookup is allowed to climb.
+@pytest.mark.parametrize(("project_subpath", "repository_marker"), [("project", ".git"), ("one/two/three", "")])
+def test_far_away_manifests_are_ignored(
+    tmp_path: pathlib.Path,
+    project_subpath: str,
+    repository_marker: str,
+) -> None:
+    project_path: typing.Final = tmp_path / project_subpath
+    source_dir: typing.Final = _build_project(
+        project_path,
+        chart_path=tmp_path / _CHART_RELATIVE_PATH,
+        chart_values=_DECOY_CHART_VALUES,
+    )
+    if repository_marker:
+        (project_path / repository_marker).mkdir()
+    response_text: typing.Final = render_architecture_page(
+        SettingsForFastarch(root_dir=source_dir, service_name="far-svc"),
+    )
+    assert "decoy.example.com" not in response_text
+    assert mermaid_syntax.render_service_node_definition("far-svc").strip() in response_text

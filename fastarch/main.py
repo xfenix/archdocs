@@ -20,7 +20,7 @@ parsers from docker-compose.yml?
 class SettingsForFastarch:
     root_dir: str | pathlib.Path
     service_name: str
-    helm_chart_dir: str | pathlib.Path | None = None
+    kubernetes_dir: str | pathlib.Path | None = None
 
 
 def _render_manifest_features(
@@ -94,7 +94,7 @@ class ArchitectureParserAndRenderer:
         node_annotations, manifest_diagram = _render_manifest_features(
             service_node_id,
             root_path,
-            self.local_settings.helm_chart_dir,
+            self.local_settings.kubernetes_dir,
         )
         all_edge_lines: typing.Final = _render_unique_edge_lines(
             manifest_diagram,

@@ -29,7 +29,31 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
 
-resources: {}
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    nvidia.com/gpu: 1
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    nvidia.com/gpu: 1
+
+envFrom:
+  - configMapRef:
+      name: app-config
+  - secretRef:
+      name: app-secrets
+
+volumes:
+  - name: tuning
+    configMap:
+      name: app-tuning
+
+persistence:
+  enabled: true
+  size: 10Gi
+
 nodeSelector: {}
 tolerations: []
 affinity: {}

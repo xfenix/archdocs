@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: helm-test-chart
+  name: kubernetes-test-chart
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
@@ -27,7 +27,7 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: helm-test-chart
+                name: kubernetes-test-chart
                 port:
                   number: 80
           {{- end }}

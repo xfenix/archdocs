@@ -22,11 +22,11 @@ _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
 _ALL_DIAGRAM_SETTINGS: typing.Final = (
     SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="fastapi-svc"),
     SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc"),
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "helm_fixtures", service_name="helm-svc"),
+    SettingsForFastarch(root_dir=_TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
     SettingsForFastarch(
         root_dir=_TESTS_ROOT / "litestar",
         service_name="merged-svc",
-        helm_chart_dir=_TESTS_ROOT / "helm_fixtures" / "chart",
+        kubernetes_dir=_TESTS_ROOT / "kubernetes_fixtures" / "chart",
     ),
 )
 

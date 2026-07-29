@@ -13,6 +13,10 @@ from tests.served_page import extract_diagram, render_architecture_page
 # be seen in the mermaid source. Expected ids are spelled out here on purpose: deriving
 # them with the code under test would assert nothing.
 _LITESTAR_ROOT: typing.Final = pathlib.Path(__file__).parent / "litestar"
+# The node label carries whatever the manifests say about the service, and the lookup climbs out
+# of `litestar/` into `tests/` where the fixture charts live. Pinning it to a manifest-less
+# directory keeps these expectations about ids and labels alone.
+_WITHOUT_MANIFESTS: typing.Final = _LITESTAR_ROOT / "src"
 _EDGE_ARROW: typing.Final = " --> "
 _SYMBOL_ONLY_NAME: typing.Final = "!!!"
 _EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{settings.SHIFT_LEFT}external_client["User/Client"]'
@@ -20,7 +24,13 @@ _EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{settings.SHIFT_LEFT}external_clie
 
 def _render_diagram(service_name: str) -> str:
     return extract_diagram(
-        render_architecture_page(SettingsForFastarch(root_dir=_LITESTAR_ROOT, service_name=service_name)),
+        render_architecture_page(
+            SettingsForFastarch(
+                root_dir=_LITESTAR_ROOT,
+                service_name=service_name,
+                kubernetes_dir=_WITHOUT_MANIFESTS,
+            ),
+        ),
     )
 
 
@@ -61,7 +71,11 @@ def test_external_client_is_labelled() -> None:
 
 def test_markup_characters_reach_mermaid_intact() -> None:
     page_html: typing.Final = render_architecture_page(
-        SettingsForFastarch(root_dir=_LITESTAR_ROOT, service_name="svc<b>&x"),
+        SettingsForFastarch(
+            root_dir=_LITESTAR_ROOT,
+            service_name="svc<b>&x",
+            kubernetes_dir=_WITHOUT_MANIFESTS,
+        ),
     )
     assert 'svc&lt;b>&amp;x"}' in page_html
     assert "svc<b>" not in page_html
