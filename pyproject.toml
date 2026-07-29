@@ -42,16 +42,17 @@ lines-after-imports = 2
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/*.py" = ["S101", "S311"]
+"scripts/*.py" = ["INP001"]
 
 [tool.mypy]
 exclude = ["tests/fastapi/", "tests/litestar/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=. --cov-report=term-missing --cov-report=xml"
+addopts = "--cov=. --cov-report=term-missing"
 
 [tool.coverage.run]
-omit = ["tests/fastapi/*"]
+omit = ["tests/fastapi/*", "scripts/*"]
 
 [tool.coverage.report]
 exclude_also = ["if typing.TYPE_CHECKING:"]
