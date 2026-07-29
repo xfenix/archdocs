@@ -10,12 +10,16 @@ lint mode="fix":
   @{{ assert(mode =~ '^(fix|check)$', "usage: just lint [fix|check]") }}true
   uv run ruff format {{ if mode == "check" { "--check" } else { "" } }}
   uv run ruff check {{ if mode == "check" { "--no-fix" } else { "--fix" } }}
-  uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} fastarch tests/*.py
+  uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} fastarch tests/*.py scripts/*.py
   uv run mypy .
   uv run flake8 --select=WPS,COP fastarch tests
 
 test *args:
   uv run --no-sync pytest {{ args }}
+
+# Html-отчёт покрытия для github pages и json бейджа для shields.io.
+coverage: (test "--cov-report=html" "--cov-report=json")
+  uv run --no-sync python scripts/generate-coverage-badge.py
 
 # Песочница: FastAPI-приложение, которое отдаёт страницы fastarch по примерам из tests/.
 # Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.

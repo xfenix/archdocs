@@ -1,0 +1,91 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_LATEST: "3.13"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          cache-dependency-glob: "**/pyproject.toml"
+      - run: uv python install ${{ env.PYTHON_LATEST }}
+      - run: just install
+      - run: just lint check
+
+  test:
+    name: ${{ matrix.os }}-${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          cache-dependency-glob: "**/pyproject.toml"
+      - run: uv python install ${{ matrix.python-version }}
+      - run: just install
+      - run: just test
+
+  coverage:
+    needs: [lint, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          cache-dependency-glob: "**/pyproject.toml"
+      - run: uv python install ${{ env.PYTHON_LATEST }}
+      - run: just install
+      - run: just coverage
+
+      - name: Push coverage badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/badges/coverage.json
+          git diff --cached --quiet || {
+            git commit -m "chore: обновление бейджа покрытия [skip ci]"
+            git pull --rebase --autostash
+            git push
+          }
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: htmlcov
+      - uses: actions/deploy-pages@v5
+        id: deployment
