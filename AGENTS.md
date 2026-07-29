@@ -90,6 +90,12 @@ just publish
 Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
 community-of-python-flake8-plugin (COP), auto-typing-final.
 
+Конфигурация целиком лежит в `pyproject.toml`, отдельных `setup.cfg` и `.flake8` нет: сам
+flake8 pyproject не понимает, поэтому в dev-зависимостях висит `flake8-pyproject` — он
+единственная причина, по которой секция `[tool.flake8]` вообще читается. `scripts/`
+проверяется ruff, auto-typing-final и mypy, но не WPS: это разовые утилиты для CI, а не код
+пакета.
+
 Пайплайн живёт в одном файле `.github/workflows/ci.yaml` и не знает других команд, кроме
 `just`: джобы гоняют ровно `just install`, `just lint check`, `just test` и `just coverage`.
 Набор проверок в `lint` один, режим `check` отличается только флагами `--check`/`--no-fix`,

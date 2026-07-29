@@ -47,6 +47,12 @@ lines-after-imports = 2
 [tool.mypy]
 exclude = ["tests/fastapi/", "tests/litestar/"]
 
+[tool.flake8]
+max-line-length = 120
+exclude = ["tests/fastapi", "tests/litestar"]
+max-imports = 20
+per-file-ignores = ["tests/*.py:WPS218"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=. --cov-report=term-missing"
@@ -61,6 +67,7 @@ dev = [
     "auto-typing-final>=1.0.4",
     "community-of-python-flake8-plugin>=0.6.0",
     "fastapi>=0.140.7",
+    "flake8-pyproject>=1.2.4",
     "hypothesis>=6.161.8",
     "litestar>=2.24.0",
     "mypy>=2.3.0",

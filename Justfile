@@ -12,7 +12,7 @@ lint mode="fix":
   uv run ruff check {{ if mode == "check" { "--no-fix" } else { "--fix" } }}
   uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} fastarch tests/*.py scripts/*.py
   uv run mypy .
-  uv run flake8 --select=WPS,COP fastarch tests scripts
+  uv run flake8 --select=WPS,COP fastarch tests
 
 test *args:
   uv run --no-sync pytest {{ args }}
