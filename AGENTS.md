@@ -88,6 +88,7 @@ just install     # uv lock + uv sync
 just lint        # ruff, auto-typing-final, mypy, flake8 (WPS и COP) с автоправками
 just lint check  # тот же список проверок без правок — так линтует пайплайн
 just test        # pytest
+just coverage    # тот же pytest + html-отчёт и json бейджа покрытия
 just playground  # песочница на 8000 порту, `just playground 9000` — на другом
 just publish
 ```
@@ -104,13 +105,33 @@ just publish
 Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
 community-of-python-flake8-plugin (COP), auto-typing-final.
 
-Пайплайн не знает других команд, кроме `just`: джобы гоняют ровно `just install`,
-`just lint check` и `just test`. Набор проверок в `lint` один, режим `check` отличается
-только флагами `--check`/`--no-fix`, так что зелёный `just lint check` локально означает
-зелёный линт в CI. Версии линтеров приходят из dev-зависимостей и там, и там — WPS больше
-не запускается отдельным экшеном со своей вкомпилированной версией. Флаги покрытия живут в
-`addopts` в `pyproject.toml`, поэтому `coverage.xml` для codecov появляется и локально.
+Конфигурация целиком лежит в `pyproject.toml`, отдельных `setup.cfg` и `.flake8` нет: сам
+flake8 pyproject не понимает, поэтому в dev-зависимостях висит `flake8-pyproject` — он
+единственная причина, по которой секция `[tool.flake8]` вообще читается. `scripts/`
+проверяется ruff, auto-typing-final и mypy, но не WPS: это разовые утилиты для CI, а не код
+пакета.
+
+Пайплайн живёт в одном файле `.github/workflows/ci.yaml` и не знает других команд, кроме
+`just`: джобы гоняют ровно `just install`, `just lint check`, `just test` и `just coverage`.
+Набор проверок в `lint` один, режим `check` отличается только флагами `--check`/`--no-fix`,
+так что зелёный `just lint check` локально означает зелёный линт в CI. Версии линтеров
+приходят из dev-зависимостей и там, и там — WPS больше не запускается отдельным экшеном со
+своей вкомпилированной версией. Флаги покрытия живут в `addopts` в `pyproject.toml`, а
+`coverage` докидывает дополнительные отчёты аргументами к тому же `test`.
 Добавляя проверку, добавляйте её в `lint` — новых шагов в workflow быть не должно.
+
+## Бейдж покрытия
+
+`just coverage` кладёт html-отчёт в `htmlcov/` и пишет `.github/badges/coverage.json` в
+[формате shields.io endpoint](https://shields.io/badges/endpoint-badge); пороги цвета —
+60% и 80%, см. `scripts/generate-coverage-badge.py`. Джоба `coverage` запускается только на
+push в `main`: коммитит обновлённый json обратно в репозиторий и публикует `htmlcov/` на
+github pages. Бейдж в README читает этот json через shields.io и ведёт на
+https://xfenix.github.io/fastarch/ — json это одно число, pages это подробности.
+
+Чтобы это заработало, в репозитории нужны Settings → Pages → Source = «GitHub Actions» и
+публичная видимость: приватному репозиторию `raw.githubusercontent.com` не отдаст json
+анонимному shields.io, а pages потребуют платный тариф.
 
 ## Roadmap и TODO
 
