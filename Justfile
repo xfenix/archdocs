@@ -17,6 +17,11 @@ lint mode="fix":
 test *args:
   uv run --no-sync pytest {{ args }}
 
+# Песочница: FastAPI-приложение, которое отдаёт страницы fastarch по примерам из tests/.
+# Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.
+playground port="8000":
+  uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir fastarch --reload-dir tests --port {{ port }}
+
 publish:
   rm -rf dist
   uv build

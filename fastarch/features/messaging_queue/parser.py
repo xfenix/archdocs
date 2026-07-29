@@ -7,17 +7,14 @@ from fastarch.features.messaging_queue import const
 
 
 _SUBSCRIBER_DECORATOR_RE: typing.Final = py_re.compile(r"@\w+\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS)
-_PRODUCER_DECORATOR_RE: typing.Final = py_re.compile(
-    r"@\w+\.producer\(",
+_PRODUCER_RE: typing.Final = py_re.compile(
+    r"(?:@\w+\.(?:publisher|producer)|\w+\.publish)\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
     {
         one_broker: py_re.compile(
-            (
-                r"\b(?:from\s+faststream(?:\s+import\s+|\."
-                rf"{one_broker.value}\s+import\s+)|import\s+faststream\.{one_broker.value}\b)"
-            ),
+            rf"\bfaststream\.{one_broker.value}\b",
             flags=settings.TYPICAL_RE_FLAGS,
         )
         for one_broker in const.BrokersEnum
@@ -34,7 +31,7 @@ def find_faststream_features(raw_source: str) -> const.MQFeatures:
         )
     return const.MQFeatures(
         consumers=bool(_SUBSCRIBER_DECORATOR_RE.search(raw_source)),
-        producers=bool(_PRODUCER_DECORATOR_RE.search(raw_source)),
+        producers=bool(_PRODUCER_RE.search(raw_source)),
         broker_names=[
             one_broker.value for one_broker, pattern in _BROKER_PATTERNS.items() if pattern.search(raw_source)
         ],
