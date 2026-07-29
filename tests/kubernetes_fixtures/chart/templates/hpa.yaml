@@ -2,12 +2,12 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: helm-test-chart
+  name: kubernetes-test-chart
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: helm-test-chart
+    name: kubernetes-test-chart
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

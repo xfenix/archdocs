@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stateful-app
+spec:
+  replicas: 2
+  serviceName: stateful-app
+  template:
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app
+          envFrom:
+            - secretRef:
+                name: stateful-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stateful-app
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080

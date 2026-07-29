@@ -10,18 +10,18 @@ from fastarch.main import SettingsForFastarch
 
 
 TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
-HELM_CHART_DIR: typing.Final = TESTS_ROOT / "helm_fixtures" / "chart"
+KUBERNETES_DIR: typing.Final = TESTS_ROOT / "kubernetes_fixtures" / "chart"
 PLAYGROUND_EXAMPLES: typing.Final = types.MappingProxyType(
     {
         "fastapi": SettingsForFastarch(
             root_dir=TESTS_ROOT / "fastapi",
             service_name="fastapi-example",
-            helm_chart_dir=HELM_CHART_DIR,
+            kubernetes_dir=KUBERNETES_DIR,
         ),
         "litestar": SettingsForFastarch(
             root_dir=TESTS_ROOT / "litestar",
             service_name="litestar-example",
-            helm_chart_dir=HELM_CHART_DIR,
+            kubernetes_dir=KUBERNETES_DIR,
         ),
     },
 )

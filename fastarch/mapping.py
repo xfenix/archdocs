@@ -6,13 +6,13 @@ import typing
 
 from fastarch.features.app_servers import parser as app_servers_parser
 from fastarch.features.app_servers import renderer as app_servers_renderer
-from fastarch.features.helm import discovery as helm_discovery
-from fastarch.features.helm import parser as helm_parser
-from fastarch.features.helm import renderer as helm_renderer
 from fastarch.features.http_api import parser as httpapi_parser
 from fastarch.features.http_api import renderer as httpapi_renderer
 from fastarch.features.http_clients import parser as http_clients_parser
 from fastarch.features.http_clients import renderer as http_clients_renderer
+from fastarch.features.kubernetes import discovery as kubernetes_discovery
+from fastarch.features.kubernetes import parser as kubernetes_parser
+from fastarch.features.kubernetes import renderer as kubernetes_renderer
 from fastarch.features.messaging_queue import parser as mq_parser
 from fastarch.features.messaging_queue import renderer as mq_renderer
 from fastarch.features.redis import parser as redis_parser
@@ -86,16 +86,16 @@ class _ManifestFeatureFunctions:
 
 @typing.final
 class AllCurrentManifestFeatures(enum.Enum):
-    helm_chart = 1
+    kubernetes = 1
 
 
 MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
     {
-        AllCurrentManifestFeatures.helm_chart: _ManifestFeatureFunctions(
-            read_source=helm_discovery.read_helm_chart_source,
-            parse_manifests=helm_parser.find_helm_features,
-            render_diagram=helm_renderer.render_helm_features,
-            render_node_annotations=helm_renderer.render_helm_node_annotations,
+        AllCurrentManifestFeatures.kubernetes: _ManifestFeatureFunctions(
+            read_source=kubernetes_discovery.read_kubernetes_manifests,
+            parse_manifests=kubernetes_parser.find_kubernetes_features,
+            render_diagram=kubernetes_renderer.render_kubernetes_features,
+            render_node_annotations=kubernetes_renderer.render_kubernetes_node_annotations,
         ),
     },
 )

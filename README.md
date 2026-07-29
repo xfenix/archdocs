@@ -68,13 +68,18 @@ fastarch scans your source code and automatically detects:
 * **Caching** — Redis (plain and sentinel connections)
 * **Messaging queues** — FastStream
 * **Task queues** — Celery, Taskiq, Arq, RQ, Dramatiq, Huey
-* **Kubernetes / Helm** — ingress hosts and TLS, service type, replica count and HPA range
+* **Kubernetes** — how the traffic gets in (ingress hosts and TLS, service type and port),
+  how the service scales (workload kind, replicas, HPA range and its CPU target), what it
+  is given (cpu, RAM and GPU requests and limits), how it is configured (ConfigMaps and
+  Secrets, as environment or as volumes) and what it persists (volume claims and their size)
 
-Helm charts are read straight from your repository, no `helm template` run and no extra
-dependency. The chart is found next to your code — inside `root_dir` or in the usual
-neighbour locations (`deploy/`, `helm/`, `charts/`, `.helm/`) — and never outside of the
-project `root_dir` belongs to. Set `helm_chart_dir` when your layout differs; a relative
-path is taken from `root_dir`, not from the working directory of the process:
+Kubernetes manifests are read straight from your repository, no `helm template` run and no
+extra dependency: both a Helm chart and a plain directory of manifests work, and templated
+`{{ ... }}` values are simply skipped in favour of what `values.yaml` says. They are looked
+up recursively under `root_dir` and, if nothing is there, a couple of directories above it —
+never outside of the repository your sources live in. Set `kubernetes_dir` when your layout
+differs; a relative path is taken from `root_dir`, not from the working directory of the
+process:
 
 ```python
 add_architecture_doc_routes(
@@ -82,7 +87,7 @@ add_architecture_doc_routes(
     arch_settings=SettingsForFastarch(
         root_dir="src/",
         service_name="my-service",
-        helm_chart_dir="deploy/my-chart/",
+        kubernetes_dir="deploy/my-chart/",
     ),
 )
 ```

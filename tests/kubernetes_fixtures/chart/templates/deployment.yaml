@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: helm-test-chart
+  name: kubernetes-test-chart
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      app: helm-test-chart
+      app: kubernetes-test-chart
   template:
     metadata:
       labels:
-        app: helm-test-chart
+        app: kubernetes-test-chart
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -22,5 +22,12 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/app
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        {{- toYaml .Values.volumes | nindent 8 }}
