@@ -8,9 +8,10 @@ from tests.playground import INDEX_PATH, PLAYGROUND_EXAMPLES, playground_app, re
 from tests.served_page import GOOD_HTTP_CODE, extract_diagram
 
 
-# The playground is the only place where every supported technology is shown at once, so the
-# example applications are held to that: whatever the package can detect has to be visible on
-# one of the served pages, otherwise a capability is shipped with nothing to look at.
+# The showcase example is the page the README screenshot is taken from, so it is held to the
+# whole list: whatever the package can detect has to be visible there, otherwise a capability
+# is shipped with nothing to look at.
+_SHOWCASE_EXAMPLE_NAME: typing.Final = "showcase"
 _REQUIRED_DIAGRAM_MARKS: typing.Final = (
     "REST",
     "httpx",
@@ -46,12 +47,8 @@ _REQUIRED_DIAGRAM_MARKS: typing.Final = (
 )
 
 
-def _render_every_diagram() -> str:
-    playground_client: typing.Final = TestClient(playground_app)
-    return "\n".join(
-        extract_diagram(playground_client.get(render_example_path(one_example_name)).text)
-        for one_example_name in PLAYGROUND_EXAMPLES
-    )
+def _render_showcase_diagram() -> str:
+    return extract_diagram(TestClient(playground_app).get(render_example_path(_SHOWCASE_EXAMPLE_NAME)).text)
 
 
 def test_index_links_every_example() -> None:
@@ -71,5 +68,5 @@ def test_example_page_serves_its_own_service(example_name: str) -> None:
 
 
 @pytest.mark.parametrize("feature_mark", _REQUIRED_DIAGRAM_MARKS)
-def test_examples_show_every_supported_feature(feature_mark: str) -> None:
-    assert py_re.search(rf"\b{feature_mark}\b", _render_every_diagram())
+def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
+    assert py_re.search(rf"\b{feature_mark}\b", _render_showcase_diagram())

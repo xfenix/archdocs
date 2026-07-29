@@ -10,7 +10,7 @@ dependencies = []
 fix = true
 unsafe-fixes = true
 line-length = 120
-exclude = ["tests/fastapi/src/*", "tests/litestar/src/*"]
+exclude = ["tests/fastapi/src/*", "tests/litestar/src/*", "tests/showcase/src/*"]
 
 [tool.ruff.format]
 quote-style = "preserve"
@@ -45,11 +45,11 @@ lines-after-imports = 2
 "scripts/*.py" = ["INP001"]
 
 [tool.mypy]
-exclude = ["tests/fastapi/", "tests/litestar/"]
+exclude = ["tests/fastapi/", "tests/litestar/", "tests/showcase/"]
 
 [tool.flake8]
 max-line-length = 120
-exclude = ["tests/fastapi", "tests/litestar"]
+exclude = ["tests/fastapi", "tests/litestar", "tests/showcase"]
 # Каждая фича добавляет в реестр mapping.py по паре импортов, парсер и рендерер.
 max-imports = 30
 per-file-ignores = ["tests/*.py:WPS218"]
