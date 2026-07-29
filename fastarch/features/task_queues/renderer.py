@@ -1,12 +1,23 @@
 import typing
 
-from fastarch import mermaid_syntax
+from fastarch import diagram_model
 from fastarch.features.task_queues.const import TaskQueueFeatures
 
 
-def render_task_queue_features(service_node_id: str, features_to_draw: TaskQueueFeatures, /) -> str:
+_TASK_WORKER_NODE: typing.Final = diagram_model.build_diagram_node(
+    "TaskQueue_Worker",
+    "Task workers",
+    diagram_model.NodeGroup.messaging_and_tasks,
+)
+
+
+def render_task_queue_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: TaskQueueFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.queues_used:
-        return ""
+        return ()
 
     properties_on_arrow: typing.Final = ", ".join(
         filter(
@@ -19,4 +30,10 @@ def render_task_queue_features(service_node_id: str, features_to_draw: TaskQueue
         ),
     )
 
-    return mermaid_syntax.render_edge(service_node_id, f"Tasks ({properties_on_arrow})", "TaskQueue_Worker")
+    return (
+        diagram_model.DiagramEdge(
+            source_node=service_node,
+            target_node=_TASK_WORKER_NODE,
+            edge_label=f"Tasks ({properties_on_arrow})",
+        ),
+    )

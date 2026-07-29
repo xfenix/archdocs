@@ -19,7 +19,9 @@ _LITESTAR_ROOT: typing.Final = pathlib.Path(__file__).parent / "litestar"
 _WITHOUT_MANIFESTS: typing.Final = _LITESTAR_ROOT / "src"
 _EDGE_ARROW: typing.Final = " --> "
 _SYMBOL_ONLY_NAME: typing.Final = "!!!"
-_EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{settings.SHIFT_LEFT}external_client["User/Client"]'
+_INBOUND_GROUP_OPENING: typing.Final = f'{settings.SHIFT_LEFT}subgraph group_inbound_api["Inbound API"]'
+_GROUPED_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 2
+_EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{_GROUPED_SHIFT_LEFT}external_client["User/Client"]'
 
 
 def _render_diagram(service_name: str) -> str:
@@ -61,10 +63,11 @@ def test_node_id_falls_back_for_symbol_name() -> None:
     assert any(settings.FALLBACK_SERVICE_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)
 
 
-def test_external_client_is_labelled() -> None:
+def test_external_client_sits_in_its_group() -> None:
     all_lines: typing.Final = _render_diagram("client-svc").split("\n")
     all_edge_lines: typing.Final = _extract_edge_lines(all_lines)
-    assert all_lines[1] == _EXTERNAL_CLIENT_DEFINITION
+    assert all_lines[1] == _INBOUND_GROUP_OPENING
+    assert all_lines[2] == _EXTERNAL_CLIENT_DEFINITION
     assert settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA not in "\n".join(all_edge_lines)
     assert any(settings.EXTERNAL_CLIENT_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)
 

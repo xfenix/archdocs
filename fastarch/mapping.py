@@ -4,6 +4,7 @@ import pathlib
 import types
 import typing
 
+from fastarch import diagram_model
 from fastarch.features.app_servers import parser as app_servers_parser
 from fastarch.features.app_servers import renderer as app_servers_renderer
 from fastarch.features.http_api import parser as httpapi_parser
@@ -27,7 +28,7 @@ from fastarch.features.task_queues import renderer as task_queues_renderer
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _FeatureFunctions:
     parse_source: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[str, typing.Any], str]
+    render_diagram: typing.Callable[[diagram_model.DiagramNode, typing.Any], tuple[diagram_model.DiagramEdge, ...]]
 
 
 @typing.final
@@ -77,10 +78,10 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class _ManifestFeatureFunctions:
+class ManifestFeatureFunctions:
     read_source: typing.Callable[[pathlib.Path, str | pathlib.Path | None], str]
     parse_manifests: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[str, typing.Any], str]
+    render_diagram: typing.Callable[[diagram_model.DiagramNode, typing.Any], tuple[diagram_model.DiagramEdge, ...]]
     render_node_annotations: typing.Callable[[typing.Any], tuple[str, ...]]
 
 
@@ -91,7 +92,7 @@ class AllCurrentManifestFeatures(enum.Enum):
 
 MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
     {
-        AllCurrentManifestFeatures.kubernetes: _ManifestFeatureFunctions(
+        AllCurrentManifestFeatures.kubernetes: ManifestFeatureFunctions(
             read_source=kubernetes_discovery.read_kubernetes_manifests,
             parse_manifests=kubernetes_parser.find_kubernetes_features,
             render_diagram=kubernetes_renderer.render_kubernetes_features,

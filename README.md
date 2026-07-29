@@ -96,8 +96,9 @@ How it looks
 ===
 fastarch renders your architecture as an interactive Mermaid diagram served
 directly from your application. The page shows your service as the central node
-with edges to every detected dependency: incoming REST clients, outgoing HTTP
-calls, databases, caches, message brokers and task queues.
+with edges to every detected dependency, and those dependencies are boxed by the
+role they play: inbound API, outbound calls, messaging and tasks, data stores and
+configuration.
 
 <img src="./screenshot.png" alt="architecture page served by fastarch" width="900"/>
 

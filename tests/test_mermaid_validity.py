@@ -19,6 +19,7 @@ _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_]+$")
 _EDGE_PATTERN: typing.Final = py_re.compile(r"^(?P<source>\S+)\s+-->\s+(?:\|(?P<label>.*)\|\s+)?(?P<target>\S+)$")
 _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
+_GROUP_CLOSING_LINE: typing.Final = "end"
 _ALL_DIAGRAM_SETTINGS: typing.Final = (
     SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="fastapi-svc"),
     SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc"),
@@ -46,9 +47,12 @@ def test_no_id_less_node_or_reverse_arrow(arch_settings: SettingsForFastarch) ->
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
 def test_lines_are_indented_and_unique(arch_settings: SettingsForFastarch) -> None:
     all_lines: typing.Final = _render(arch_settings).split("\n")
+    # Every group ends with the same `end` keyword, so only the lines that carry content
+    # are held to uniqueness.
+    all_content_lines: typing.Final = [one_line for one_line in all_lines if one_line.strip() != _GROUP_CLOSING_LINE]
     assert all(one_line.startswith(settings.SHIFT_LEFT) for one_line in all_lines)
     assert all(one_line.count(" --> ") <= 1 for one_line in all_lines)
-    assert len(all_lines) == len(set(all_lines))
+    assert len(all_content_lines) == len(set(all_content_lines))
 
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)

@@ -1,7 +1,7 @@
 import re as py_re
 import typing
 
-from fastarch import mermaid_syntax, settings
+from fastarch import diagram_model, settings
 from fastarch.features.sqlalchemy.const import SQLAlchemyFeatures
 
 
@@ -13,17 +13,27 @@ def _render_masked_dsn(raw_database_type: str) -> str:
     return _DSN_CREDENTIALS_PATTERN.sub("://***@", raw_database_type)
 
 
-def _render_database_node_id(raw_database_type: str, host_suffix: int | str) -> str:
+def _render_database_scheme(raw_database_type: str) -> str:
     scheme_match: typing.Final = _DSN_SCHEME_PATTERN.search(raw_database_type)
-    return (
-        f"{mermaid_syntax.render_node_id(scheme_match.group() if scheme_match else raw_database_type)}db{host_suffix}"
+    return scheme_match.group() if scheme_match else raw_database_type
+
+
+def _build_database_node(raw_database_type: str, host_suffix: int | str) -> diagram_model.DiagramNode:
+    database_scheme: typing.Final = _render_database_scheme(raw_database_type)
+    return diagram_model.build_diagram_node(
+        f"{diagram_model.render_node_id(database_scheme)}db{host_suffix}",
+        database_scheme if host_suffix == "" else f"{database_scheme} #{host_suffix}",
+        diagram_model.NodeGroup.data_stores,
     )
 
 
-def render_sqlalchemy_features(service_node_id: str, features_to_draw: SQLAlchemyFeatures, /) -> str:
+def render_sqlalchemy_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: SQLAlchemyFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.database_type:
-        return ""
-    diagram_parts: typing.Final[list[str]] = []
+        return ()
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,
@@ -37,13 +47,14 @@ def render_sqlalchemy_features(service_node_id: str, features_to_draw: SQLAlchem
     connections_number: typing.Final = (
         settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION if features_to_draw.pooling_used else 1
     )
-    for one_counter in range(connections_number):
-        host_suffix = one_counter if features_to_draw.multiple_hosts else ""
-        diagram_parts.append(
-            mermaid_syntax.render_edge(
-                service_node_id,
-                properties_on_arrow,
-                _render_database_node_id(features_to_draw.database_type, host_suffix),
+    return tuple(
+        diagram_model.DiagramEdge(
+            source_node=service_node,
+            target_node=_build_database_node(
+                features_to_draw.database_type,
+                one_counter if features_to_draw.multiple_hosts else "",
             ),
+            edge_label=properties_on_arrow,
         )
-    return "\n".join(diagram_parts)
+        for one_counter in range(connections_number)
+    )

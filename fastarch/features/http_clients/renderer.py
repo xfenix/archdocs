@@ -1,12 +1,23 @@
 import typing
 
-from fastarch import mermaid_syntax
+from fastarch import diagram_model
 from fastarch.features.http_clients.const import HttpClientFeatures
 
 
-def render_http_client_features(service_node_id: str, features_to_draw: HttpClientFeatures, /) -> str:
+_EXTERNAL_API_NODE: typing.Final = diagram_model.build_diagram_node(
+    "External_API",
+    "External API",
+    diagram_model.NodeGroup.outbound_calls,
+)
+
+
+def render_http_client_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: HttpClientFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.has_external_calls or not features_to_draw.clients_used:
-        return ""
+        return ()
 
     properties_on_arrow: typing.Final = ", ".join(
         filter(
@@ -18,4 +29,10 @@ def render_http_client_features(service_node_id: str, features_to_draw: HttpClie
         ),
     )
 
-    return mermaid_syntax.render_edge(service_node_id, f"HTTP ({properties_on_arrow})", "External_API")
+    return (
+        diagram_model.DiagramEdge(
+            source_node=service_node,
+            target_node=_EXTERNAL_API_NODE,
+            edge_label=f"HTTP ({properties_on_arrow})",
+        ),
+    )

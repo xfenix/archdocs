@@ -1,13 +1,27 @@
 import typing
 
-from fastarch import mermaid_syntax, settings
+from fastarch import diagram_model, settings
 from fastarch.features.redis.const import RedisFeatures
 
 
-def render_redis_features(service_node_id: str, features_to_draw: RedisFeatures, /) -> str:
+_REDIS_NODE_LABEL: typing.Final = "redis"
+
+
+def _build_redis_node(node_suffix: int | str, /) -> diagram_model.DiagramNode:
+    return diagram_model.build_diagram_node(
+        f"redisdb{node_suffix}",
+        _REDIS_NODE_LABEL if node_suffix == "" else f"{_REDIS_NODE_LABEL} #{node_suffix}",
+        diagram_model.NodeGroup.data_stores,
+    )
+
+
+def render_redis_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: RedisFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.connection_type and not features_to_draw.async_used and not features_to_draw.retry_used:
-        return ""
-    diagram_parts: typing.Final[list[str]] = []
+        return ()
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,
@@ -18,9 +32,11 @@ def render_redis_features(service_node_id: str, features_to_draw: RedisFeatures,
             ],
         ),
     )
-    for one_counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION):
-        db_suffix = one_counter if features_to_draw.cluster_or_sentinel else ""
-        diagram_parts.append(
-            mermaid_syntax.render_edge(service_node_id, properties_on_arrow, f"redisdb{db_suffix}"),
+    return tuple(
+        diagram_model.DiagramEdge(
+            source_node=service_node,
+            target_node=_build_redis_node(one_counter if features_to_draw.cluster_or_sentinel else ""),
+            edge_label=properties_on_arrow,
         )
-    return "\n".join(diagram_parts)
+        for one_counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION)
+    )
