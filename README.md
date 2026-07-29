@@ -62,6 +62,8 @@ Supported technologies
 ===
 fastarch scans your source code and automatically detects:
 * **HTTP endpoints** — FastAPI and Litestar routes (incoming REST methods)
+* **Application servers** — granian, uvicorn, gunicorn (including its worker class), hypercorn,
+  daphne, waitress and the rest of the ASGI/WSGI family, with worker count, port, TLS and HTTP/2
 * **HTTP clients** — httpx, aiohttp, requests, niquests (outgoing calls)
 * **Databases** — SQLAlchemy (async engines, pooling, PostgreSQL/asyncpg, and more)
 * **Caching** — Redis (plain and sentinel connections)

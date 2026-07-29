@@ -34,6 +34,9 @@ _REQUIRED_DIAGRAM_MARKS: typing.Final = (
     "sqlite",
     "replicas",
     "HPA",
+    "granian",
+    "gunicorn",
+    "uvicorn",
 )
 
 

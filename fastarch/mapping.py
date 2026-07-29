@@ -4,6 +4,8 @@ import pathlib
 import types
 import typing
 
+from fastarch.features.app_servers import parser as app_servers_parser
+from fastarch.features.app_servers import renderer as app_servers_renderer
 from fastarch.features.helm import discovery as helm_discovery
 from fastarch.features.helm import parser as helm_parser
 from fastarch.features.helm import renderer as helm_renderer
@@ -36,6 +38,7 @@ class AllCurrentFeatures(enum.Enum):
     redis_cache = 4
     http_clients = 5
     task_queues = 6
+    app_servers = 7
 
 
 MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
@@ -63,6 +66,10 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
         AllCurrentFeatures.task_queues: _FeatureFunctions(
             parse_source=task_queues_parser.find_task_queue_features,
             render_diagram=task_queues_renderer.render_task_queue_features,
+        ),
+        AllCurrentFeatures.app_servers: _FeatureFunctions(
+            parse_source=app_servers_parser.find_application_server_features,
+            render_diagram=app_servers_renderer.render_application_server_features,
         ),
     },
 )
