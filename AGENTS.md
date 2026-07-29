@@ -103,7 +103,7 @@ community-of-python-flake8-plugin (COP), auto-typing-final.
 
 `just coverage` кладёт html-отчёт в `htmlcov/` и пишет `.github/badges/coverage.json` в
 [формате shields.io endpoint](https://shields.io/badges/endpoint-badge); пороги цвета —
-60% и 80%, см. `scripts/generate_coverage_badge.py`. Джоба `coverage` запускается только на
+60% и 80%, см. `scripts/generate-coverage-badge.py`. Джоба `coverage` запускается только на
 push в `main`: коммитит обновлённый json обратно в репозиторий и публикует `htmlcov/` на
 github pages. Бейдж в README читает этот json через shields.io и ведёт на
 https://xfenix.github.io/fastarch/ — json это одно число, pages это подробности.

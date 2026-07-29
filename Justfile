@@ -19,7 +19,7 @@ test *args:
 
 # Html-отчёт покрытия для github pages и json бейджа для shields.io.
 coverage: (test "--cov-report=html" "--cov-report=json")
-  uv run --no-sync python scripts/generate_coverage_badge.py
+  uv run --no-sync python scripts/generate-coverage-badge.py
 
 publish:
   rm -rf dist
