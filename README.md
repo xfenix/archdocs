@@ -98,3 +98,17 @@ fastarch renders your architecture as an interactive Mermaid diagram served
 directly from your application. The page shows your service as the central node
 with edges to every detected dependency: incoming REST clients, outgoing HTTP
 calls, databases, caches, message brokers and task queues.
+
+<img src="./screenshot.png" alt="architecture page served by fastarch" width="900"/>
+
+The screenshot above is the page of `tests/showcase`, an example application that
+uses everything from the list above at once, taken as the browser draws it. That
+example and its FastAPI and Litestar neighbours are served by the playground, so
+you can click through the same pages yourself:
+
+```shell
+just playground
+```
+
+It starts on <a href="http://127.0.0.1:8000/">127.0.0.1:8000</a> and lists every
+example it serves.

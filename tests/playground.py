@@ -23,6 +23,11 @@ PLAYGROUND_EXAMPLES: typing.Final = types.MappingProxyType(
             service_name="litestar-example",
             kubernetes_dir=KUBERNETES_DIR,
         ),
+        "showcase": SettingsForFastarch(
+            root_dir=TESTS_ROOT / "showcase",
+            service_name="showcase-service",
+            kubernetes_dir=KUBERNETES_DIR,
+        ),
     },
 )
 INDEX_PATH: typing.Final = "/"
