@@ -20,20 +20,20 @@ def choose_badge_color(coverage_percent: float) -> str:
     return GOOD_COVERAGE_COLOR
 
 
-def read_coverage_percent() -> float:
-    return float(json.loads(COVERAGE_REPORT_PATH.read_text())["totals"]["percent_covered"])
+def read_coverage_display() -> str:
+    return str(json.loads(COVERAGE_REPORT_PATH.read_text())["totals"]["percent_covered_display"])
 
 
 def build_badge_file() -> None:
-    coverage_percent: typing.Final = read_coverage_percent()
+    coverage_display: typing.Final = read_coverage_display()
     BADGE_TARGET_PATH.parent.mkdir(parents=True, exist_ok=True)
     BADGE_TARGET_PATH.write_text(
         json.dumps(
             {
                 "schemaVersion": 1,
                 "label": "coverage",
-                "message": f"{coverage_percent:.0f}%",
-                "color": choose_badge_color(coverage_percent),
+                "message": f"{coverage_display}%",
+                "color": choose_badge_color(float(coverage_display)),
             },
             indent=2,
         )
