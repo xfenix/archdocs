@@ -107,7 +107,10 @@ community-of-python-flake8-plugin (COP), auto-typing-final.
 
 Конфигурация целиком лежит в `pyproject.toml`, отдельных `setup.cfg` и `.flake8` нет: сам
 flake8 pyproject не понимает, поэтому в dev-зависимостях висит `flake8-pyproject` — он
-единственная причина, по которой секция `[tool.flake8]` вообще читается. `scripts/`
+единственная причина, по которой секция `[tool.flake8]` вообще читается. По той же логике
+в dev-зависимостях лежит `httpx2`, который никто не импортирует: `TestClient` из starlette
+берёт его сам, если он установлен, а без него ругается на устаревший `httpx` (тот приезжает
+транзитивно из litestar и нужен его собственному `TestClient`). `scripts/`
 проверяется ruff, auto-typing-final и mypy, но не WPS: это разовые утилиты для CI, а не код
 пакета.
 
