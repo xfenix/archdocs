@@ -7,7 +7,12 @@ install:
 # Один список проверок на локалку и на пайплайн: `just lint` правит код на месте,
 # `just lint check` тот же список только проверяет — этот режим и гоняет CI.
 lint mode="fix":
-  @{{ assert(mode =~ '^(fix|check)$', "usage: just lint [fix|check]") }}true
+  #!/usr/bin/env sh
+  set -e
+  case "{{ mode }}" in
+    fix|check) ;;
+    *) echo "usage: just lint [fix|check]" && exit 1 ;;
+  esac
   uv run ruff format {{ if mode == "check" { "--check" } else { "" } }}
   uv run ruff check {{ if mode == "check" { "--no-fix" } else { "--fix" } }}
   uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} fastarch tests/*.py scripts/*.py

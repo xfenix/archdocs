@@ -56,7 +56,7 @@ per-file-ignores = ["tests/*.py:WPS218"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=. --cov-report=term-missing"
+addopts = "-n auto --cov=. --cov-report=term-missing"
 
 [tool.coverage.run]
 omit = ["tests/fastapi/*", "scripts/*"]
