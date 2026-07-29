@@ -47,7 +47,8 @@ lines-after-imports = 2
 exclude = ["tests/fastapi/", "tests/litestar/"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=. --cov-report=term-missing"
+testpaths = ["tests"]
+addopts = "--cov=. --cov-report=term-missing --cov-report=xml"
 
 [tool.coverage.run]
 omit = ["tests/fastapi/*"]
