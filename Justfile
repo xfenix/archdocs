@@ -21,6 +21,11 @@ test *args:
 coverage: (test "--cov-report=html" "--cov-report=json")
   uv run --no-sync python scripts/generate-coverage-badge.py
 
+# Песочница: FastAPI-приложение, которое отдаёт страницы fastarch по примерам из tests/.
+# Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.
+playground port="8000":
+  uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir fastarch --reload-dir tests --port {{ port }}
+
 publish:
   rm -rf dist
   uv build

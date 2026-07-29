@@ -31,6 +31,8 @@ fastarch/
 ├── mermaid_syntax.py
 └── settings.py
 tests/             # End-to-end тесты через реальное приложение + фикстуры чартов
+├── fastapi/, litestar/  # Примеры приложений: и вход для тестов, и то, что видно в песочнице
+└── playground.py        # Песочница: `just playground`
 ```
 
 Новая фича — это новый каталог в `features/` по образцу соседнего (`const.py` с
@@ -75,6 +77,9 @@ dataclass фич, `parser.py` с regex-парсингом, `renderer.py` с ре
   не проверяют ничего
 - AAA, `@pytest.mark.parametrize` вместо копипасты, hypothesis для property-based кейсов
 - Покрываем edge cases: пустой ввод, отсутствие паттернов, чужие и отсутствующие каталоги
+- Новая поддержанная технология доезжает до примеров в `tests/fastapi` и `tests/litestar`:
+  `tests/test_playground.py` требует, чтобы каждая возможность была видна хотя бы на одной
+  странице песочницы. Дублировать её в обоих примерах не нужно — они делят набор пополам
 
 ## Инструменты разработки
 
@@ -84,8 +89,18 @@ just lint        # ruff, auto-typing-final, mypy, flake8 (WPS и COP) с авт�
 just lint check  # тот же список проверок без правок — так линтует пайплайн
 just test        # pytest
 just coverage    # тот же pytest + html-отчёт и json бейджа покрытия
+just playground  # песочница на 8000 порту, `just playground 9000` — на другом
 just publish
 ```
+
+`just playground` поднимает `tests/playground.py` — FastAPI-приложение, которое отдаёт
+страницы fastarch по тем же примерам из `tests/`, что и тесты. Отдельных приложений под
+песочницу нет специально: пример, на который смотрят глазами, и пример, по которому
+падает тест, должны быть одним и тем же кодом. Диаграмма кэшируется на процесс
+(`ArchitectureParserAndRenderer._cache`), поэтому свежий результат даёт не F5, а
+перезапуск от `--reload`: uvicorn следит за `fastarch/` и `tests/`, так что правка
+пакета или примера видна на странице через пару секунд. Тестами это не заменяется —
+`just test` остаётся первым способом проверить поведение.
 
 Зависимости разработки: uv, ruff, mypy, pytest, hypothesis, wemake-python-styleguide (WPS),
 community-of-python-flake8-plugin (COP), auto-typing-final.
