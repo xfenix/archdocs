@@ -67,5 +67,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.16.0",
+    "uvicorn>=0.52.0",
+    "watchfiles>=1.2.0",
     "wemake-python-styleguide>=1.7.0",
 ]

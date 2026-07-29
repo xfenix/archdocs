@@ -2,19 +2,17 @@
 
 import typing
 
-from redis import Redis
-from redis.sentinel import Sentinel
+import redis
+from redis.backoff import ExponentialBackoff
 
 
-redis_client: typing.Final = Redis(
+redis_client: typing.Final = redis.Redis(
     host="localhost",
     port=6379,
     db=0,
     decode_responses=True,
+    retry=redis.Retry(ExponentialBackoff(), 3),
 )
-
-sentinel_client: typing.Final = Sentinel([("localhost", 26379)])
-sentinel_master: typing.Final = sentinel_client.master_for("mymaster")
 
 
 async def get_cached_value(key: str) -> str | None:
