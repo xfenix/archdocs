@@ -1,49 +1,75 @@
-import re as py_re
 import typing
 
 from fastarch import settings
+from fastarch.diagram_model import DiagramEdge, DiagramNode, NodeGroup, build_service_node
 
 
 _DOUBLE_QUOTE: typing.Final = '"'
-_UNSAFE_NODE_ID_PATTERN: typing.Final = py_re.compile(r"[^A-Za-z0-9_]+")
-_PLAIN_NODE_TEMPLATE: typing.Final = '{defined_node_id}["{node_label}"]'
-_SERVICE_NODE_TEMPLATE: typing.Final = '{defined_node_id}{{"{node_label}"}}'
-
-
-def render_node_id(raw_node_name: str) -> str:
-    return _UNSAFE_NODE_ID_PATTERN.sub("_", raw_node_name).strip("_")
+_GROUP_OPENING_TEMPLATE: typing.Final = 'subgraph group_{group_name}["{group_title}"]'
+_GROUP_CLOSING_LINE: typing.Final = "end"
 
 
 def render_service_node_id(service_name: str) -> str:
-    return render_node_id(service_name) or settings.FALLBACK_SERVICE_NODE_ID
+    return build_service_node(service_name).defined_node_id
 
 
 def render_edge_label(raw_label: str) -> str:
     return f'|"{raw_label.replace(_DOUBLE_QUOTE, "")}"|'
 
 
-def render_edge(source_node: str, raw_label: str, target_node: str, /) -> str:
-    edge_beginning: typing.Final = f"{settings.SHIFT_LEFT}{source_node} -->"
-    if not raw_label:
-        return f"{edge_beginning} {target_node}"
-    return f"{edge_beginning} {render_edge_label(raw_label)} {target_node}"
+def render_edge(one_edge: DiagramEdge, /) -> str:
+    source_node_id: typing.Final = one_edge.source_node.defined_node_id
+    target_node_id: typing.Final = one_edge.target_node.defined_node_id
+    if not one_edge.edge_label:
+        return f"{settings.SHIFT_LEFT}{source_node_id} --> {target_node_id}"
+    return f"{settings.SHIFT_LEFT}{source_node_id} --> {render_edge_label(one_edge.edge_label)} {target_node_id}"
 
 
-def _render_node(defined_node_id: str, raw_node_label: str, node_template: str, /) -> str:
-    return settings.SHIFT_LEFT + node_template.format(
-        defined_node_id=defined_node_id,
-        node_label=raw_node_label.replace(_DOUBLE_QUOTE, ""),
+def render_node_definition(one_node: DiagramNode, /) -> str:
+    return settings.SHIFT_LEFT + one_node.node_shape.value.format(
+        defined_node_id=one_node.defined_node_id,
+        node_label=one_node.node_label.replace(_DOUBLE_QUOTE, ""),
     )
 
 
-def render_node_definition(defined_node_id: str, raw_node_label: str, /) -> str:
-    return _render_node(defined_node_id, raw_node_label, _PLAIN_NODE_TEMPLATE)
-
-
 def render_service_node_definition(service_name: str, node_annotations: typing.Iterable[str] = ()) -> str:
-    joined_annotations: typing.Final = ", ".join(filter(None, node_annotations))
-    return _render_node(
-        render_service_node_id(service_name),
-        f"{service_name} ({joined_annotations})" if joined_annotations else service_name,
-        _SERVICE_NODE_TEMPLATE,
+    return render_node_definition(build_service_node(service_name, node_annotations))
+
+
+def _render_group_lines(node_group: NodeGroup, all_nodes: tuple[DiagramNode, ...], /) -> tuple[str, ...]:
+    grouped_nodes: typing.Final = tuple(one_node for one_node in all_nodes if one_node.node_group is node_group)
+    if not grouped_nodes:
+        return ()
+    group_opening: typing.Final = _GROUP_OPENING_TEMPLATE.format(
+        group_name=node_group.name,
+        group_title=node_group.value,
+    )
+    return (
+        settings.SHIFT_LEFT + group_opening,
+        *(settings.SHIFT_LEFT + render_node_definition(one_node) for one_node in grouped_nodes),
+        settings.SHIFT_LEFT + _GROUP_CLOSING_LINE,
+    )
+
+
+def render_definition_lines(service_node: DiagramNode, all_edges: tuple[DiagramEdge, ...], /) -> tuple[str, ...]:
+    all_nodes: typing.Final = tuple(
+        {
+            one_node.defined_node_id: one_node
+            for one_node in (
+                service_node,
+                *(
+                    one_edge_end
+                    for one_edge in all_edges
+                    for one_edge_end in (one_edge.source_node, one_edge.target_node)
+                ),
+            )
+        }.values(),
+    )
+    return (
+        *(render_node_definition(one_node) for one_node in all_nodes if one_node.node_group is None),
+        *(
+            one_group_line
+            for one_node_group in NodeGroup
+            for one_group_line in _render_group_lines(one_node_group, all_nodes)
+        ),
     )

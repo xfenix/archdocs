@@ -1,6 +1,6 @@
 import typing
 
-from fastarch import mermaid_syntax, settings
+from fastarch import diagram_model
 from fastarch.features.app_servers.const import ApplicationServerFeatures
 
 
@@ -15,9 +15,13 @@ def _render_workers_label(workers_count: int, /) -> str:
     return f"{workers_count} workers"
 
 
-def render_application_server_features(service_node_id: str, features_to_draw: ApplicationServerFeatures, /) -> str:
+def render_application_server_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: ApplicationServerFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.servers_used:
-        return ""
+        return ()
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,
@@ -30,8 +34,10 @@ def render_application_server_features(service_node_id: str, features_to_draw: A
             ],
         ),
     )
-    return mermaid_syntax.render_edge(
-        settings.EXTERNAL_CLIENT_NODE_ID,
-        f"Served by {properties_on_arrow}",
-        service_node_id,
+    return (
+        diagram_model.DiagramEdge(
+            source_node=diagram_model.EXTERNAL_CLIENT_NODE,
+            target_node=service_node,
+            edge_label=f"Served by {properties_on_arrow}",
+        ),
     )

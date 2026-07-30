@@ -1,19 +1,38 @@
 import typing
 
-from fastarch import mermaid_syntax
+from fastarch import diagram_model
 from fastarch.features.messaging_queue.const import MQFeatures
 
 
-def render_mq_features(service_node_id: str, features_to_draw: MQFeatures, /) -> str:
-    diagram_parts: typing.Final[list[str]] = []
-    diagram_parts.extend(
-        mermaid_syntax.render_edge(mermaid_syntax.render_node_id(one_broker), "MQ", service_node_id)
+_MQ_EDGE_LABEL: typing.Final = "MQ"
+
+
+def _build_broker_node(one_broker: str, /) -> diagram_model.DiagramNode:
+    return diagram_model.build_diagram_node(one_broker, one_broker, diagram_model.NodeGroup.messaging_and_tasks)
+
+
+def render_mq_features(
+    service_node: diagram_model.DiagramNode,
+    features_to_draw: MQFeatures,
+    /,
+) -> tuple[diagram_model.DiagramEdge, ...]:
+    all_edges: typing.Final[list[diagram_model.DiagramEdge]] = []
+    all_edges.extend(
+        diagram_model.DiagramEdge(
+            source_node=_build_broker_node(one_broker),
+            target_node=service_node,
+            edge_label=_MQ_EDGE_LABEL,
+        )
         for one_broker in features_to_draw.broker_names
         if features_to_draw.consumers
     )
-    diagram_parts.extend(
-        mermaid_syntax.render_edge(service_node_id, "MQ", mermaid_syntax.render_node_id(one_broker))
+    all_edges.extend(
+        diagram_model.DiagramEdge(
+            source_node=service_node,
+            target_node=_build_broker_node(one_broker),
+            edge_label=_MQ_EDGE_LABEL,
+        )
         for one_broker in features_to_draw.broker_names
         if features_to_draw.producers
     )
-    return "\n".join(diagram_parts)
+    return tuple(all_edges)
