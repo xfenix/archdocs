@@ -4,7 +4,7 @@ import pathlib
 import typing
 from concurrent import futures
 
-from fastarch import diagram_layout, diagram_model, mermaid_syntax, settings
+from fastarch import diagram_model, mermaid_syntax, settings
 from fastarch.mapping import (
     MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS,
     MAPPING_OF_PARSERS_AND_RENDERERS,
@@ -66,10 +66,6 @@ def _render_manifest_edges(
     )
 
 
-def _render_unique_edge_lines(all_edges: typing.Iterable[diagram_model.DiagramEdge], /) -> tuple[str, ...]:
-    return tuple(dict.fromkeys(mermaid_syntax.render_edge(one_edge) for one_edge in all_edges))
-
-
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ArchitectureParserAndRenderer:
@@ -96,12 +92,7 @@ class ArchitectureParserAndRenderer:
             *_render_manifest_edges(service_node, all_parsed_manifests),
             *self._process_source_files(service_node, root_path),
         )
-        return "\n".join(
-            (
-                *diagram_layout.render_definition_lines(service_node, all_edges),
-                *_render_unique_edge_lines(all_edges),
-            ),
-        )
+        return mermaid_syntax.MermaidDiagram(service_node=service_node, all_edges=all_edges).render_every_line()
 
     def _process_source_files(
         self,

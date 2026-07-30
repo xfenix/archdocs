@@ -43,9 +43,6 @@ def render_diagram(arch_settings: SettingsForFastarch) -> str:
     return extract_diagram(render_architecture_page(arch_settings))
 
 
-# The borderless service row is a `subgraph` too, so only the `group_` prefixed ones count as
-# groups: matching every wrapper would file the nodes of the first group inside it under the
-# row instead.
 def collect_group_of_every_node(rendered_diagram: str, /) -> dict[str, str]:
     return {
         one_node_match.group("node_id"): one_group_match.group("group_title")

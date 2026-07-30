@@ -20,8 +20,6 @@ BROKER_CLASS_OF_NAME: typing.Final = types.MappingProxyType(
         BrokersEnum.redis_broker: "RedisBroker",
     },
 )
-# faststream names the destination differently per broker, and the decorators take it
-# positionally, so a queue, a topic, a subject and a channel all end up in the same slot.
 DESTINATION_KEYWORDS: typing.Final = ("queue", "topic", "subject", "channel", "stream", "list")
 
 

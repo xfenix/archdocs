@@ -15,10 +15,7 @@ class NodeShape(enum.Enum):
     service_node = '{defined_node_id}{{"{node_label}"}}'
 
 
-# Declaration order is emission order, and mermaid lays a group out where its first line
-# appears: brokers written after `Outbound calls` are dragged out of the service row and over
-# the whole diagram, because half their arrows point back at the service. `diagram_layout`
-# turns this order into sides of the page.
+# Declaration order is emission order, and mermaid lays a group out where it is written.
 @typing.final
 class NodeGroup(enum.Enum):
     inbound_api = "Inbound API"

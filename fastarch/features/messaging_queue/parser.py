@@ -58,8 +58,6 @@ def _collect_broker_of_variable(raw_source: str, /) -> dict[str, str]:
     }
 
 
-# A destination only reaches the diagram when the code spells it out: `subscriber(SOME_CONST)`
-# leaves the arrow bare rather than inventing a name for it.
 def _collect_topics_of_broker(
     raw_source: str,
     broker_of_variable: dict[str, str],

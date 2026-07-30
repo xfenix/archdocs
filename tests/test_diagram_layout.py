@@ -9,12 +9,9 @@ from tests.served_page import collect_group_of_every_node, render_diagram
 
 
 # Mermaid has no coordinates: a diagram is laid out from arrow directions and from the order
-# the lines are written in, so both are held down here. The page reads top to bottom, which
-# earns `Configuration` its place above the service and `Data stores` its place below, and the
-# borderless `service_row` reads left to right, which puts callers left of the service and
-# everything the service reaches out to on its right. That only holds while the arrows agree
-# with the side they are drawn on: one `get` route drawn as an arrow from the service back to
-# its own clients used to drag the whole `Inbound API` group across the page.
+# the lines are written in, so both are held down here. It only holds while the arrows agree
+# with the side they are drawn on — one `get` route drawn as an arrow leaving the service used
+# to drag the whole `Inbound API` group across the page.
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _KUBERNETES_DIR: typing.Final = _TESTS_ROOT / "kubernetes_fixtures" / "chart"
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"

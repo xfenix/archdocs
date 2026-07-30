@@ -5,10 +5,6 @@ from fastarch import settings
 from fastarch.features.http_api.const import HTTPApiFeatures
 
 
-# Every route the service declares is traffic somebody else sends to it, `get` included: the
-# method only says what the caller asks for, never who dials whom. Splitting the verbs into
-# incoming and outgoing used to draw the read routes as an arrow leaving the service towards
-# its own clients, which reads as the service calling them back.
 _SERVED_METHOD_PATTERN: typing.Final = py_re.compile(
     r"@(?:\w+\.)?(post|put|patch|delete|get|head|options|trace)\b",
     flags=settings.TYPICAL_RE_FLAGS,

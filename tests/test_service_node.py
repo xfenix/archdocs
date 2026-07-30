@@ -20,8 +20,7 @@ _WITHOUT_MANIFESTS: typing.Final = _LITESTAR_ROOT / "src"
 _EDGE_ARROW: typing.Final = " --> "
 _SYMBOL_ONLY_NAME: typing.Final = "!!!"
 _MARKED_UP_NODE_ENDING: typing.Final = '{"svc<b>&x"}'
-# The service and its side groups live one level down, inside the borderless row that turns
-# the middle of the page sideways, so every expectation here counts that level in.
+# The service and its side groups live one level down, inside the borderless row.
 _ROW_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 2
 _GROUPED_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 3
 _SERVICE_ROW_OPENING: typing.Final = f'{settings.SHIFT_LEFT}subgraph service_row[" "]'

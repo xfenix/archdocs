@@ -11,8 +11,8 @@ from tests.served_page import extract_diagram, render_architecture_page
 # broker faststream ships with, so a single rabbit application was drawn talking to kafka and
 # nats too. Producers are the mirror case — the decorator is `publisher`, `producer` exists
 # nowhere in faststream, so outgoing edges never appeared for real code. The arrows carry the
-# destination the code names — queue, topic, subject or channel — because a row of arrows all
-# labelled `MQ` says only what the broker box already says.
+# destination the code names, because a row of them all labelled `MQ` said only what the
+# broker box already said.
 _SERVICE_NAME: typing.Final = "mq-svc"
 _INCOMING_RABBIT_EDGE: typing.Final = '    rabbit --> |"commands"| mq_svc'
 _OUTGOING_RABBIT_EDGE: typing.Final = '    mq_svc --> |"events"| rabbit'

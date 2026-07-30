@@ -7,9 +7,6 @@ from fastarch.features.redis.const import RedisFeatures
 _REDIS_NODE_LABEL: typing.Final = "redis"
 
 
-# A sentinel setup and a cluster are different deployments of redis, so their nodes carry the
-# connection type in both id and label: sharing plain `redisdb0..2` between them made the two
-# collapse onto one row of boxes with a `cluster` and a `sentinel` arrow each.
 def _build_redis_node(connection_type: str, node_suffix: int | str, /) -> diagram_model.DiagramNode:
     node_kind: typing.Final = f"{_REDIS_NODE_LABEL} {connection_type}" if connection_type else _REDIS_NODE_LABEL
     return diagram_model.build_diagram_node(

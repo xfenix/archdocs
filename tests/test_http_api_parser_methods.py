@@ -7,8 +7,7 @@ from fastarch.features.http_api.parser import find_fastapi_and_litestar_features
 
 
 # A route is traffic the service receives whatever verb it answers, so the parser keeps one
-# list: `get` used to be filed as an outgoing method and drawn as an arrow from the service
-# back to its own clients.
+# list: `get` used to be filed as an outgoing method and drawn as an arrow leaving the service.
 ALL_METHODS: typing.Final[tuple[str, ...]] = ("post", "put", "patch", "delete", "get", "head", "options", "trace")
 
 
