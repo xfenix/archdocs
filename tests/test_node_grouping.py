@@ -6,7 +6,7 @@ import pytest
 
 from fastarch import diagram_model, mermaid_syntax
 from fastarch.main import SettingsForFastarch
-from tests.served_page import extract_diagram, render_architecture_page
+from tests.served_page import collect_group_of_every_node, render_diagram
 
 
 # Grouping is what keeps the page from falling apart into a field of loose boxes: everything
@@ -15,20 +15,18 @@ from tests.served_page import extract_diagram, render_architecture_page
 # example carries them because it is the one example with every supported technology at once.
 # The structural half of the file guards the two ways grouping breaks a diagram silently: a
 # `subgraph` left unclosed, and a node defined twice or drawn without being defined at all.
+# Where each group lands on the page is `test_diagram_layout.py`.
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 _KUBERNETES_DIR: typing.Final = _TESTS_ROOT / "kubernetes_fixtures" / "chart"
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _SERVICE_NODE_ID: typing.Final = "showcase_service"
+_SERVICE_SHAPE_OPENING: typing.Final = '{"'
 _MESSAGING_GROUP: typing.Final = "Messaging & tasks"
 _DATA_STORES_GROUP: typing.Final = "Data stores"
 _CONFIGURATION_GROUP: typing.Final = "Configuration"
 _GROUP_OPENING_MARK: typing.Final = "subgraph "
 _GROUP_CLOSING_LINE: typing.Final = "end"
 _EDGE_ARROW: typing.Final = " --> "
-_GROUP_BLOCK_PATTERN: typing.Final = py_re.compile(
-    r'subgraph \w+\["(?P<group_title>[^"]+)"\]\n(?P<group_body>.*?)\n\s*end',
-    flags=py_re.DOTALL,
-)
 _DEFINED_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\["')
 _EDGE_ENDS_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*(?P<source>\w+) -->.* (?P<target>\w+)$")
 _SHOWCASE_SETTINGS: typing.Final = SettingsForFastarch(
@@ -54,48 +52,39 @@ _EXPECTED_GROUP_OF_NODE: typing.Final = (
     ("postgresql_psycopgdb0", _DATA_STORES_GROUP),
     ("sqlite_aiosqlitedb", _DATA_STORES_GROUP),
     ("redisdb", _DATA_STORES_GROUP),
-    ("redisdb0", _DATA_STORES_GROUP),
+    ("redisdb_cluster0", _DATA_STORES_GROUP),
+    ("redisdb_sentinel0", _DATA_STORES_GROUP),
     ("PersistentVolume", _DATA_STORES_GROUP),
     ("ConfigMap_app_config", _CONFIGURATION_GROUP),
     ("Secret_app_secrets", _CONFIGURATION_GROUP),
 )
 
 
-def _render(arch_settings: SettingsForFastarch) -> str:
-    return extract_diagram(render_architecture_page(arch_settings))
-
-
-def _collect_group_of_every_node(rendered_diagram: str, /) -> dict[str, str]:
-    return {
-        one_node_match.group("node_id"): one_group_match.group("group_title")
-        for one_group_match in _GROUP_BLOCK_PATTERN.finditer(rendered_diagram)
-        for one_node_match in _DEFINED_NODE_PATTERN.finditer(one_group_match.group("group_body"))
-    }
-
-
 @pytest.mark.parametrize(("expected_node_id", "expected_group"), _EXPECTED_GROUP_OF_NODE)
 def test_node_is_drawn_inside_its_group(expected_node_id: str, expected_group: str) -> None:
-    assert _collect_group_of_every_node(_render(_SHOWCASE_SETTINGS)).get(expected_node_id) == expected_group
+    assert collect_group_of_every_node(render_diagram(_SHOWCASE_SETTINGS)).get(expected_node_id) == expected_group
 
 
 def test_every_node_but_service_is_grouped() -> None:
-    rendered_diagram: typing.Final = _render(_SHOWCASE_SETTINGS)
+    rendered_diagram: typing.Final = render_diagram(_SHOWCASE_SETTINGS)
     all_defined_ids: typing.Final = {
         one_match.group("node_id") for one_match in _DEFINED_NODE_PATTERN.finditer(rendered_diagram)
     }
-    assert all_defined_ids == set(_collect_group_of_every_node(rendered_diagram))
-    assert rendered_diagram.split("\n")[0].strip().startswith(_SERVICE_NODE_ID)
+    all_lines: typing.Final = [one_line.strip() for one_line in rendered_diagram.split("\n")]
+    service_definition_opening: typing.Final = _SERVICE_NODE_ID + _SERVICE_SHAPE_OPENING
+    assert all_defined_ids == set(collect_group_of_every_node(rendered_diagram))
+    assert any(one_line.startswith(service_definition_opening) for one_line in all_lines)
 
 
 def test_group_titles_match_the_registry() -> None:
-    assert set(_collect_group_of_every_node(_render(_SHOWCASE_SETTINGS)).values()) == {
+    assert set(collect_group_of_every_node(render_diagram(_SHOWCASE_SETTINGS)).values()) == {
         one_node_group.value for one_node_group in diagram_model.NodeGroup
     }
 
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
 def test_group_blocks_are_well_formed(arch_settings: SettingsForFastarch) -> None:
-    rendered_diagram: typing.Final = _render(arch_settings)
+    rendered_diagram: typing.Final = render_diagram(arch_settings)
     all_lines: typing.Final = [one_line.strip() for one_line in rendered_diagram.split("\n")]
     all_group_openings: typing.Final = [one_line for one_line in all_lines if one_line.startswith(_GROUP_OPENING_MARK)]
     all_defined_ids: typing.Final = [
@@ -114,7 +103,7 @@ def test_group_blocks_are_well_formed(arch_settings: SettingsForFastarch) -> Non
 
 def test_every_edge_touches_the_service() -> None:
     all_edge_lines: typing.Final = [
-        one_line for one_line in _render(_SHOWCASE_SETTINGS).split("\n") if _EDGE_ARROW in one_line
+        one_line for one_line in render_diagram(_SHOWCASE_SETTINGS).split("\n") if _EDGE_ARROW in one_line
     ]
     assert all_edge_lines
     assert all(_SERVICE_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)

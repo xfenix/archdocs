@@ -11,9 +11,14 @@ from fastarch.main import SettingsForFastarch
 
 GOOD_HTTP_CODE: typing.Final = 200
 _DIAGRAM_PATTERN: typing.Final = py_re.compile(
-    r"graph LR\n(?P<diagram>.*?)</pre>",
+    r"graph TB\n(?P<diagram>.*?)</pre>",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+_GROUP_BLOCK_PATTERN: typing.Final = py_re.compile(
+    r'subgraph group_\w+\["(?P<group_title>[^"]+)"\]\n(?P<group_body>.*?)\n\s*end',
+    flags=py_re.DOTALL,
+)
+_DEFINED_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\["')
 
 
 def render_architecture_page(arch_settings: SettingsForFastarch | None = None) -> str:
@@ -32,3 +37,18 @@ def _extract_diagram_body(page_html: str) -> str:
 
 def extract_diagram(page_html: str) -> str:
     return _extract_diagram_body(page_html).replace("&lt;", "<").replace("&amp;", "&")
+
+
+def render_diagram(arch_settings: SettingsForFastarch) -> str:
+    return extract_diagram(render_architecture_page(arch_settings))
+
+
+# The borderless service row is a `subgraph` too, so only the `group_` prefixed ones count as
+# groups: matching every wrapper would file the nodes of the first group inside it under the
+# row instead.
+def collect_group_of_every_node(rendered_diagram: str, /) -> dict[str, str]:
+    return {
+        one_node_match.group("node_id"): one_group_match.group("group_title")
+        for one_group_match in _GROUP_BLOCK_PATTERN.finditer(rendered_diagram)
+        for one_node_match in _DEFINED_NODE_PATTERN.finditer(one_group_match.group("group_body"))
+    }

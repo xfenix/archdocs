@@ -4,7 +4,7 @@ import pathlib
 import typing
 from concurrent import futures
 
-from fastarch import diagram_model, mermaid_syntax, settings
+from fastarch import diagram_layout, diagram_model, mermaid_syntax, settings
 from fastarch.mapping import (
     MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS,
     MAPPING_OF_PARSERS_AND_RENDERERS,
@@ -98,7 +98,7 @@ class ArchitectureParserAndRenderer:
         )
         return "\n".join(
             (
-                *mermaid_syntax.render_definition_lines(service_node, all_edges),
+                *diagram_layout.render_definition_lines(service_node, all_edges),
                 *_render_unique_edge_lines(all_edges),
             ),
         )

@@ -38,7 +38,7 @@ def test_real_app_folder_features_detected(litestar_app_from_folder: Litestar) -
     assert _CONTENT_TYPE_HTML in response.headers["content-type"]
     response_text: typing.Final = response.text
     assert "mermaid" in response_text
-    assert "graph LR" in response_text
+    assert "graph TB" in response_text
     assert "litestar-test-service" in response_text
     response_text_lower: typing.Final = response_text.lower()
     assert "get" in response_text_lower

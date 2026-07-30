@@ -24,6 +24,6 @@ def test_page_keeps_every_required_tag() -> None:
 
 
 def test_omitted_settings_draw_the_default_name() -> None:
-    rendered_diagram: typing.Final = extract_diagram(render_architecture_page())
-    assert rendered_diagram.startswith(f"{settings.SHIFT_LEFT}{_DEFAULT_NODE_OPENING}")
-    assert settings.DEFAULT_SERVICE_NAME in rendered_diagram
+    all_diagram_lines: typing.Final = extract_diagram(render_architecture_page()).split("\n")
+    assert any(one_line.strip().startswith(_DEFAULT_NODE_OPENING) for one_line in all_diagram_lines)
+    assert settings.DEFAULT_SERVICE_NAME in "\n".join(all_diagram_lines)

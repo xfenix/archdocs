@@ -63,7 +63,7 @@ def test_index_links_every_example() -> None:
 def test_example_page_serves_its_own_service(example_name: str) -> None:
     response: typing.Final = TestClient(playground_app).get(render_example_path(example_name))
     assert response.status_code == GOOD_HTTP_CODE
-    assert "graph LR" in response.text
+    assert "graph TB" in response.text
     assert PLAYGROUND_EXAMPLES[example_name].service_name in response.text
 
 

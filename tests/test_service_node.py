@@ -19,8 +19,14 @@ _LITESTAR_ROOT: typing.Final = pathlib.Path(__file__).parent / "litestar"
 _WITHOUT_MANIFESTS: typing.Final = _LITESTAR_ROOT / "src"
 _EDGE_ARROW: typing.Final = " --> "
 _SYMBOL_ONLY_NAME: typing.Final = "!!!"
-_INBOUND_GROUP_OPENING: typing.Final = f'{settings.SHIFT_LEFT}subgraph group_inbound_api["Inbound API"]'
-_GROUPED_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 2
+_MARKED_UP_NODE_ENDING: typing.Final = '{"svc<b>&x"}'
+# The service and its side groups live one level down, inside the borderless row that turns
+# the middle of the page sideways, so every expectation here counts that level in.
+_ROW_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 2
+_GROUPED_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 3
+_SERVICE_ROW_OPENING: typing.Final = f'{settings.SHIFT_LEFT}subgraph service_row[" "]'
+_ROW_DIRECTION_LINE: typing.Final = f"{_ROW_SHIFT_LEFT}direction LR"
+_INBOUND_GROUP_OPENING: typing.Final = f'{_ROW_SHIFT_LEFT}subgraph group_inbound_api["Inbound API"]'
 _EXTERNAL_CLIENT_DEFINITION: typing.Final = f'{_GROUPED_SHIFT_LEFT}external_client["User/Client"]'
 
 
@@ -37,7 +43,7 @@ def _render_diagram(service_name: str) -> str:
 
 
 def _render_node_definition(expected_node_id: str, service_name: str) -> str:
-    return f'{settings.SHIFT_LEFT}{expected_node_id}{{"{service_name}"}}'
+    return f'{_ROW_SHIFT_LEFT}{expected_node_id}{{"{service_name}"}}'
 
 
 def _extract_edge_lines(all_diagram_lines: list[str]) -> list[str]:
@@ -51,7 +57,7 @@ def _extract_edge_lines(all_diagram_lines: list[str]) -> list[str]:
 def test_service_name_is_the_node_id(service_name: str, expected_node_id: str) -> None:
     all_lines: typing.Final = _render_diagram(service_name).split("\n")
     all_edge_lines: typing.Final = _extract_edge_lines(all_lines)
-    assert all_lines[0] == _render_node_definition(expected_node_id, service_name)
+    assert _render_node_definition(expected_node_id, service_name) in all_lines
     assert settings.FALLBACK_SERVICE_NODE_ID not in "\n".join(all_lines)
     assert all(expected_node_id in one_edge_line for one_edge_line in all_edge_lines)
 
@@ -59,15 +65,22 @@ def test_service_name_is_the_node_id(service_name: str, expected_node_id: str) -
 def test_node_id_falls_back_for_symbol_name() -> None:
     all_lines: typing.Final = _render_diagram(_SYMBOL_ONLY_NAME).split("\n")
     all_edge_lines: typing.Final = _extract_edge_lines(all_lines)
-    assert all_lines[0] == _render_node_definition(settings.FALLBACK_SERVICE_NODE_ID, _SYMBOL_ONLY_NAME)
+    assert _render_node_definition(settings.FALLBACK_SERVICE_NODE_ID, _SYMBOL_ONLY_NAME) in all_lines
     assert any(settings.FALLBACK_SERVICE_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)
 
 
-def test_external_client_sits_in_its_group() -> None:
+def test_external_client_sits_left_of_the_service() -> None:
     all_lines: typing.Final = _render_diagram("client-svc").split("\n")
     all_edge_lines: typing.Final = _extract_edge_lines(all_lines)
-    assert all_lines[1] == _INBOUND_GROUP_OPENING
-    assert all_lines[2] == _EXTERNAL_CLIENT_DEFINITION
+    assert all_lines[:4] == [
+        _SERVICE_ROW_OPENING,
+        _ROW_DIRECTION_LINE,
+        _INBOUND_GROUP_OPENING,
+        _EXTERNAL_CLIENT_DEFINITION,
+    ]
+    assert all_lines.index(_EXTERNAL_CLIENT_DEFINITION) < all_lines.index(
+        _render_node_definition("client_svc", "client-svc"),
+    )
     assert settings.EXTERNAL_CLIENT_TITLE_FOR_SCHEMA not in "\n".join(all_edge_lines)
     assert any(settings.EXTERNAL_CLIENT_NODE_ID in one_edge_line for one_edge_line in all_edge_lines)
 
@@ -80,6 +93,7 @@ def test_markup_characters_reach_mermaid_intact() -> None:
             kubernetes_dir=_WITHOUT_MANIFESTS,
         ),
     )
+    all_diagram_lines: typing.Final = extract_diagram(page_html).split("\n")
     assert 'svc&lt;b>&amp;x"}' in page_html
     assert "svc<b>" not in page_html
-    assert extract_diagram(page_html).split("\n")[0].endswith('{"svc<b>&x"}')
+    assert any(one_line.endswith(_MARKED_UP_NODE_ENDING) for one_line in all_diagram_lines)

@@ -17,7 +17,8 @@ def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> s
     prefix_end: typing.Final = placeholder_match.start()
     suffix_start: typing.Final = placeholder_match.end()
     diagram_block: typing.Final = (
-        f"{placeholder_match.group('pre_open')}graph LR\n{rendered_diagram}{placeholder_match.group('pre_close')}"
+        f"{placeholder_match.group('pre_open')}{settings.DIAGRAM_HEADER}\n"
+        f"{rendered_diagram}{placeholder_match.group('pre_close')}"
     )
     return settings.UI_HTML_TEMPLATE[:prefix_end] + diagram_block + settings.UI_HTML_TEMPLATE[suffix_start:]
 
