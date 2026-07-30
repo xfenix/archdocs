@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import types
 import typing
 
 
@@ -11,9 +12,34 @@ class BrokersEnum(enum.Enum):
     redis_broker = "redis"
 
 
+BROKER_CLASS_OF_NAME: typing.Final = types.MappingProxyType(
+    {
+        BrokersEnum.rabbit_broker: "RabbitBroker",
+        BrokersEnum.kafka_broker: "KafkaBroker",
+        BrokersEnum.nats_broker: "NatsBroker",
+        BrokersEnum.redis_broker: "RedisBroker",
+    },
+)
+DESTINATION_KEYWORDS: typing.Final = ("queue", "topic", "subject", "channel", "stream", "list")
+
+
+@typing.final
+class MessageDirection(enum.Enum):
+    consumed = "consumed"
+    produced = "produced"
+
+
+@typing.final
+@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
+class BrokerFlow:
+    broker_name: str
+    consumes: bool
+    produces: bool
+    consumed_topics: tuple[str, ...] = ()
+    produced_topics: tuple[str, ...] = ()
+
+
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
 class MQFeatures:
-    consumers: bool
-    producers: bool
-    broker_names: list[str]
+    broker_flows: tuple[BrokerFlow, ...] = ()

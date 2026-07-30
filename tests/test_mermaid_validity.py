@@ -20,6 +20,7 @@ _NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_]+$")
 _EDGE_PATTERN: typing.Final = py_re.compile(r"^(?P<source>\S+)\s+-->\s+(?:\|(?P<label>.*)\|\s+)?(?P<target>\S+)$")
 _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
 _GROUP_CLOSING_LINE: typing.Final = "end"
+_SERVICE_SHAPE_OPENING: typing.Final = '{"'
 _ALL_DIAGRAM_SETTINGS: typing.Final = (
     SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="fastapi-svc"),
     SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc"),
@@ -93,4 +94,4 @@ def test_service_node_defined_exactly_once(arch_settings: SettingsForFastarch) -
         one_line for one_line in all_lines if one_line.strip().startswith(service_node_id) and " --> " not in one_line
     ]
     assert len(node_definitions) == 1
-    assert node_definitions[0] == all_lines[0]
+    assert node_definitions[0].strip().startswith(service_node_id + _SERVICE_SHAPE_OPENING)
