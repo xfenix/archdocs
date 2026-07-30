@@ -23,10 +23,6 @@ type ValuePath = tuple[str, ...]
 type ParentKeys = list[tuple[int, str]]
 
 
-def _read_raw_value(raw_value: str, /) -> str:
-    return raw_value.partition(_INLINE_COMMENT_PREFIX)[0].strip().strip(_QUOTE_CHARACTERS)
-
-
 def _remove_list_prefix(raw_indent: int, raw_content: str, /) -> tuple[int, str]:
     if not raw_content.startswith(_LIST_ITEM_PREFIX):
         return raw_indent, raw_content
@@ -58,7 +54,12 @@ def _read_one_pair(raw_indent: int, raw_content: str, parent_keys: ParentKeys, /
         return None
     while parent_keys and parent_keys[-1][0] >= line_indent:
         parent_keys.pop()
-    return _make_one_value(line_indent, value_key.strip(), _read_raw_value(raw_value), parent_keys)
+    return _make_one_value(
+        line_indent,
+        value_key.strip(),
+        raw_value.partition(_INLINE_COMMENT_PREFIX)[0].strip().strip(_QUOTE_CHARACTERS),
+        parent_keys,
+    )
 
 
 def _read_one_line(raw_line: str, parent_keys: ParentKeys, /) -> ManifestValue | None:

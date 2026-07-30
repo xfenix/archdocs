@@ -4,9 +4,9 @@ import typing
 
 import pytest
 
-from fastarch import mermaid_syntax, settings
+from fastarch import settings
 from fastarch.main import SettingsForFastarch
-from tests.served_page import extract_diagram, render_architecture_page
+from tests.served_page import extract_diagram, render_architecture_page, render_service_node_id
 
 
 # These invariants encode the mermaid syntax rules the renderers used to break silently:
@@ -88,7 +88,7 @@ def test_credentials_never_reach_diagram() -> None:
 
 @pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
 def test_service_node_defined_exactly_once(arch_settings: SettingsForFastarch) -> None:
-    service_node_id: typing.Final = mermaid_syntax.render_service_node_id(arch_settings.service_name)
+    service_node_id: typing.Final = render_service_node_id(arch_settings.service_name)
     all_lines: typing.Final = _render(arch_settings).split("\n")
     node_definitions: typing.Final = [
         one_line for one_line in all_lines if one_line.strip().startswith(service_node_id) and " --> " not in one_line

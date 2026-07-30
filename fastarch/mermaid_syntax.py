@@ -4,7 +4,7 @@ import types
 import typing
 
 from fastarch import settings
-from fastarch.diagram_model import DiagramEdge, DiagramNode, NodeGroup, build_service_node
+from fastarch.diagram_model import DiagramEdge, DiagramNode, NodeGroup
 
 
 _DOUBLE_QUOTE: typing.Final = '"'
@@ -43,24 +43,13 @@ def render_node_definition(one_node: DiagramNode, /) -> str:
     )
 
 
-def render_service_node_id(service_name: str) -> str:
-    return build_service_node(service_name).defined_node_id
-
-
-def render_service_node_definition(service_name: str, node_annotations: typing.Iterable[str] = ()) -> str:
-    return settings.SHIFT_LEFT + render_node_definition(build_service_node(service_name, node_annotations))
-
-
-def render_edge_label(raw_label: str) -> str:
-    return f'|"{raw_label.replace(_DOUBLE_QUOTE, "")}"|'
-
-
 def render_edge(one_edge: DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
-    if not one_edge.edge_label:
+    escaped_label: typing.Final = one_edge.edge_label.replace(_DOUBLE_QUOTE, "")
+    if not escaped_label:
         return f"{settings.SHIFT_LEFT}{source_node_id} --> {target_node_id}"
-    return f"{settings.SHIFT_LEFT}{source_node_id} --> {render_edge_label(one_edge.edge_label)} {target_node_id}"
+    return f'{settings.SHIFT_LEFT}{source_node_id} --> |"{escaped_label}"| {target_node_id}'
 
 
 # Mermaid has no coordinates: the page flows top to bottom, and a borderless row with its own

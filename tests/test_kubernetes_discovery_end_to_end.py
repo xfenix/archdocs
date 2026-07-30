@@ -3,9 +3,8 @@ import typing
 
 import pytest
 
-from fastarch import mermaid_syntax
 from fastarch.main import SettingsForFastarch
-from tests.served_page import render_architecture_page
+from tests.served_page import render_architecture_page, render_service_node_definition
 
 
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
@@ -54,7 +53,7 @@ def _build_project(
 
 @pytest.mark.parametrize("sources_subpath", [".", "one"])
 def test_manifests_found_above_the_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
-    expected_node: typing.Final = mermaid_syntax.render_service_node_definition("above-svc", ("replicas 4",)).strip()
+    expected_node: typing.Final = render_service_node_definition("above-svc", ("replicas 4",))
     response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_build_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
@@ -110,7 +109,7 @@ def test_missing_explicit_dir_is_ignored(tmp_path: pathlib.Path) -> None:
             kubernetes_dir=tmp_path / "there-is-no-such-chart",
         ),
     )
-    assert mermaid_syntax.render_service_node_definition("missing-svc").strip() in response_text
+    assert render_service_node_definition("missing-svc") in response_text
     assert "neighbour.example.com" not in response_text
 
 
@@ -134,4 +133,4 @@ def test_far_away_manifests_are_ignored(
         SettingsForFastarch(root_dir=source_dir, service_name="far-svc"),
     )
     assert "decoy.example.com" not in response_text
-    assert mermaid_syntax.render_service_node_definition("far-svc").strip() in response_text
+    assert render_service_node_definition("far-svc") in response_text

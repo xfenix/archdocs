@@ -1,5 +1,4 @@
 import functools
-import typing
 
 import fastapi
 from starlette.requests import Request as StarletteRequest
@@ -17,12 +16,6 @@ async def _handle_fastapi_arch_doc_route(
     return StarletteHtmlResponse(_generate_architecture_html(arch_engine))
 
 
-def _build_fastapi_arch_doc_route(
-    arch_engine: ArchitectureParserAndRenderer,
-) -> typing.Callable[[StarletteRequest], typing.Awaitable[StarletteHtmlResponse]]:
-    return functools.partial(_handle_fastapi_arch_doc_route, arch_engine=arch_engine)
-
-
 def add_architecture_doc_routes(
     fastapi_app: fastapi.FastAPI,
     *,
@@ -31,5 +24,8 @@ def add_architecture_doc_routes(
 ) -> None:
     fastapi_app.add_api_route(
         route_path,
-        _build_fastapi_arch_doc_route(_create_architecture_engine(arch_settings)),
+        functools.partial(
+            _handle_fastapi_arch_doc_route,
+            arch_engine=_create_architecture_engine(arch_settings),
+        ),
     )

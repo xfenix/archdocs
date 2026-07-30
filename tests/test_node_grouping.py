@@ -4,9 +4,9 @@ import typing
 
 import pytest
 
-from fastarch import diagram_model, mermaid_syntax
+from fastarch import diagram_model
 from fastarch.main import SettingsForFastarch
-from tests.served_page import collect_group_of_every_node, render_diagram
+from tests.served_page import collect_group_of_every_node, render_diagram, render_service_node_id
 
 
 # Grouping is what keeps the page from falling apart into a field of loose boxes: everything
@@ -98,7 +98,7 @@ def test_group_blocks_are_well_formed(arch_settings: SettingsForFastarch) -> Non
     assert all_group_openings
     assert len(all_group_openings) == len(set(all_group_openings)) == all_lines.count(_GROUP_CLOSING_LINE)
     assert len(all_defined_ids) == len(set(all_defined_ids))
-    assert all_drawn_ids <= set(all_defined_ids) | {mermaid_syntax.render_service_node_id(arch_settings.service_name)}
+    assert all_drawn_ids <= set(all_defined_ids) | {render_service_node_id(arch_settings.service_name)}
 
 
 def test_every_edge_touches_the_service() -> None:

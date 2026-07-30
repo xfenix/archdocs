@@ -4,16 +4,16 @@ from fastarch import diagram_model
 from fastarch.features.messaging_queue.const import BrokerFlow, MQFeatures
 
 
-def _build_broker_node(one_broker: str, /) -> diagram_model.DiagramNode:
-    return diagram_model.build_diagram_node(one_broker, one_broker, diagram_model.NodeGroup.messaging_and_tasks)
-
-
 def _render_flow_edges(
     service_node: diagram_model.DiagramNode,
     one_flow: BrokerFlow,
     /,
 ) -> tuple[diagram_model.DiagramEdge, ...]:
-    broker_node: typing.Final = _build_broker_node(one_flow.broker_name)
+    broker_node: typing.Final = diagram_model.build_diagram_node(
+        one_flow.broker_name,
+        one_flow.broker_name,
+        diagram_model.NodeGroup.messaging_and_tasks,
+    )
     all_edges: typing.Final[list[diagram_model.DiagramEdge]] = []
     if one_flow.consumes:
         all_edges.append(
