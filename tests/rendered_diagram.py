@@ -6,21 +6,14 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 from tests.playground import PLAYGROUND_EXAMPLES
 
 
-# Tests enter the package through `ArchitectureParserAndRenderer`: the walk over the sources,
-# every parser, every renderer and the mermaid syntax sit behind that one call, so a diagram
-# read back from here is the one an application serves. The page around it, with its tags and
-# its escaping, is the subject of `test_served_page.py` alone.
 TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 FASTAPI_ROOT: typing.Final = TESTS_ROOT / "fastapi"
 LITESTAR_ROOT: typing.Final = TESTS_ROOT / "litestar"
 KUBERNETES_VARIANTS_ROOT: typing.Final = TESTS_ROOT / "kubernetes_variants"
-# Manifests are looked up a couple of directories above the sources and the fixture charts live
-# right in `tests/`, so a test whose expectations are about the service name alone points
-# `kubernetes_dir` at a name no directory here has.
+# The lookup climbs out of any root inside `tests/` and reaches the fixture charts, so a bare
+# service node is asked for by a directory name nothing here has.
 WITHOUT_MANIFESTS: typing.Final = "there-are-no-manifests-here"
 SOURCE_SERVICE_NAME: typing.Final = "app-svc"
-# The examples come from the playground, so the pages looked at by eye and the diagrams
-# asserted on are built from one set of settings.
 SHOWCASE_SETTINGS: typing.Final = PLAYGROUND_EXAMPLES["showcase"]
 ALL_EXAMPLE_SETTINGS: typing.Final = (
     *PLAYGROUND_EXAMPLES.values(),

@@ -7,12 +7,6 @@ from fastarch.main import SettingsForFastarch
 from tests.rendered_diagram import KUBERNETES_VARIANTS_ROOT, WITHOUT_MANIFESTS, render_diagram
 
 
-# Which files on disk are read at all. A virtual environment is somebody else's code: the
-# sources of uvicorn, redis and celery themselves match the very patterns the service is
-# scanned for and land on the diagram as its architecture. Manifests are the mirror case —
-# charts live next to the sources at least as often as inside them, so the lookup climbs a
-# couple of levels up, and the two guards that keep it off somebody else's chart are the
-# repository the sources live in and the depth it is allowed to climb.
 _OWN_SOURCE: typing.Final = """import redis
 
 
@@ -76,8 +70,7 @@ def _build_charted_project(
     return source_dir
 
 
-# The last case is the mirror one: names are matched against the path relative to the project
-# root, otherwise a service living in a `build` directory would skip itself.
+# The last case is the mirror one: a service living in a `build` directory must not skip itself.
 @pytest.mark.parametrize(
     ("project_subpath", "vendored_relative_path"),
     [
@@ -134,10 +127,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     assert "HTTP from-templates.example.com" in rendered_diagram
 
 
-# A configured directory is answered for by the settings alone: an absolute one wins over the
-# chart lying next to the sources, a relative one is resolved from `root_dir` and not from the
-# working directory, and one that is not there at all leaves the node bare instead of falling
-# back to somebody else's chart. The decoy is what the working directory would offer.
+# The decoy chart is what the working directory would offer a relative path.
 @pytest.mark.parametrize(
     ("kubernetes_dir", "expected_part", "forbidden_part"),
     [

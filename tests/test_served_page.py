@@ -10,10 +10,8 @@ from tests.rendered_diagram import LITESTAR_ROOT, WITHOUT_MANIFESTS
 from tests.served_page import ALL_PAGE_RENDERERS, FRAMEWORK_IDS, PageRenderer
 
 
-# Everything here is read off a page served by a running application, because that document is
-# the only thing a browser is handed. Minifying the template by joining on "" used to glue
-# attributes onto their tags, turning the mermaid script tag into `<scriptsrc=...>`, and the
-# diagram stopped loading — with every function of the package still working correctly.
+# Minifying the template by joining on "" used to glue attributes onto their tags, turning the
+# mermaid script tag into `<scriptsrc=...>`: the served document is the only proof there is.
 _SERVICE_NAME: typing.Final = "page-svc"
 _MARKED_UP_SERVICE_NAME: typing.Final = "svc<b>&x"
 _RENDERER_ARGUMENT: typing.Final = "render_page"
@@ -56,8 +54,6 @@ def test_omitted_settings_draw_the_default(render_page: PageRenderer) -> None:
 
 @pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
 def test_markup_characters_are_escaped(render_page: PageRenderer) -> None:
-    # In `<pre>` the diagram is text, so `&` and `<` have to arrive escaped: unescaped, the
-    # browser reads them as markup and mermaid never sees the label.
     page_html: typing.Final = render_page(_build_settings(_MARKED_UP_SERVICE_NAME), None)
 
     assert 'svc&lt;b>&amp;x"}' in page_html

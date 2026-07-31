@@ -11,8 +11,6 @@ from fastarch.integrations import litestar as litestar_integration
 from fastarch.main import SettingsForFastarch
 
 
-# Both integrations answer with a response class of their own, so a page is handed over as the
-# text of a document that came back with a good code and an html content type.
 type PageRenderer = typing.Callable[[SettingsForFastarch | None, str | None], str]
 
 GOOD_HTTP_CODE: typing.Final = 200

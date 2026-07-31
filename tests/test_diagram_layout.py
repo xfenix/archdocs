@@ -18,10 +18,7 @@ from tests.rendered_diagram import (
 
 
 # Mermaid has no coordinates: a diagram is laid out from the direction of its arrows and from
-# the order its lines are written in, so both are part of the contract. The page is read top to
-# bottom, the middle band is turned sideways by a borderless row, and a group stays on its side
-# only while the arrows agree with it — one `get` route drawn as an arrow leaving the service
-# used to drag the whole `Inbound API` group across the page.
+# the order its lines are written in, so both are part of the contract.
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _INBOUND_GROUP: typing.Final = "Inbound API"
 _OUTBOUND_GROUP: typing.Final = "Outbound calls"
@@ -29,9 +26,6 @@ _MESSAGING_GROUP: typing.Final = "Messaging & tasks"
 _DATA_STORES_GROUP: typing.Final = "Data stores"
 _CONFIGURATION_GROUP: typing.Final = "Configuration"
 _SHOWCASE_NODE_ID: typing.Final = "showcase_service"
-# The showcase carries every supported technology at once, so its whole map of nodes to groups
-# is spelled out: everything the service talks to belongs to a group and neighbours of a kind
-# share it.
 _EXPECTED_SHOWCASE_GROUPS: typing.Final = types.MappingProxyType(
     {
         "external_client": _INBOUND_GROUP,
@@ -71,7 +65,6 @@ _PLACEMENT_ORDER_OF_MARKS: typing.Final = (
     "style service_row fill:none,stroke:none",
     'subgraph group_data_stores["Data stores"]',
 )
-# Expected ids are spelled out on purpose: derived with the code under test they assert nothing.
 _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
@@ -122,8 +115,6 @@ def test_groups_sit_around_the_service() -> None:
 
 @pytest.mark.parametrize(("service_name", "expected_node_id"), _ALL_SERVICE_NAMES)
 def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: str) -> None:
-    # The name used to reach the diagram once, as the label of a node whose id was a fixed
-    # `fastarch_service`, so every edge named the constant instead.
     rendered_diagram: typing.Final = _render_named_diagram(service_name)
 
     assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram

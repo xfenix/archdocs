@@ -9,9 +9,8 @@ from hypothesis import strategies as st
 from tests.rendered_diagram import EDGE_ARROW, SHOWCASE_SETTINGS, render_diagram, render_source_diagram
 
 
-# One source file in, one diagram out. What a parser found is only interesting once it reaches
-# an arrow: a feature drawn on the wrong side, under a name of its own or with a label nobody
-# can read is a different diagram even when the parser was right about the code.
+# What a parser found is only interesting once it reaches an arrow, so every case here is one
+# source file, the diagram parts it has to draw and the parts it may not.
 _EVERY_METHOD_SOURCE: typing.Final = '''import fastapi
 
 router = fastapi.APIRouter()
@@ -201,8 +200,6 @@ _ASYNC_DATABASE_EDGE: typing.Final = (
 _REPLICA_DATABASE_EDGE: typing.Final = (
     'app_svc --> |"postgresql+psycopg://***@pg-replica-one:5432,pg-replica-two:5432/orders"| postgresql_psycopgdb0'
 )
-# A source, what its diagram has to carry, and what it must not: expectations are literals,
-# because a value computed by the code under test asserts nothing.
 _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
     {
         "every served method": (
@@ -299,9 +296,6 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
         "carrier library is not a server": (_CARRIER_LIBRARIES_SOURCE, (), ("Served by",)),
     },
 )
-# Detection stays narrow for libraries that merely carry a server: gevent, eventlet, werkzeug
-# and tornado are imported for a dozen unrelated reasons, so nothing but their serving module
-# counts, otherwise every project using them would be drawn as if it served traffic through them.
 _ALL_SERVER_SOURCES: typing.Final = types.MappingProxyType(
     {
         "granian": "import granian\n\ngranian.Granian('src.main:app').serve()\n",
@@ -322,9 +316,6 @@ _ALL_SERVER_SOURCES: typing.Final = types.MappingProxyType(
         "wsgiref": "from wsgiref.simple_server import make_server\n",
     },
 )
-# The showcase is the page the README screenshot is taken from, so it is held to the whole
-# list: whatever the package can detect has to be visible there, otherwise a capability is
-# shipped with nothing to look at.
 _REQUIRED_SHOWCASE_MARKS: typing.Final = (
     "REST",
     "httpx",
@@ -358,7 +349,6 @@ _REQUIRED_SHOWCASE_MARKS: typing.Final = (
     "gunicorn",
     "uvicorn",
 )
-# Every literal any parser prefilters by: a source free of all of them has nothing to draw.
 _ALL_FEATURE_LITERALS: typing.Final = (
     *_ALL_SERVER_SOURCES,
     "fastapi",
@@ -426,8 +416,6 @@ def test_source_reaches_the_diagram(
 
 @pytest.mark.parametrize("server_name", _ALL_SERVER_SOURCES)
 def test_every_server_reaches_the_diagram(tmp_path: pathlib.Path, server_name: str) -> None:
-    # The application server is what the outside world talks to, so it is drawn on the incoming
-    # edge instead of a node of its own.
     rendered_diagram: typing.Final = render_source_diagram(tmp_path, _ALL_SERVER_SOURCES[server_name])
 
     assert f'external_client --> |"Served by {server_name}"| app_svc' in rendered_diagram

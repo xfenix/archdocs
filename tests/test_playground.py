@@ -6,8 +6,6 @@ from fastapi.testclient import TestClient
 from tests.playground import INDEX_PATH, PLAYGROUND_EXAMPLES, playground_app, render_example_path
 
 
-# The sandbox serves the same examples the tests assert on, so that the page looked at by eye
-# and the diagram a test falls on are built from one set of settings.
 _GOOD_HTTP_CODE: typing.Final = 200
 
 

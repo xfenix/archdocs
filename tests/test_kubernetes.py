@@ -7,10 +7,6 @@ from fastarch.main import SettingsForFastarch
 from tests.rendered_diagram import FASTAPI_ROOT, KUBERNETES_VARIANTS_ROOT, LITESTAR_ROOT, TESTS_ROOT, render_diagram
 
 
-# Manifests are the second source of the same diagram: they annotate the service node the code
-# already drew, hang configuration and storage around it, and name the entrypoint the cluster
-# exposes. Toggles win over templates — a chart that ships an ingress with `enabled: false`
-# describes a service nobody reaches from outside.
 _FIXTURE_ANNOTATIONS: typing.Final = "replicas 3, HPA 2-10, target CPU 70%, cpu 100m-500m, RAM 128Mi-512Mi, GPU 1"
 _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
     {
