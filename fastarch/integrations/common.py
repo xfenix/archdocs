@@ -5,12 +5,10 @@ from fastarch import settings
 from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
-def _escape_for_html_text(rendered_diagram: str) -> str:
-    return rendered_diagram.replace("&", "&amp;").replace("<", "&lt;")
-
-
 def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
-    rendered_diagram: typing.Final = _escape_for_html_text(arch_engine.render_architecture_diagram())
+    rendered_diagram: typing.Final = (
+        arch_engine.render_architecture_diagram().replace("&", "&amp;").replace("<", "&lt;")
+    )
     placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTER.search(settings.UI_HTML_TEMPLATE)
     if placeholder_match is None:
         return settings.UI_HTML_TEMPLATE

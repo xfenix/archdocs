@@ -3,9 +3,8 @@ import typing
 
 import pytest
 
-from fastarch import mermaid_syntax
 from fastarch.main import SettingsForFastarch
-from tests.served_page import extract_diagram, render_architecture_page
+from tests.served_page import extract_diagram, render_architecture_page, render_service_node_definition
 
 
 _TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
@@ -28,10 +27,10 @@ _MERGED_SETTINGS: typing.Final = SettingsForFastarch(
 
 
 def test_chart_features_reach_the_page() -> None:
-    expected_node: typing.Final = mermaid_syntax.render_service_node_definition(
+    expected_node: typing.Final = render_service_node_definition(
         "kubernetes-svc",
         _FIXTURE_ANNOTATIONS,
-    ).strip()
+    )
     response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(root_dir=_FIXTURES_ROOT, service_name="kubernetes-svc"),
     )
@@ -53,10 +52,10 @@ def test_configuration_and_storage_reach_the_page(expected_edge: str) -> None:
 
 
 def test_manifests_and_code_share_one_node() -> None:
-    expected_node: typing.Final = mermaid_syntax.render_service_node_definition(
+    expected_node: typing.Final = render_service_node_definition(
         "merged-svc",
         _FIXTURE_ANNOTATIONS,
-    ).strip()
+    )
     response_text: typing.Final = render_architecture_page(_MERGED_SETTINGS)
     assert "HTTPS api.example.com" in response_text
     assert "redisdb" in response_text
@@ -64,10 +63,10 @@ def test_manifests_and_code_share_one_node() -> None:
 
 
 def test_disabled_toggles_win_over_templates() -> None:
-    expected_node: typing.Final = mermaid_syntax.render_service_node_definition(
+    expected_node: typing.Final = render_service_node_definition(
         "disabled-svc",
         ("replicas 2",),
-    ).strip()
+    )
     response_text: typing.Final = render_architecture_page(
         SettingsForFastarch(
             root_dir=_FASTAPI_ROOT,
