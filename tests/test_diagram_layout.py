@@ -1,68 +1,128 @@
-import pathlib
-import re as py_re
+import types
 import typing
 
 import pytest
 
+from fastarch import settings
 from fastarch.main import SettingsForFastarch
-from tests.served_page import collect_group_of_every_node, render_diagram
+from tests.rendered_diagram import (
+    ALL_EXAMPLE_SETTINGS,
+    LITESTAR_ROOT,
+    SHOWCASE_SETTINGS,
+    WITHOUT_MANIFESTS,
+    collect_edge_ends,
+    collect_group_of_every_node,
+    extract_edge_lines,
+    render_diagram,
+)
 
 
-# Mermaid has no coordinates: a diagram is laid out from arrow directions and from the order
-# the lines are written in, so both are held down here. It only holds while the arrows agree
-# with the side they are drawn on — one `get` route drawn as an arrow leaving the service used
-# to drag the whole `Inbound API` group across the page.
-_TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
-_KUBERNETES_DIR: typing.Final = _TESTS_ROOT / "kubernetes_fixtures" / "chart"
+# Mermaid has no coordinates: a diagram is laid out from the direction of its arrows and from
+# the order its lines are written in, so both are part of the contract.
 _SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _INBOUND_GROUP: typing.Final = "Inbound API"
 _OUTBOUND_GROUP: typing.Final = "Outbound calls"
-_EDGE_ENDS_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*(?P<source>\w+) -->.* (?P<target>\w+)$")
-_SHOWCASE_SETTINGS: typing.Final = SettingsForFastarch(
-    root_dir=_TESTS_ROOT / "showcase",
-    service_name="showcase-service",
-    kubernetes_dir=_KUBERNETES_DIR,
-)
-_ALL_DIAGRAM_SETTINGS: typing.Final = (
-    _SHOWCASE_SETTINGS,
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "fastapi", service_name="fastapi-svc"),
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "litestar", service_name="litestar-svc", kubernetes_dir=_KUBERNETES_DIR),
-    SettingsForFastarch(root_dir=_TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
+_MESSAGING_GROUP: typing.Final = "Messaging & tasks"
+_DATA_STORES_GROUP: typing.Final = "Data stores"
+_CONFIGURATION_GROUP: typing.Final = "Configuration"
+_SHOWCASE_NODE_ID: typing.Final = "showcase_service"
+_EXPECTED_SHOWCASE_GROUPS: typing.Final = types.MappingProxyType(
+    {
+        "external_client": _INBOUND_GROUP,
+        "rabbit": _MESSAGING_GROUP,
+        "kafka": _MESSAGING_GROUP,
+        "nats": _MESSAGING_GROUP,
+        "redis": _MESSAGING_GROUP,
+        "TaskQueue_Worker": _MESSAGING_GROUP,
+        "External_API": _OUTBOUND_GROUP,
+        "PersistentVolume": _DATA_STORES_GROUP,
+        "redisdb": _DATA_STORES_GROUP,
+        "redisdb_cluster0": _DATA_STORES_GROUP,
+        "redisdb_cluster1": _DATA_STORES_GROUP,
+        "redisdb_cluster2": _DATA_STORES_GROUP,
+        "redisdb_sentinel0": _DATA_STORES_GROUP,
+        "redisdb_sentinel1": _DATA_STORES_GROUP,
+        "redisdb_sentinel2": _DATA_STORES_GROUP,
+        "postgresql_asyncpgdb": _DATA_STORES_GROUP,
+        "postgresql_psycopgdb0": _DATA_STORES_GROUP,
+        "postgresql_psycopgdb1": _DATA_STORES_GROUP,
+        "postgresql_psycopgdb2": _DATA_STORES_GROUP,
+        "sqlite_aiosqlitedb": _DATA_STORES_GROUP,
+        "ConfigMap_app_config": _CONFIGURATION_GROUP,
+        "Secret_app_secrets": _CONFIGURATION_GROUP,
+        "ConfigMap_app_tuning": _CONFIGURATION_GROUP,
+    },
 )
 _PLACEMENT_ORDER_OF_MARKS: typing.Final = (
     'subgraph group_configuration["Configuration"]',
     'subgraph service_row[" "]',
     "direction LR",
     'subgraph group_inbound_api["Inbound API"]',
+    'external_client["User/Client"]',
     'showcase_service{"',
     'subgraph group_messaging_and_tasks["Messaging & tasks"]',
     'subgraph group_outbound_calls["Outbound calls"]',
     "style service_row fill:none,stroke:none",
     'subgraph group_data_stores["Data stores"]',
 )
+_ALL_SERVICE_NAMES: typing.Final = (
+    ("payments-api", "payments_api"),
+    ("svc.v2", "svc_v2"),
+    ("Billing Service", "Billing_Service"),
+    ("!!!", settings.FALLBACK_SERVICE_NODE_ID),
+)
 
 
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, _ALL_DIAGRAM_SETTINGS)
+def _render_named_diagram(service_name: str, /) -> str:
+    return render_diagram(
+        SettingsForFastarch(
+            root_dir=LITESTAR_ROOT,
+            service_name=service_name,
+            kubernetes_dir=WITHOUT_MANIFESTS,
+        ),
+    )
+
+
+@pytest.mark.parametrize(_SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
 def test_arrows_agree_with_their_side(arch_settings: SettingsForFastarch) -> None:
     rendered_diagram: typing.Final = render_diagram(arch_settings)
+
     group_of_node: typing.Final = collect_group_of_every_node(rendered_diagram)
-    all_edge_ends: typing.Final = tuple(_EDGE_ENDS_PATTERN.finditer(rendered_diagram))
-    assert {
-        one_match.group("target")
-        for one_match in all_edge_ends
-        if group_of_node.get(one_match.group("target")) == _INBOUND_GROUP
-    } == set()
-    assert {
-        one_match.group("source")
-        for one_match in all_edge_ends
-        if group_of_node.get(one_match.group("source")) == _OUTBOUND_GROUP
-    } == set()
+    all_edge_ends: typing.Final = collect_edge_ends(rendered_diagram)
+    all_target_groups: typing.Final = {group_of_node.get(one_ends.target_id) for one_ends in all_edge_ends}
+    all_source_groups: typing.Final = {group_of_node.get(one_ends.source_id) for one_ends in all_edge_ends}
+    assert all_edge_ends
+    assert _INBOUND_GROUP not in all_target_groups
+    assert _OUTBOUND_GROUP not in all_source_groups
+
+
+def test_showcase_nodes_sit_in_their_groups() -> None:
+    rendered_diagram: typing.Final = render_diagram(SHOWCASE_SETTINGS)
+
+    assert collect_group_of_every_node(rendered_diagram) == _EXPECTED_SHOWCASE_GROUPS
+    assert all(_SHOWCASE_NODE_ID in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
 
 
 def test_groups_sit_around_the_service() -> None:
-    all_lines: typing.Final = [one_line.strip() for one_line in render_diagram(_SHOWCASE_SETTINGS).split("\n")]
+    all_lines: typing.Final = [one_line.strip() for one_line in render_diagram(SHOWCASE_SETTINGS).split("\n")]
+
     all_positions: typing.Final = [
         next(line_index for line_index, one_line in enumerate(all_lines) if one_line.startswith(one_mark))
         for one_mark in _PLACEMENT_ORDER_OF_MARKS
     ]
     assert all_positions == sorted(all_positions)
+
+
+@pytest.mark.parametrize(("service_name", "expected_node_id"), _ALL_SERVICE_NAMES)
+def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: str) -> None:
+    rendered_diagram: typing.Final = _render_named_diagram(service_name)
+
+    assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram
+    assert all(expected_node_id in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
+
+
+def test_credentials_never_reach_the_diagram() -> None:
+    rendered_diagram: typing.Final = _render_named_diagram("secretive-svc")
+
+    assert "user:password" not in rendered_diagram
+    assert "://***@" in rendered_diagram
