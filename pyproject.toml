@@ -73,6 +73,7 @@ dev = [
     "hypothesis>=6.163.0",
     "litestar>=2.24.0",
     "mypy>=2.3.0",
+    "playwright>=1.62.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",

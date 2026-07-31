@@ -103,9 +103,11 @@ configuration.
 <img src="./screenshot.png" alt="architecture page served by fastarch" width="900"/>
 
 The screenshot above is the page of `tests/showcase`, an example application that
-uses everything from the list above at once, taken as the browser draws it. That
-example and its FastAPI and Litestar neighbours are served by the playground, so
-you can click through the same pages yourself:
+uses everything from the list above at once, taken as the browser draws it — by
+`just screenshot`, which serves that page and captures it with a headless browser,
+so the picture is always what the current code renders. That example and its
+FastAPI and Litestar neighbours are served by the playground, so you can click
+through the same pages yourself:
 
 ```shell
 just playground
