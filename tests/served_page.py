@@ -1,59 +1,55 @@
-import re as py_re
 import typing
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+import fastapi
+from fastapi.testclient import TestClient as FastapiTestClient
+from litestar import Litestar
+from litestar.testing import TestClient as LitestarTestClient
 
-from fastarch import diagram_model, mermaid_syntax, settings
-from fastarch.integrations.fastapi import add_architecture_doc_routes
+from fastarch import settings
+from fastarch.integrations import fastapi as fastapi_integration
+from fastarch.integrations import litestar as litestar_integration
 from fastarch.main import SettingsForFastarch
 
 
+# Both integrations answer with a response class of their own, so a page is handed over as the
+# text of a document that came back with a good code and an html content type.
+type PageRenderer = typing.Callable[[SettingsForFastarch | None, str | None], str]
+
 GOOD_HTTP_CODE: typing.Final = 200
-_DIAGRAM_PATTERN: typing.Final = py_re.compile(
-    r"graph TB\n(?P<diagram>.*?)</pre>",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_GROUP_BLOCK_PATTERN: typing.Final = py_re.compile(
-    r'subgraph group_\w+\["(?P<group_title>[^"]+)"\]\n(?P<group_body>.*?)\n\s*end',
-    flags=py_re.DOTALL,
-)
-_DEFINED_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\["')
+CONTENT_TYPE_HTML: typing.Final = "text/html"
 
 
-def render_architecture_page(arch_settings: SettingsForFastarch | None = None) -> str:
-    fastapi_app: typing.Final = FastAPI()
-    add_architecture_doc_routes(fastapi_app, route_path="/", arch_settings=arch_settings)
-    response: typing.Final = TestClient(fastapi_app).get("/")
-    assert response.status_code == GOOD_HTTP_CODE
-    return response.text
+def render_fastapi_page(arch_settings: SettingsForFastarch | None, route_path: str | None, /) -> str:
+    fastapi_app: typing.Final = fastapi.FastAPI()
+    if route_path is None:
+        fastapi_integration.add_architecture_doc_routes(fastapi_app, arch_settings=arch_settings)
+    else:
+        fastapi_integration.add_architecture_doc_routes(
+            fastapi_app,
+            route_path=route_path,
+            arch_settings=arch_settings,
+        )
+    fastapi_response: typing.Final = FastapiTestClient(fastapi_app).get(route_path or settings.DEFAULT_PATH)
+    assert fastapi_response.status_code == GOOD_HTTP_CODE
+    assert CONTENT_TYPE_HTML in fastapi_response.headers["content-type"]
+    return fastapi_response.text
 
 
-def _extract_diagram_body(page_html: str) -> str:
-    diagram_match: typing.Final = _DIAGRAM_PATTERN.search(page_html)
-    assert diagram_match is not None
-    return diagram_match.group("diagram")
+def render_litestar_page(arch_settings: SettingsForFastarch | None, route_path: str | None, /) -> str:
+    litestar_app: typing.Final = Litestar()
+    if route_path is None:
+        litestar_integration.add_architecture_doc_routes(litestar_app, arch_settings=arch_settings)
+    else:
+        litestar_integration.add_architecture_doc_routes(
+            litestar_app,
+            route_path=route_path,
+            arch_settings=arch_settings,
+        )
+    litestar_response: typing.Final = LitestarTestClient(litestar_app).get(route_path or settings.DEFAULT_PATH)
+    assert litestar_response.status_code == GOOD_HTTP_CODE
+    assert CONTENT_TYPE_HTML in litestar_response.headers["content-type"]
+    return litestar_response.text
 
 
-def extract_diagram(page_html: str) -> str:
-    return _extract_diagram_body(page_html).replace("&lt;", "<").replace("&amp;", "&")
-
-
-def render_diagram(arch_settings: SettingsForFastarch) -> str:
-    return extract_diagram(render_architecture_page(arch_settings))
-
-
-def render_service_node_id(service_name: str) -> str:
-    return diagram_model.build_service_node(service_name).defined_node_id
-
-
-def render_service_node_definition(service_name: str, node_annotations: typing.Iterable[str] = ()) -> str:
-    return mermaid_syntax.render_node_definition(diagram_model.build_service_node(service_name, node_annotations))
-
-
-def collect_group_of_every_node(rendered_diagram: str, /) -> dict[str, str]:
-    return {
-        one_node_match.group("node_id"): one_group_match.group("group_title")
-        for one_group_match in _GROUP_BLOCK_PATTERN.finditer(rendered_diagram)
-        for one_node_match in _DEFINED_NODE_PATTERN.finditer(one_group_match.group("group_body"))
-    }
+ALL_PAGE_RENDERERS: typing.Final[tuple[PageRenderer, ...]] = (render_fastapi_page, render_litestar_page)
+FRAMEWORK_IDS: typing.Final = ("fastapi", "litestar")
