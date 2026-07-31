@@ -2,7 +2,7 @@ import re as py_re
 import types
 import typing
 
-from fastarch import settings
+from fastarch import prefilter, settings
 from fastarch.features.task_queues.const import TaskQueueEnum, TaskQueueFeatures
 
 
@@ -62,22 +62,27 @@ _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
     },
 )
 
+_EMPTY_FEATURES: typing.Final = TaskQueueFeatures(
+    queues_used=frozenset(),
+    has_tasks=False,
+    has_workers=False,
+    brokers_detected=frozenset(),
+)
+
+
+def _find_used_queues(raw_source: str, /) -> set[str]:
+    lowered_source: typing.Final = raw_source.lower()
+    return {
+        one_queue.value
+        for one_queue, one_pattern in _QUEUE_IMPORT_PATTERNS.items()
+        if prefilter.contains_any_literal(lowered_source, (one_queue.value,)) and one_pattern.search(raw_source)
+    }
+
 
 def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
-    queues_found: typing.Final[set[str]] = set()
-    for queue_enum, pattern in _QUEUE_IMPORT_PATTERNS.items():
-        if pattern.search(raw_source):
-            queues_found.add(queue_enum.value)
-
+    queues_found: typing.Final = _find_used_queues(raw_source)
     if not queues_found:
-        return TaskQueueFeatures(
-            queues_used=frozenset(),
-            has_tasks=False,
-            has_workers=False,
-            brokers_detected=frozenset(),
-        )
-
-    # Combine all detection into single return statement
+        return _EMPTY_FEATURES
     return TaskQueueFeatures(
         queues_used=frozenset(queues_found),
         has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),

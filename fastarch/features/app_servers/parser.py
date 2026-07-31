@@ -2,7 +2,7 @@ import re as py_re
 import types
 import typing
 
-from fastarch import settings
+from fastarch import prefilter, settings
 from fastarch.features.app_servers.const import ApplicationServerEnum, ApplicationServerFeatures
 
 
@@ -47,6 +47,16 @@ _SERVER_PATTERNS: typing.Final = types.MappingProxyType(
         },
     },
 )
+# A server's own name is almost always the literal to prefilter it by, but `run_simple(` from
+# werkzeug gets written without naming werkzeug at all — a pattern and its literals have to
+# agree, see `prefilter`.
+_LITERALS_OF_SERVER: typing.Final = types.MappingProxyType(
+    {
+        **{one_server: (one_server.value,) for one_server in ApplicationServerEnum},
+        ApplicationServerEnum.werkzeug_server: ("werkzeug", "run_simple"),
+    },
+)
+_WORKER_CLASS_LITERALS: typing.Final = ("worker_class", "--worker-class")
 _WORKER_CLASS_PATTERN: typing.Final = py_re.compile(
     r"(?:worker_class\s*=|--worker-class)[\s=\"']*(?P<worker_class>[\w.]+)",
     flags=settings.TYPICAL_RE_FLAGS,
@@ -76,7 +86,9 @@ def _read_first_number(number_pattern: py_re.Pattern[str], raw_source: str, /) -
     return int(number_match.group("found_number"))
 
 
-def _find_servers_behind_worker_class(raw_source: str, /) -> set[str]:
+def _find_servers_behind_worker_class(raw_source: str, lowered_source: str, /) -> set[str]:
+    if not prefilter.contains_any_literal(lowered_source, _WORKER_CLASS_LITERALS):
+        return set()
     worker_class_match: typing.Final = _WORKER_CLASS_PATTERN.search(raw_source)
     if worker_class_match is None:
         return set()
@@ -87,9 +99,13 @@ def _find_servers_behind_worker_class(raw_source: str, /) -> set[str]:
 
 
 def find_application_server_features(raw_source: str) -> ApplicationServerFeatures:
+    lowered_source: typing.Final = raw_source.lower()
     servers_found: typing.Final = {
-        one_server.value for one_server, one_pattern in _SERVER_PATTERNS.items() if one_pattern.search(raw_source)
-    } | _find_servers_behind_worker_class(raw_source)
+        one_server.value
+        for one_server, one_pattern in _SERVER_PATTERNS.items()
+        if prefilter.contains_any_literal(lowered_source, _LITERALS_OF_SERVER[one_server])
+        and one_pattern.search(raw_source)
+    } | _find_servers_behind_worker_class(raw_source, lowered_source)
     if not servers_found:
         return ApplicationServerFeatures()
     return ApplicationServerFeatures(

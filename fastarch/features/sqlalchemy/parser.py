@@ -1,7 +1,7 @@
 import re as py_re
 import typing
 
-from fastarch import settings
+from fastarch import prefilter, settings
 from fastarch.features.sqlalchemy.const import SQLAlchemyFeatures
 
 
@@ -20,9 +20,32 @@ _DB_TYPE_PATTERN: typing.Final = py_re.compile(
     r"mssql(?:\+[^'\"]*)?|mariadb(?:\+[^'\"]*)?|cockroachdb(?:\+[^'\"]*)?)['\"]",
     settings.TYPICAL_RE_FLAGS,
 )
+# One union of literals for the whole feature: an engine is found not only by the package
+# name but by a bare DSN in a string, so the database schemes of `_DB_TYPE_PATTERN` belong here too.
+_SQLALCHEMY_LITERALS: typing.Final = (
+    "sqlalchemy",
+    "create_engine",
+    "target_session_attrs",
+    "postgresql",
+    "mysql",
+    "sqlite",
+    "oracle",
+    "mssql",
+    "mariadb",
+    "cockroachdb",
+)
+_EMPTY_FEATURES: typing.Final = SQLAlchemyFeatures(
+    async_used=False,
+    pooling_used=False,
+    multiple_hosts=False,
+    target_session_attrs="",
+    database_type="",
+)
 
 
 def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
+    if not prefilter.contains_any_literal(raw_source.lower(), _SQLALCHEMY_LITERALS):
+        return _EMPTY_FEATURES
     target_session_attrs_match: typing.Final = _TARGET_SESSION_ATTRS_PATTERN.search(raw_source)
     database_type_match: typing.Final = _DB_TYPE_PATTERN.search(raw_source)
     return SQLAlchemyFeatures(
