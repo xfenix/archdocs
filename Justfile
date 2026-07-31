@@ -26,6 +26,12 @@ test *args:
 coverage: (test "--cov-report=html" "--cov-report=json")
   uv run --no-sync python scripts/generate-coverage-badge.py
 
+# Пересъёмка `screenshot.png` для README со страницы showcase — той же, что даёт песочница.
+# Браузер ставится сюда же, в .venv, и повторный запуск ничего не качает.
+screenshot:
+  uv run --no-sync playwright install chromium
+  PYTHONPATH=. uv run --no-sync python scripts/generate-architecture-screenshot.py
+
 # Песочница: FastAPI-приложение, которое отдаёт страницы fastarch по примерам из tests/.
 # Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.
 playground port="8000":
