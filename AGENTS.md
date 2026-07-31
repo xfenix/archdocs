@@ -180,9 +180,10 @@ push в `main`: коммитит обновлённый json обратно в �
 github pages. Бейдж в README читает этот json через shields.io и ведёт на
 https://xfenix.github.io/fastarch/ — json это одно число, pages это подробности.
 
-Чтобы это заработало, в репозитории нужны Settings → Pages → Source = «GitHub Actions» и
-публичная видимость: приватному репозиторию `raw.githubusercontent.com` не отдаст json
-анонимному shields.io, а pages потребуют платный тариф.
+Pages джоба включает сама — `actions/configure-pages` с `enablement: true`; руками в
+Settings → Pages лезть не нужно. А вот публичная видимость нужна: приватному репозиторию
+`raw.githubusercontent.com` не отдаст json анонимному shields.io, а pages потребуют
+платный тариф.
 
 ## Скриншот архитектуры
 
