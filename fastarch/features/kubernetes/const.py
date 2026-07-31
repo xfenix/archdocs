@@ -19,9 +19,6 @@ PARENT_LOOKUP_DEPTH: typing.Final = 2
 TEMPLATES_DIR_NAME: typing.Final = "templates"
 VALUES_FILE_STEM: typing.Final = "values"
 MANIFEST_FILE_SUFFIXES: typing.Final = (".yaml", ".yml")
-SKIPPED_DIR_NAMES: typing.Final = frozenset(
-    (".git", ".venv", ".tox", ".mypy_cache", ".ruff_cache", "venv", "node_modules", "__pycache__", "site-packages"),
-)
 
 
 @typing.final

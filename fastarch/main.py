@@ -100,7 +100,11 @@ class ArchitectureParserAndRenderer:
         root_path: pathlib.Path,
         /,
     ) -> tuple[diagram_model.DiagramEdge, ...]:
-        py_files: typing.Final = sorted(root_path.rglob(settings.FILES_SEARCH_PATTERN))
+        py_files: typing.Final = sorted(
+            one_src_file
+            for one_src_file in root_path.rglob(settings.FILES_SEARCH_PATTERN)
+            if settings.SKIPPED_DIR_NAMES.isdisjoint(one_src_file.relative_to(root_path).parts)
+        )
         with futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
             all_rendered_files: typing.Final = executor.map(
                 functools.partial(self._process_one_file, service_node),

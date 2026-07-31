@@ -22,7 +22,7 @@ def _find_manifest_files(search_dir: pathlib.Path, /) -> list[pathlib.Path]:
         one_found_file
         for one_file_suffix in const.MANIFEST_FILE_SUFFIXES
         for one_found_file in search_dir.rglob(f"*{one_file_suffix}")
-        if not const.SKIPPED_DIR_NAMES.intersection(one_found_file.relative_to(search_dir).parts)
+        if settings.SKIPPED_DIR_NAMES.isdisjoint(one_found_file.relative_to(search_dir).parts)
     )
     return sorted(
         (one_found_file for one_found_file in all_found_files if _is_manifest_file(one_found_file)),

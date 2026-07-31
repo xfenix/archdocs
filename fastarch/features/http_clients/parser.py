@@ -2,7 +2,7 @@ import re as py_re
 import types
 import typing
 
-from fastarch import settings
+from fastarch import prefilter, settings
 from fastarch.features.http_clients.const import HttpClientEnum, HttpClientFeatures
 
 
@@ -44,11 +44,12 @@ _ASYNC_DETECTION_PATTERNS: typing.Final = py_re.compile(
 
 
 def find_http_client_features(raw_source: str) -> HttpClientFeatures:
-    clients_found: typing.Final[set[str]] = set()
-
-    for client_enum, pattern in _CLIENT_PATTERNS.items():
-        if pattern.search(raw_source):
-            clients_found.add(client_enum.value)
+    lowered_source: typing.Final = raw_source.lower()
+    clients_found: typing.Final = {
+        one_client.value
+        for one_client, one_pattern in _CLIENT_PATTERNS.items()
+        if prefilter.contains_any_literal(lowered_source, (one_client.value,)) and one_pattern.search(raw_source)
+    }
 
     if not clients_found:
         return HttpClientFeatures(

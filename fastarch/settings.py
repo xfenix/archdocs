@@ -4,6 +4,28 @@ import typing
 
 
 FILES_SEARCH_PATTERN: typing.Final = "*.py"
+# A virtual environment is somebody else's code: the sources of uvicorn, redis and celery
+# themselves match the very patterns the service is scanned for, and land on the diagram as
+# its architecture. The walk matches these names relative to the project root rather than to
+# the filesystem root, otherwise a service living in a `build` directory would skip itself.
+SKIPPED_DIR_NAMES: typing.Final = frozenset(
+    (
+        ".git",
+        ".venv",
+        ".tox",
+        ".nox",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pytest_cache",
+        ".eggs",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        "site-packages",
+        "build",
+        "dist",
+    ),
+)
 MAX_WORKERS: typing.Final = 10
 SHIFT_LEFT: typing.Final = " " * 4
 VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION: typing.Final = 3

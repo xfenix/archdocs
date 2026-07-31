@@ -2,7 +2,7 @@ import re as py_re
 import types
 import typing
 
-from fastarch import settings
+from fastarch import prefilter, settings
 from fastarch.features.redis.const import RedisFeatures
 
 
@@ -31,11 +31,20 @@ _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(
     r"\bredis\.Retry\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+_REDIS_LITERALS: typing.Final = ("redis",)
+_EMPTY_FEATURES: typing.Final = RedisFeatures(
+    cluster_or_sentinel=False,
+    connection_type=None,
+    async_used=False,
+    retry_used=False,
+)
 
 
 def find_redis_features(raw_source: str) -> RedisFeatures:
+    if not prefilter.contains_any_literal(raw_source.lower(), _REDIS_LITERALS):
+        return _EMPTY_FEATURES
     if not _REDIS_IMPORT_PATTERN.search(raw_source):
-        return RedisFeatures(cluster_or_sentinel=False, connection_type=None, async_used=False, retry_used=False)
+        return _EMPTY_FEATURES
     connection_type: typing.Final = next(
         (one_type_name for one_type_name, pattern in _REDIS_CONNECTION_PATTERNS.items() if pattern.search(raw_source)),
         None,
