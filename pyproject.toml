@@ -60,9 +60,11 @@ addopts = "-n auto --cov=. --cov-report=term-missing"
 
 [tool.coverage.run]
 omit = ["tests/fastapi/*", "scripts/*"]
+branch = true
 
 [tool.coverage.report]
 exclude_also = ["if typing.TYPE_CHECKING:"]
+fail_under = 100
 [dependency-groups]
 dev = [
     "auto-typing-final>=1.0.4",

@@ -6,7 +6,8 @@ import hypothesis
 import pytest
 from hypothesis import strategies as st
 
-from tests.rendered_diagram import EDGE_ARROW, SHOWCASE_SETTINGS, render_diagram, render_source_diagram
+from tests.diagram_parts import EDGE_ARROW
+from tests.rendered_diagram import SHOWCASE_SETTINGS, render_example_diagram, render_source_diagram
 
 
 # What a parser found is only interesting once it reaches an arrow, so every case here is one
@@ -423,7 +424,7 @@ def test_every_server_reaches_the_diagram(tmp_path: pathlib.Path, server_name: s
 
 @pytest.mark.parametrize("feature_mark", _REQUIRED_SHOWCASE_MARKS)
 def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
-    assert feature_mark in render_diagram(SHOWCASE_SETTINGS)
+    assert feature_mark in render_example_diagram(SHOWCASE_SETTINGS)
 
 
 @hypothesis.settings(

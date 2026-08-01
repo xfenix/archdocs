@@ -3,23 +3,19 @@ import typing
 
 import pytest
 
-from fastarch import settings
 from fastarch.main import SettingsForFastarch
+from tests.diagram_parts import collect_edge_ends, collect_group_of_every_node, extract_edge_lines
 from tests.rendered_diagram import (
     ALL_EXAMPLE_SETTINGS,
-    LITESTAR_ROOT,
+    SETTINGS_ARGUMENT,
     SHOWCASE_SETTINGS,
-    WITHOUT_MANIFESTS,
-    collect_edge_ends,
-    collect_group_of_every_node,
-    extract_edge_lines,
-    render_diagram,
+    build_named_settings,
+    render_example_diagram,
 )
 
 
 # Mermaid has no coordinates: a diagram is laid out from the direction of its arrows and from
 # the order its lines are written in, so both are part of the contract.
-_SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _INBOUND_GROUP: typing.Final = "Inbound API"
 _OUTBOUND_GROUP: typing.Final = "Outbound calls"
 _MESSAGING_GROUP: typing.Final = "Messaging & tasks"
@@ -69,23 +65,13 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
     ("Billing Service", "Billing_Service"),
-    ("!!!", settings.FALLBACK_SERVICE_NODE_ID),
+    ("!!!", "fastarch_service"),
 )
 
 
-def _render_named_diagram(service_name: str, /) -> str:
-    return render_diagram(
-        SettingsForFastarch(
-            root_dir=LITESTAR_ROOT,
-            service_name=service_name,
-            kubernetes_dir=WITHOUT_MANIFESTS,
-        ),
-    )
-
-
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
+@pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
 def test_arrows_agree_with_their_side(arch_settings: SettingsForFastarch) -> None:
-    rendered_diagram: typing.Final = render_diagram(arch_settings)
+    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     group_of_node: typing.Final = collect_group_of_every_node(rendered_diagram)
     all_edge_ends: typing.Final = collect_edge_ends(rendered_diagram)
@@ -97,14 +83,14 @@ def test_arrows_agree_with_their_side(arch_settings: SettingsForFastarch) -> Non
 
 
 def test_showcase_nodes_sit_in_their_groups() -> None:
-    rendered_diagram: typing.Final = render_diagram(SHOWCASE_SETTINGS)
+    rendered_diagram: typing.Final = render_example_diagram(SHOWCASE_SETTINGS)
 
     assert collect_group_of_every_node(rendered_diagram) == _EXPECTED_SHOWCASE_GROUPS
     assert all(_SHOWCASE_NODE_ID in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
 
 
 def test_groups_sit_around_the_service() -> None:
-    all_lines: typing.Final = [one_line.strip() for one_line in render_diagram(SHOWCASE_SETTINGS).split("\n")]
+    all_lines: typing.Final = [one_line.strip() for one_line in render_example_diagram(SHOWCASE_SETTINGS).split("\n")]
 
     all_positions: typing.Final = [
         next(line_index for line_index, one_line in enumerate(all_lines) if one_line.startswith(one_mark))
@@ -115,14 +101,14 @@ def test_groups_sit_around_the_service() -> None:
 
 @pytest.mark.parametrize(("service_name", "expected_node_id"), _ALL_SERVICE_NAMES)
 def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: str) -> None:
-    rendered_diagram: typing.Final = _render_named_diagram(service_name)
+    rendered_diagram: typing.Final = render_example_diagram(build_named_settings(service_name))
 
     assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram
     assert all(expected_node_id in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
 
 
 def test_credentials_never_reach_the_diagram() -> None:
-    rendered_diagram: typing.Final = _render_named_diagram("secretive-svc")
+    rendered_diagram: typing.Final = render_example_diagram(build_named_settings("secretive-svc"))
 
     assert "user:password" not in rendered_diagram
     assert "://***@" in rendered_diagram

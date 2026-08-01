@@ -3,45 +3,31 @@ import typing
 
 import pytest
 
-from fastarch import settings
 from fastarch.main import SettingsForFastarch
-from tests.rendered_diagram import (
-    ALL_EXAMPLE_SETTINGS,
+from tests.diagram_parts import (
     EDGE_ARROW,
     collect_defined_node_ids,
     collect_edge_ends,
     collect_group_of_every_node,
     extract_edge_lines,
-    render_diagram,
 )
+from tests.rendered_diagram import ALL_EXAMPLE_SETTINGS, SETTINGS_ARGUMENT, render_example_diagram
 
 
 # Every rule here breaks the render silently: the page stays hidden until `postRenderCallback`
 # that never fires.
-_SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 _GROUP_OPENING_MARK: typing.Final = "subgraph "
 _GROUP_CLOSING_LINE: typing.Final = "end"
-_EDGE_END_GROUPS: typing.Final = ("source", "target")
-_NODE_ID_PATTERN: typing.Final = py_re.compile(r"^[A-Za-z0-9_]+$")
-_EDGE_PATTERN: typing.Final = py_re.compile(r"^(?P<source>\S+)\s+-->\s+(?:\|(?P<label>.*)\|\s+)?(?P<target>\S+)$")
-_QUOTED_LABEL_PATTERN: typing.Final = py_re.compile(r'"[^"]+"')
+_LINE_INDENT: typing.Final = " " * 4
+# An edge is a bare node id on each end of the arrow and a label either absent or quoted whole.
+_WELL_FORMED_EDGE_PATTERN: typing.Final = py_re.compile(r'[A-Za-z0-9_]+ --> (?:\|"[^"]+"\| )?[A-Za-z0-9_]+')
 _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
 _SERVICE_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\{"')
 
 
-def _is_edge_well_formed(one_edge_line: str, /) -> bool:
-    edge_match: typing.Final = _EDGE_PATTERN.match(one_edge_line)
-    if edge_match is None:
-        return False
-    if not all(_NODE_ID_PATTERN.match(edge_match.group(one_group)) for one_group in _EDGE_END_GROUPS):
-        return False
-    edge_label: typing.Final = edge_match.group("label")
-    return edge_label is None or bool(_QUOTED_LABEL_PATTERN.fullmatch(edge_label))
-
-
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
+@pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
 def test_every_line_is_valid_mermaid(arch_settings: SettingsForFastarch) -> None:
-    rendered_diagram: typing.Final = render_diagram(arch_settings)
+    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     all_lines: typing.Final = rendered_diagram.split("\n")
     all_content_lines: typing.Final = [one_line for one_line in all_lines if one_line.strip() != _GROUP_CLOSING_LINE]
@@ -49,11 +35,13 @@ def test_every_line_is_valid_mermaid(arch_settings: SettingsForFastarch) -> None
         one_line.strip() for one_line in all_lines if one_line.strip().startswith(_GROUP_OPENING_MARK)
     ]
     all_broken_edges: typing.Final = [
-        one_line for one_line in extract_edge_lines(rendered_diagram) if not _is_edge_well_formed(one_line)
+        one_line
+        for one_line in extract_edge_lines(rendered_diagram)
+        if not _WELL_FORMED_EDGE_PATTERN.fullmatch(one_line)
     ]
     assert not _ID_LESS_NODE_PATTERN.search(rendered_diagram)
     assert "<--" not in rendered_diagram
-    assert all(one_line.startswith(settings.SHIFT_LEFT) for one_line in all_lines)
+    assert all(one_line.startswith(_LINE_INDENT) for one_line in all_lines)
     assert all(one_line.count(EDGE_ARROW) <= 1 for one_line in all_lines)
     assert all_broken_edges == []
     assert len(all_content_lines) == len(set(all_content_lines))
@@ -61,9 +49,9 @@ def test_every_line_is_valid_mermaid(arch_settings: SettingsForFastarch) -> None
     assert len(all_group_openings) == len(all_lines) - len(all_content_lines)
 
 
-@pytest.mark.parametrize(_SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
+@pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
 def test_nodes_are_defined_once_and_grouped(arch_settings: SettingsForFastarch) -> None:
-    rendered_diagram: typing.Final = render_diagram(arch_settings)
+    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     all_defined_ids: typing.Final = collect_defined_node_ids(rendered_diagram)
     all_service_ids: typing.Final = {
