@@ -26,6 +26,10 @@ test *args:
 coverage: (test "--cov-report=html" "--cov-report=json")
   uv run --no-sync python scripts/generate-coverage-badge.py
 
+# Json бейджа со строками кода пакета для shields.io.
+lines:
+  uv run --no-sync python scripts/generate-lines-badge.py
+
 # Пересъёмка `screenshot.png` для README со страницы showcase — той же, что даёт песочница.
 # Браузер ставится сюда же, в .venv, и повторный запуск ничего не качает.
 screenshot:

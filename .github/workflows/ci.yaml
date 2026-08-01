@@ -72,14 +72,15 @@ jobs:
       - run: uv python install ${{ env.PYTHON_LATEST }}
       - run: just install
       - run: just coverage
+      - run: just lines
 
-      - name: Push coverage badge
+      - name: Push badges
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/badges/coverage.json
+          git add .github/badges/coverage.json .github/badges/lines.json
           git diff --cached --quiet || {
-            git commit -m "chore: обновление бейджа покрытия [skip ci]"
+            git commit -m "chore: обновление бейджей [skip ci]"
             git pull --rebase --autostash
             git push
           }
