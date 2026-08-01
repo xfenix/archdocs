@@ -96,7 +96,7 @@ jobs:
             "${{ github.api_url }}/repos/${{ github.repository }}/pages")"
           [ "${status}" = "200" ] && enabled=true || enabled=false
           echo "enabled=${enabled}" >>"$GITHUB_OUTPUT"
-          [ "${enabled}" = "true" ] || echo "::warning::Github pages выключен, отчёт покрытия уедет в артефакт запуска. Включить: Settings -> Pages -> Source: GitHub Actions."
+          [ "${enabled}" = "true" ] || echo "::warning::Github pages выключен, отчёт покрытия уедет в артефакт запуска. Включить: Settings -> Pages -> Source: GitHub Actions, после чего вернуть ссылку бейджа покрытия в README на https://xfenix.github.io/fastarch/."
 
       - if: steps.pages.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v5

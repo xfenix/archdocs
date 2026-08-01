@@ -1,7 +1,7 @@
 fastarch
 ===
 [![CI Pipeline](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/coverage.json)](https://xfenix.github.io/fastarch/)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/coverage.json)](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml?query=branch%3Amain)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 <img src="./logo.svg" alt="fastarch logo" width="300"/>
