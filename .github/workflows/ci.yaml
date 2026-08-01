@@ -84,14 +84,30 @@ jobs:
             git push
           }
 
-      # `enablement` включает pages c источником «GitHub Actions» сам: без него deploy-pages
-      # падает с 404 на репозитории, где pages ни разу не включали руками.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      # Включить сам pages пайплайн не может: создание сайта требует прав админа,
+      # а `GITHUB_TOKEN` их не имеет. Поэтому спрашиваем состояние и не роняем CI,
+      # пока pages не включили руками в Settings.
+      - name: Check github pages
+        id: pages
+        run: |
+          status="$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/pages")"
+          [ "${status}" = "200" ] && enabled=true || enabled=false
+          echo "enabled=${enabled}" >>"$GITHUB_OUTPUT"
+          [ "${enabled}" = "true" ] || echo "::warning::Github pages выключен, отчёт покрытия уедет в артефакт запуска. Включить: Settings -> Pages -> Source: GitHub Actions."
 
-      - uses: actions/upload-pages-artifact@v5
+      - if: steps.pages.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: htmlcov
-      - uses: actions/deploy-pages@v5
+      - if: steps.pages.outputs.enabled == 'true'
+        uses: actions/deploy-pages@v5
         id: deployment
+
+      - if: steps.pages.outputs.enabled != 'true'
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-html
+          path: htmlcov
