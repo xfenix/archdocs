@@ -37,10 +37,10 @@ from fastarch.integrations.fastapi import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
 
 
-app: typing.Final = fastapi.FastAPI()
+example_app: typing.Final = fastapi.FastAPI()
 
 add_architecture_doc_routes(
-    app,
+    example_app,
     arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"),
 )
 ```
@@ -56,10 +56,10 @@ from fastarch.integrations.litestar import add_architecture_doc_routes
 from fastarch.main import SettingsForFastarch
 
 
-app: typing.Final = litestar.Litestar()
+example_app: typing.Final = litestar.Litestar()
 
 add_architecture_doc_routes(
-    app,
+    example_app,
     arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"),
 )
 ```
@@ -96,7 +96,7 @@ relative path is taken from `root_dir`, not from the working directory of the pr
 
 ```python
 add_architecture_doc_routes(
-    app,
+    example_app,
     arch_settings=SettingsForFastarch(
         root_dir="src/",
         service_name="my-service",
