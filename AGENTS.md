@@ -187,10 +187,10 @@ push в `main`: коммитит обновлённый json обратно в �
 github pages. Бейдж в README читает этот json через shields.io и ведёт на
 https://xfenix.github.io/fastarch/ — json это одно число, pages это подробности.
 
-Pages джоба включает сама — `actions/configure-pages` с `enablement: true`; руками в
-Settings → Pages лезть не нужно. А вот публичная видимость нужна: приватному репозиторию
-`raw.githubusercontent.com` не отдаст json анонимному shields.io, а pages потребуют
-платный тариф.
+Pages включены в Settings → Pages с source `GitHub Actions`; пайплайн просто заливает
+артефакт и деплоит его, ничего не проверяя. Ещё репозиторий должен оставаться публичным:
+приватному `raw.githubusercontent.com` не отдаст json анонимному shields.io, а pages
+потребуют платный тариф.
 
 ## Бейдж строк кода
 
