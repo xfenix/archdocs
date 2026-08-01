@@ -4,7 +4,13 @@ import typing
 import pytest
 
 from fastarch.main import SettingsForFastarch
-from tests.rendered_diagram import FASTAPI_ROOT, KUBERNETES_VARIANTS_ROOT, LITESTAR_ROOT, TESTS_ROOT, render_diagram
+from tests.rendered_diagram import (
+    FASTAPI_ROOT,
+    KUBERNETES_VARIANTS_ROOT,
+    LITESTAR_ROOT,
+    TESTS_ROOT,
+    render_example_diagram,
+)
 
 
 _FIXTURE_ANNOTATIONS: typing.Final = "replicas 3, HPA 2-10, target CPU 70%, cpu 100m-500m, RAM 128Mi-512Mi, GPU 1"
@@ -108,7 +114,7 @@ def test_manifests_reach_the_diagram(
     expected_parts: tuple[str, ...],
     forbidden_parts: tuple[str, ...],
 ) -> None:
-    rendered_diagram: typing.Final = render_diagram(arch_settings)
+    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     for one_expected_part in expected_parts:
         assert one_expected_part in rendered_diagram, one_expected_part

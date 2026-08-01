@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from fastarch.main import SettingsForFastarch
+from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 from tests.rendered_diagram import KUBERNETES_VARIANTS_ROOT, WITHOUT_MANIFESTS, render_diagram
 
 
@@ -45,14 +45,6 @@ ingress:
 """
 
 
-def _build_vendored_project(project_path: pathlib.Path, vendored_relative_path: str, /) -> pathlib.Path:
-    (project_path / "service.py").write_text(_OWN_SOURCE)
-    vendored_dir: typing.Final = project_path / vendored_relative_path
-    vendored_dir.mkdir(parents=True)
-    (vendored_dir / "vendored.py").write_text(_VENDORED_SOURCE)
-    return project_path
-
-
 def _build_charted_project(
     project_path: pathlib.Path,
     /,
@@ -88,10 +80,14 @@ def test_dependencies_stay_out_of_the_diagram(
 ) -> None:
     project_path: typing.Final = tmp_path / project_subpath
     project_path.mkdir(parents=True, exist_ok=True)
+    (project_path / "service.py").write_text(_OWN_SOURCE)
+    vendored_dir: typing.Final = project_path / vendored_relative_path
+    vendored_dir.mkdir(parents=True)
+    (vendored_dir / "vendored.py").write_text(_VENDORED_SOURCE)
 
     rendered_diagram: typing.Final = render_diagram(
         SettingsForFastarch(
-            root_dir=_build_vendored_project(project_path, vendored_relative_path),
+            root_dir=project_path,
             service_name="vendor-svc",
             kubernetes_dir=WITHOUT_MANIFESTS,
         ),
@@ -157,6 +153,27 @@ def test_configured_dir_wins_over_the_lookup(
 
     assert expected_part in rendered_diagram
     assert forbidden_part not in rendered_diagram
+
+
+# A mounted route keeps one engine alive, and a rescan on every request would walk the whole
+# tree again: sources edited under a running process wait for a restart, see the playground.
+def test_sources_are_scanned_once_per_engine(tmp_path: pathlib.Path) -> None:
+    (tmp_path / "service.py").write_text(_OWN_SOURCE)
+    architecture_engine: typing.Final = ArchitectureParserAndRenderer(
+        local_settings=SettingsForFastarch(
+            root_dir=tmp_path,
+            service_name="cached-svc",
+            kubernetes_dir=WITHOUT_MANIFESTS,
+        ),
+    )
+    first_diagram: typing.Final = architecture_engine.render_architecture_diagram()
+
+    (tmp_path / "service.py").write_text(_APPLICATION_SOURCE)
+    second_diagram: typing.Final = architecture_engine.render_architecture_diagram()
+
+    assert second_diagram == first_diagram
+    assert 'redisdb["redis"]' in second_diagram
+    assert "REST" not in second_diagram
 
 
 @pytest.mark.parametrize(("project_subpath", "repository_marker"), [("project", ".git"), ("one/two/three", "")])
