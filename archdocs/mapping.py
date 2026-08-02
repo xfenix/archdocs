@@ -11,7 +11,7 @@ from archdocs.features.http_api import parser as httpapi_parser
 from archdocs.features.http_api import renderer as httpapi_renderer
 from archdocs.features.http_clients import parser as http_clients_parser
 from archdocs.features.http_clients import renderer as http_clients_renderer
-from archdocs.features.kubernetes import discovery as kubernetes_discovery
+from archdocs.features.kubernetes import manifest_files as kubernetes_manifest_files
 from archdocs.features.kubernetes import parser as kubernetes_parser
 from archdocs.features.kubernetes import renderer as kubernetes_renderer
 from archdocs.features.messaging_queue import parser as mq_parser
@@ -93,7 +93,7 @@ class AllCurrentManifestFeatures(enum.Enum):
 MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
     {
         AllCurrentManifestFeatures.kubernetes: ManifestFeatureFunctions(
-            read_source=kubernetes_discovery.read_kubernetes_manifests,
+            read_source=kubernetes_manifest_files.read_kubernetes_manifests,
             parse_manifests=kubernetes_parser.find_kubernetes_features,
             render_diagram=kubernetes_renderer.render_kubernetes_features,
             render_node_annotations=kubernetes_renderer.render_kubernetes_node_annotations,

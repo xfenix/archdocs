@@ -132,7 +132,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
         (_CHART_RELATIVE_PATH, "HTTP neighbour.example.com", "decoy.example.com"),
     ],
 )
-def test_configured_dir_wins_over_the_lookup(
+def test_configured_dir_wins_over_the_search(
     tmp_path: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
     kubernetes_dir: str | pathlib.Path,

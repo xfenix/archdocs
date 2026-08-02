@@ -15,7 +15,7 @@ VOLUME_ATTACHMENT: typing.Final = "volume"
 GPU_RESOURCE_KEYS: typing.Final = ("nvidia.com/gpu", "amd.com/gpu", "gpu")
 
 REPOSITORY_MARKER_NAME: typing.Final = ".git"
-PARENT_LOOKUP_DEPTH: typing.Final = 2
+PARENT_SEARCH_DEPTH: typing.Final = 2
 TEMPLATES_DIR_NAME: typing.Final = "templates"
 VALUES_FILE_STEM: typing.Final = "values"
 MANIFEST_FILE_SUFFIXES: typing.Final = (".yaml", ".yml")

@@ -30,12 +30,12 @@ def _find_manifest_files(search_dir: pathlib.Path, /) -> list[pathlib.Path]:
     )
 
 
-def _iter_lookup_dirs(root_path: pathlib.Path, /) -> typing.Iterator[pathlib.Path]:
-    # Charts live next to the sources at least as often as inside them, so the lookup climbs a
+def _iter_search_roots(root_path: pathlib.Path, /) -> typing.Iterator[pathlib.Path]:
+    # Charts live next to the sources at least as often as inside them, so the search climbs a
     # couple of levels up — but never out of the repository the sources belong to.
-    for one_lookup_dir in (root_path, *list(root_path.parents)[: const.PARENT_LOOKUP_DEPTH]):
-        yield one_lookup_dir
-        if (one_lookup_dir / const.REPOSITORY_MARKER_NAME).exists():
+    for one_search_root in (root_path, *list(root_path.parents)[: const.PARENT_SEARCH_DEPTH]):
+        yield one_search_root
+        if (one_search_root / const.REPOSITORY_MARKER_NAME).exists():
             return
 
 
@@ -54,13 +54,13 @@ def _resolve_manifest_dir(root_path: pathlib.Path, configured_dir: str | pathlib
         return next(
             (
                 one_found_dir
-                for one_found_dir in map(_find_manifest_dir, _iter_lookup_dirs(root_path))
+                for one_found_dir in map(_find_manifest_dir, _iter_search_roots(root_path))
                 if one_found_dir is not None
             ),
             None,
         )
     all_candidate_dirs: typing.Final = (
-        (one_lookup_dir / configured_dir).resolve() for one_lookup_dir in _iter_lookup_dirs(root_path)
+        (one_search_root / configured_dir).resolve() for one_search_root in _iter_search_roots(root_path)
     )
     return next((one_candidate_dir for one_candidate_dir in all_candidate_dirs if one_candidate_dir.is_dir()), None)
 

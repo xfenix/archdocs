@@ -1,14 +1,14 @@
 import dataclasses
 import typing
 
-from archdocs.features.kubernetes import const, lookup, manifests
+from archdocs.features.kubernetes import const, values
 
 
 type _KindNames = tuple[str, ...]
-type _ConfigurationPaths = tuple[tuple[manifests.ValuePath, str, str], ...]
+type _ConfigurationPaths = tuple[tuple[values.ValuePath, str, str], ...]
 
 _NAME_KEY: typing.Final = "name"
-_KIND_PATH: typing.Final[manifests.ValuePath] = ("kind",)
+_KIND_PATH: typing.Final[values.ValuePath] = ("kind",)
 _TRUE_VALUES: typing.Final = frozenset(("true", "yes", "on"))
 _CONFIGURATION_SOURCE_PATHS: typing.Final[_ConfigurationPaths] = (
     (("configMapRef", _NAME_KEY), const.CONFIG_MAP_KIND, const.ENVIRONMENT_ATTACHMENT),
@@ -23,54 +23,54 @@ _CONFIGURATION_SOURCE_PATHS: typing.Final[_ConfigurationPaths] = (
 
 
 def _read_toggle(
-    all_values: manifests.ManifestValues,
-    toggle_path: manifests.ValuePath,
+    all_values: values.ManifestValues,
+    toggle_path: values.ValuePath,
     kind_name: str,
     all_kinds: _KindNames,
     /,
 ) -> bool:
-    toggle_value: typing.Final = lookup.read_first_value(all_values, toggle_path)
+    toggle_value: typing.Final = values.read_first_value(all_values, toggle_path)
     if toggle_value:
         return toggle_value.lower() in _TRUE_VALUES
     return kind_name in all_kinds
 
 
-def _read_amounts(all_values: manifests.ManifestValues, /, *resource_keys: str) -> const.ResourceAmounts:
+def _read_amounts(all_values: values.ManifestValues, /, *resource_keys: str) -> const.ResourceAmounts:
     return const.ResourceAmounts(
-        requested_amount=lookup.read_first_value(
+        requested_amount=values.read_first_value(
             all_values,
             *[("resources", "requests", one_resource_key) for one_resource_key in resource_keys],
         ),
-        limited_amount=lookup.read_first_value(
+        limited_amount=values.read_first_value(
             all_values,
             *[("resources", "limits", one_resource_key) for one_resource_key in resource_keys],
         ),
     )
 
 
-def _read_traffic(all_values: manifests.ManifestValues, all_kinds: _KindNames, /) -> const.TrafficFeatures:
+def _read_traffic(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.TrafficFeatures:
     ingress_enabled: typing.Final = _read_toggle(all_values, ("ingress", "enabled"), const.INGRESS_KIND, all_kinds)
     return const.TrafficFeatures(
         ingress_enabled=ingress_enabled,
-        ingress_hosts=lookup.read_values(all_values, ("hosts", "host"), ("rules", "host")) if ingress_enabled else (),
-        ingress_tls_enabled=ingress_enabled and lookup.has_any_block(all_values, ("ingress", "tls"), ("spec", "tls")),
-        service_type=lookup.read_first_value(all_values, ("service", "type"), ("spec", "type")),
-        service_port=lookup.read_int_value(all_values, ("service", "port"), ("ports", "port")),
+        ingress_hosts=values.read_values(all_values, ("hosts", "host"), ("rules", "host")) if ingress_enabled else (),
+        ingress_tls_enabled=ingress_enabled and values.has_any_block(all_values, ("ingress", "tls"), ("spec", "tls")),
+        service_type=values.read_first_value(all_values, ("service", "type"), ("spec", "type")),
+        service_port=values.read_int_value(all_values, ("service", "port"), ("ports", "port")),
     )
 
 
-def _read_scaling(all_values: manifests.ManifestValues, all_kinds: _KindNames, /) -> const.ScalingFeatures:
+def _read_scaling(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.ScalingFeatures:
     plain_scaling: typing.Final = const.ScalingFeatures(
         workload_kind=next((one_kind for one_kind in all_kinds if one_kind in const.WORKLOAD_KINDS), ""),
-        replica_count=lookup.read_int_value(all_values, ("replicaCount",), ("spec", "replicas")),
+        replica_count=values.read_int_value(all_values, ("replicaCount",), ("spec", "replicas")),
     )
     if not _read_toggle(all_values, ("autoscaling", "enabled"), const.AUTOSCALER_KIND, all_kinds):
         return plain_scaling
     return dataclasses.replace(
         plain_scaling,
-        min_replicas=lookup.read_int_value(all_values, ("minReplicas",)),
-        max_replicas=lookup.read_int_value(all_values, ("maxReplicas",)),
-        target_cpu_utilization=lookup.read_int_value(
+        min_replicas=values.read_int_value(all_values, ("minReplicas",)),
+        max_replicas=values.read_int_value(all_values, ("maxReplicas",)),
+        target_cpu_utilization=values.read_int_value(
             all_values,
             ("targetCPUUtilizationPercentage",),
             ("target", "averageUtilization"),
@@ -78,18 +78,18 @@ def _read_scaling(all_values: manifests.ManifestValues, all_kinds: _KindNames, /
     )
 
 
-def _read_resources(all_values: manifests.ManifestValues, all_kinds: _KindNames, /) -> const.ResourceFeatures:
+def _read_resources(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.ResourceFeatures:
     return const.ResourceFeatures(
         cpu_amounts=_read_amounts(all_values, "cpu"),
         memory_amounts=_read_amounts(all_values, "memory"),
         gpu_amounts=_read_amounts(all_values, *const.GPU_RESOURCE_KEYS),
         persistence_enabled=_read_toggle(all_values, ("persistence", "enabled"), const.VOLUME_CLAIM_KIND, all_kinds)
-        or lookup.has_any_block(all_values, ("volumeClaimTemplates",)),
-        persistence_size=lookup.read_first_value(all_values, ("persistence", "size"), ("requests", "storage")),
+        or values.has_any_block(all_values, ("volumeClaimTemplates",)),
+        persistence_size=values.read_first_value(all_values, ("persistence", "size"), ("requests", "storage")),
     )
 
 
-def _read_configuration(all_values: manifests.ManifestValues, /) -> tuple[const.ConfigurationSource, ...]:
+def _read_configuration(all_values: values.ManifestValues, /) -> tuple[const.ConfigurationSource, ...]:
     return tuple(
         dict.fromkeys(
             const.ConfigurationSource(
@@ -98,14 +98,14 @@ def _read_configuration(all_values: manifests.ManifestValues, /) -> tuple[const.
                 attachment_kind=one_attachment_kind,
             )
             for one_value_path, one_source_kind, one_attachment_kind in _CONFIGURATION_SOURCE_PATHS
-            for one_source_name in lookup.read_values(all_values, one_value_path)
+            for one_source_name in values.read_values(all_values, one_value_path)
         ),
     )
 
 
 def find_kubernetes_features(raw_source: str) -> const.KubernetesFeatures:
-    all_values: typing.Final = manifests.read_manifest_values(raw_source)
-    all_kinds: typing.Final = lookup.read_values(all_values, _KIND_PATH)
+    all_values: typing.Final = values.read_manifest_values(raw_source)
+    all_kinds: typing.Final = values.read_values(all_values, _KIND_PATH)
     return const.KubernetesFeatures(
         traffic_features=_read_traffic(all_values, all_kinds),
         scaling_features=_read_scaling(all_values, all_kinds),
