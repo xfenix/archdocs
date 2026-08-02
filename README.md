@@ -8,7 +8,7 @@ archdocs
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 
-<img src="https://raw.githubusercontent.com/xfenix/archdocs/main/logo.svg" alt="archdocs logo" width="300"/>
+<p><img src="https://raw.githubusercontent.com/xfenix/archdocs/main/logo.svg" alt="archdocs logo" width="300"/></p>
 
 archdocs is OpenAPI and SwaggerUI, but for architecture. It reads the source code of your
 fastapi or litestar service and serves a diagram of it: who calls the service, what the
@@ -113,7 +113,7 @@ Your service sits in the middle of the page, every dependency around it, boxed b
 plays: inbound API, outbound calls, messaging and tasks, data stores, configuration. The
 diagram is Mermaid and your own application serves it.
 
-<img src="https://raw.githubusercontent.com/xfenix/archdocs/main/screenshot.png" alt="architecture page served by archdocs" width="900"/>
+<p><img src="https://raw.githubusercontent.com/xfenix/archdocs/main/screenshot.png" alt="architecture page served by archdocs" width="900"/></p>
 
 That page is `tests/showcase`, an example service that uses everything from the list above at
 once. The playground serves it next to the fastapi and litestar examples, so you can click
