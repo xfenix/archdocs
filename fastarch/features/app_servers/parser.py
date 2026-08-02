@@ -6,55 +6,54 @@ from fastarch import prefilter, settings
 from fastarch.features.app_servers.const import ApplicationServerEnum, ApplicationServerFeatures
 
 
-_IMPORT_PATTERN_TEMPLATE: typing.Final = r"\b(?:from|import)\s+{module_name}\b"
-_COMMAND_PATTERN_TEMPLATE: typing.Final = r"\b{module_name}\s+(?:--\w|[\w.]+:\w+)"
-_SERVERS_NAMED_BY_THEIR_MODULE: typing.Final = (
-    ApplicationServerEnum.granian_server,
-    ApplicationServerEnum.uvicorn_server,
-    ApplicationServerEnum.gunicorn_server,
-    ApplicationServerEnum.hypercorn_server,
-    ApplicationServerEnum.daphne_server,
-    ApplicationServerEnum.waitress_server,
-    ApplicationServerEnum.uwsgi_server,
-    ApplicationServerEnum.mod_wsgi_server,
-    ApplicationServerEnum.bjoern_server,
-    ApplicationServerEnum.meinheld_server,
-    ApplicationServerEnum.cheroot_server,
-)
-# These ship a server inside a library that is imported for a dozen other reasons, so only the
-# serving module counts: a bare `import gevent` is not a wsgi server, `gevent.pywsgi` is.
-_SERVERS_NAMED_BY_THEIR_SERVING_MODULE: typing.Final = types.MappingProxyType(
+_NAMED_BY_MODULE_TEMPLATE: typing.Final = r"\b(?:from|import)\s+{module_name}\b|\b{module_name}\s+(?:--\w|[\w.]+:\w+)"
+
+
+@typing.final
+class _ServerSignature(typing.NamedTuple):
+    """Empty `pattern` means the server is named by its own module, empty `literals` — by its own name."""
+
+    pattern: str = ""
+    literals: tuple[str, ...] = ()
+
+
+# Servers with an explicit pattern ship it inside a library that is imported for a dozen other
+# reasons, so only the serving module counts: a bare `import gevent` is not a wsgi server,
+# `gevent.pywsgi` is. Literals are spelled out only where the pattern can match without the
+# server's own name in the source — a pattern and its literals have to agree, see `prefilter`.
+_SERVER_SIGNATURES: typing.Final = types.MappingProxyType(
     {
-        ApplicationServerEnum.tornado_server: r"\btornado\.(?:httpserver|web|ioloop)\b",
-        ApplicationServerEnum.gevent_server: r"\bgevent\.pywsgi\b",
-        ApplicationServerEnum.eventlet_server: r"\beventlet\.wsgi\b",
-        ApplicationServerEnum.werkzeug_server: r"\bwerkzeug\.serving\b|\brun_simple\s*\(",
-        ApplicationServerEnum.wsgiref_server: r"\bwsgiref\.simple_server\b",
+        ApplicationServerEnum.granian_server: _ServerSignature(),
+        ApplicationServerEnum.uvicorn_server: _ServerSignature(),
+        ApplicationServerEnum.gunicorn_server: _ServerSignature(),
+        ApplicationServerEnum.hypercorn_server: _ServerSignature(),
+        ApplicationServerEnum.daphne_server: _ServerSignature(),
+        ApplicationServerEnum.waitress_server: _ServerSignature(),
+        ApplicationServerEnum.uwsgi_server: _ServerSignature(),
+        ApplicationServerEnum.mod_wsgi_server: _ServerSignature(),
+        ApplicationServerEnum.bjoern_server: _ServerSignature(),
+        ApplicationServerEnum.meinheld_server: _ServerSignature(),
+        ApplicationServerEnum.cheroot_server: _ServerSignature(),
+        ApplicationServerEnum.tornado_server: _ServerSignature(r"\btornado\.(?:httpserver|web|ioloop)\b"),
+        ApplicationServerEnum.gevent_server: _ServerSignature(r"\bgevent\.pywsgi\b"),
+        ApplicationServerEnum.eventlet_server: _ServerSignature(r"\beventlet\.wsgi\b"),
+        ApplicationServerEnum.werkzeug_server: _ServerSignature(
+            r"\bwerkzeug\.serving\b|\brun_simple\s*\(",
+            ("werkzeug", "run_simple"),
+        ),
+        ApplicationServerEnum.wsgiref_server: _ServerSignature(r"\bwsgiref\.simple_server\b"),
     },
 )
-_SERVER_PATTERNS: typing.Final = types.MappingProxyType(
-    {
-        **{
-            one_server: py_re.compile(
-                f"{_IMPORT_PATTERN_TEMPLATE}|{_COMMAND_PATTERN_TEMPLATE}".format(module_name=one_server.value),
-                flags=settings.TYPICAL_RE_FLAGS,
-            )
-            for one_server in _SERVERS_NAMED_BY_THEIR_MODULE
-        },
-        **{
-            one_server: py_re.compile(one_raw_pattern, flags=settings.TYPICAL_RE_FLAGS)
-            for one_server, one_raw_pattern in _SERVERS_NAMED_BY_THEIR_SERVING_MODULE.items()
-        },
-    },
-)
-# A server's own name is almost always the literal to prefilter it by, but `run_simple(` from
-# werkzeug gets written without naming werkzeug at all — a pattern and its literals have to
-# agree, see `prefilter`.
-_LITERALS_OF_SERVER: typing.Final = types.MappingProxyType(
-    {
-        **{one_server: (one_server.value,) for one_server in ApplicationServerEnum},
-        ApplicationServerEnum.werkzeug_server: ("werkzeug", "run_simple"),
-    },
+_COMPILED_SERVER_SIGNATURES: typing.Final = tuple(
+    (
+        one_server.value,
+        one_signature.literals or (one_server.value,),
+        py_re.compile(
+            one_signature.pattern or _NAMED_BY_MODULE_TEMPLATE.format(module_name=one_server.value),
+            flags=settings.TYPICAL_RE_FLAGS,
+        ),
+    )
+    for one_server, one_signature in _SERVER_SIGNATURES.items()
 )
 _WORKER_CLASS_LITERALS: typing.Final = ("worker_class", "--worker-class")
 _WORKER_CLASS_PATTERN: typing.Final = py_re.compile(
@@ -101,10 +100,9 @@ def _find_servers_behind_worker_class(raw_source: str, lowered_source: str, /) -
 def find_application_server_features(raw_source: str) -> ApplicationServerFeatures:
     lowered_source: typing.Final = raw_source.lower()
     servers_found: typing.Final = {
-        one_server.value
-        for one_server, one_pattern in _SERVER_PATTERNS.items()
-        if prefilter.contains_any_literal(lowered_source, _LITERALS_OF_SERVER[one_server])
-        and one_pattern.search(raw_source)
+        one_server_name
+        for one_server_name, one_literals, one_pattern in _COMPILED_SERVER_SIGNATURES
+        if prefilter.contains_any_literal(lowered_source, one_literals) and one_pattern.search(raw_source)
     } | _find_servers_behind_worker_class(raw_source, lowered_source)
     if not servers_found:
         return ApplicationServerFeatures()
