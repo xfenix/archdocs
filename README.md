@@ -1,6 +1,6 @@
 archdocs
 ===
-[![PyPI](https://img.shields.io/pypi/v/archdocs.svg)](https://pypi.org/project/archdocs/)
+[![PyPI](https://img.shields.io/pypi/v/archdocs.svg?label=pypi)](https://pypi.org/project/archdocs/)
 [![Python versions](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://pypi.org/project/archdocs/)
 [![CI Pipeline](https://github.com/xfenix/archdocs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/xfenix/archdocs/actions/workflows/ci.yaml)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/archdocs/main/.github/badges/coverage.json)](https://xfenix.github.io/archdocs/)
