@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  PYTHON_LATEST: "3.13"
+  PYTHON_LATEST: "3.14"
 
 jobs:
   lint:
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
