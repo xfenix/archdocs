@@ -96,6 +96,9 @@ jobs:
     needs: [lint, test]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - uses: extractions/setup-just@v4
@@ -104,6 +107,4 @@ jobs:
           cache-dependency-glob: "**/pyproject.toml"
       - run: uv python install ${{ env.PYTHON_LATEST }}
       - name: Publish to PyPI
-        env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: just publish "${GITHUB_REF_NAME#v}"

@@ -41,9 +41,9 @@ screenshot:
 playground port="8000":
   uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir archdocs --reload-dir tests --port {{ port }}
 
-# Публикация в pypi: версия проставляется из тега, токен берётся из $PYPI_TOKEN.
+# Публикация в pypi: версия проставляется из тега, авторизация через trusted publisher (OIDC).
 publish version:
   uv version "{{ version }}"
   rm -rf dist
   uv build
-  uv publish --token "$PYPI_TOKEN"
+  uv publish --trusted-publishing always
