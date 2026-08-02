@@ -15,9 +15,9 @@ lint mode="fix":
   esac
   uv run ruff format {{ if mode == "check" { "--check" } else { "" } }}
   uv run ruff check {{ if mode == "check" { "--no-fix" } else { "--fix" } }}
-  uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} fastarch tests/*.py scripts/*.py
+  uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} archdocs tests/*.py scripts/*.py
   uv run mypy .
-  uv run flake8 --select=WPS,COP fastarch tests
+  uv run flake8 --select=WPS,COP archdocs tests
 
 test *args:
   uv run --no-sync pytest {{ args }}
@@ -36,10 +36,10 @@ screenshot:
   uv run --no-sync playwright install chromium
   PYTHONPATH=. uv run --no-sync python scripts/generate-architecture-screenshot.py
 
-# Песочница: FastAPI-приложение, которое отдаёт страницы fastarch по примерам из tests/.
+# Песочница: FastAPI-приложение, которое отдаёт страницы archdocs по примерам из tests/.
 # Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.
 playground port="8000":
-  uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir fastarch --reload-dir tests --port {{ port }}
+  uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir archdocs --reload-dir tests --port {{ port }}
 
 # Публикация в pypi: версия проставляется из тега, токен берётся из $PYPI_TOKEN.
 publish version:

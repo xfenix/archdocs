@@ -285,7 +285,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fastarch"
+name = "archdocs"
 version = "1.0.0"
 source = { virtual = "." }
 

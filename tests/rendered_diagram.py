@@ -2,7 +2,7 @@ import functools
 import pathlib
 import typing
 
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 from tests.playground import PLAYGROUND_EXAMPLES
 
 
@@ -18,23 +18,23 @@ SOURCE_SERVICE_NAME: typing.Final = "app-svc"
 SHOWCASE_SETTINGS: typing.Final = PLAYGROUND_EXAMPLES["showcase"]
 ALL_EXAMPLE_SETTINGS: typing.Final = (
     *PLAYGROUND_EXAMPLES.values(),
-    SettingsForFastarch(root_dir=TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
+    SettingsForArchdocs(root_dir=TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
 )
 
 
-def render_diagram(arch_settings: SettingsForFastarch, /) -> str:
+def render_diagram(arch_settings: SettingsForArchdocs, /) -> str:
     return ArchitectureParserAndRenderer(local_settings=arch_settings).render_architecture_diagram()
 
 
 # The examples are checked in and no test rewrites them, so the same settings give the same
 # diagram all session long: layout, syntax and feature suites ask for them dozens of times.
 @functools.cache
-def render_example_diagram(arch_settings: SettingsForFastarch, /) -> str:
+def render_example_diagram(arch_settings: SettingsForArchdocs, /) -> str:
     return render_diagram(arch_settings)
 
 
-def build_named_settings(service_name: str, /) -> SettingsForFastarch:
-    return SettingsForFastarch(
+def build_named_settings(service_name: str, /) -> SettingsForArchdocs:
+    return SettingsForArchdocs(
         root_dir=LITESTAR_ROOT,
         service_name=service_name,
         kubernetes_dir=WITHOUT_MANIFESTS,
@@ -44,7 +44,7 @@ def build_named_settings(service_name: str, /) -> SettingsForFastarch:
 def render_source_diagram(project_path: pathlib.Path, source_code: str, /) -> str:
     (project_path / "main.py").write_text(source_code)
     return render_diagram(
-        SettingsForFastarch(
+        SettingsForArchdocs(
             root_dir=project_path,
             service_name=SOURCE_SERVICE_NAME,
             kubernetes_dir=WITHOUT_MANIFESTS,

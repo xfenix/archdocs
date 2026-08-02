@@ -1,29 +1,29 @@
-fastarch
+archdocs
 ===
-[![PyPI](https://img.shields.io/pypi/v/fastarch.svg)](https://pypi.org/project/fastarch/)
-[![Python versions](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://pypi.org/project/fastarch/)
-[![CI Pipeline](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/coverage.json)](https://xfenix.github.io/fastarch/)
-[![Lines of code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/lines.json)](https://github.com/xfenix/fastarch/tree/main/fastarch)
+[![PyPI](https://img.shields.io/pypi/v/archdocs.svg)](https://pypi.org/project/archdocs/)
+[![Python versions](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://pypi.org/project/archdocs/)
+[![CI Pipeline](https://github.com/xfenix/archdocs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/xfenix/archdocs/actions/workflows/ci.yaml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/archdocs/main/.github/badges/coverage.json)](https://xfenix.github.io/archdocs/)
+[![Lines of code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/archdocs/main/.github/badges/lines.json)](https://github.com/xfenix/archdocs/tree/main/archdocs)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 
-<img src="./logo.svg" alt="fastarch logo" width="300"/>
+<img src="./logo.svg" alt="archdocs logo" width="300"/>
 
-fastarch is OpenAPI and SwaggerUI, but for architecture. It reads the source code of your
+archdocs is OpenAPI and SwaggerUI, but for architecture. It reads the source code of your
 fastapi or litestar service and serves a diagram of it: who calls the service, what the
 service calls itself, where it keeps data and how it is deployed.
 
 * the code is the schema, so there is no second copy to keep in sync
 * nothing to annotate: no decorators, no magic comments, no meta files. You bind the library
-  to your app once and fastarch finds the rest on its own
+  to your app once and archdocs finds the rest on its own
 
 Quickstart
 ===
 Install the package:
 
 ```shell
-uv add fastarch
+uv add archdocs
 ```
 
 Bind it to your app.
@@ -35,15 +35,15 @@ import typing
 
 import fastapi
 
-from fastarch.integrations.fastapi import add_architecture_doc_routes
-from fastarch.main import SettingsForFastarch
+from archdocs.integrations.fastapi import add_architecture_doc_routes
+from archdocs.main import SettingsForArchdocs
 
 
 example_app: typing.Final = fastapi.FastAPI()
 
 add_architecture_doc_routes(
     example_app,
-    arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"),
+    arch_settings=SettingsForArchdocs(root_dir="src/", service_name="my-service"),
 )
 ```
 
@@ -54,15 +54,15 @@ import typing
 
 import litestar
 
-from fastarch.integrations.litestar import add_architecture_doc_routes
-from fastarch.main import SettingsForFastarch
+from archdocs.integrations.litestar import add_architecture_doc_routes
+from archdocs.main import SettingsForArchdocs
 
 
 example_app: typing.Final = litestar.Litestar()
 
 add_architecture_doc_routes(
     example_app,
-    arch_settings=SettingsForFastarch(root_dir="src/", service_name="my-service"),
+    arch_settings=SettingsForArchdocs(root_dir="src/", service_name="my-service"),
 )
 ```
 
@@ -73,7 +73,7 @@ is `/docs/architecture/` until you set another one.
 Start the app, open <a href="http://127.0.0.1:8000/docs/architecture/">/docs/architecture/</a>
 and the schema is already there.
 
-What fastarch finds
+What archdocs finds
 ===
 * HTTP endpoints: fastapi and litestar routes
 * Application servers: granian, uvicorn, gunicorn with its worker class, hypercorn, daphne,
@@ -91,7 +91,7 @@ Kubernetes
 ===
 Manifests are read straight from your repository. A Helm chart and a plain directory of
 manifests both work, no `helm template` run and no extra dependency: templated `{{ ... }}`
-values are skipped in favour of what `values.yaml` says. fastarch looks under `root_dir` and,
+values are skipped in favour of what `values.yaml` says. archdocs looks under `root_dir` and,
 if nothing is there, a couple of directories above it, never outside the repository your
 sources live in. If your layout differs, point it at the right place with `kubernetes_dir`. A
 relative path is taken from `root_dir`, not from the working directory of the process:
@@ -99,7 +99,7 @@ relative path is taken from `root_dir`, not from the working directory of the pr
 ```python
 add_architecture_doc_routes(
     example_app,
-    arch_settings=SettingsForFastarch(
+    arch_settings=SettingsForArchdocs(
         root_dir="src/",
         service_name="my-service",
         kubernetes_dir="deploy/my-chart/",
@@ -113,7 +113,7 @@ Your service sits in the middle of the page, every dependency around it, boxed b
 plays: inbound API, outbound calls, messaging and tasks, data stores, configuration. The
 diagram is Mermaid and your own application serves it.
 
-<img src="./screenshot.png" alt="architecture page served by fastarch" width="900"/>
+<img src="./screenshot.png" alt="architecture page served by archdocs" width="900"/>
 
 That page is `tests/showcase`, an example service that uses everything from the list above at
 once. The playground serves it next to the fastapi and litestar examples, so you can click

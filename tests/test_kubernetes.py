@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from fastarch.main import SettingsForFastarch
+from archdocs.main import SettingsForArchdocs
 from tests.rendered_diagram import (
     FASTAPI_ROOT,
     KUBERNETES_VARIANTS_ROOT,
@@ -17,7 +17,7 @@ _FIXTURE_ANNOTATIONS: typing.Final = "replicas 3, HPA 2-10, target CPU 70%, cpu 
 _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
     {
         "chart of the project": (
-            SettingsForFastarch(root_dir=TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
+            SettingsForArchdocs(root_dir=TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
             (
                 f'kubernetes_svc{{"kubernetes-svc ({_FIXTURE_ANNOTATIONS})"}}',
                 'external_client --> |"HTTPS api.example.com"| kubernetes_svc',
@@ -25,7 +25,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "manifests and code on one node": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=LITESTAR_ROOT,
                 service_name="merged-svc",
                 kubernetes_dir=TESTS_ROOT / "kubernetes_fixtures" / "chart",
@@ -42,7 +42,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "disabled toggles": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="disabled-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "disabled",
@@ -51,7 +51,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             ("never.example.com", "Ingress", "HPA"),
         ),
         "ingress without its own tls": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="plain-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "plain_ingress",
@@ -60,7 +60,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             ("HTTPS",),
         ),
         "load balancer entrypoint": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="entry-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "loadbalancer",
@@ -69,7 +69,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "node port entrypoint": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="entry-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "nodeport",
@@ -78,7 +78,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "ingress entrypoint": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="entry-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "bare_ingress",
@@ -87,7 +87,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "plain manifests without a chart": (
-            SettingsForFastarch(
+            SettingsForArchdocs(
                 root_dir=FASTAPI_ROOT,
                 service_name="stateful-svc",
                 kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "statefulset",
@@ -110,7 +110,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
     ids=_ALL_MANIFEST_CASES,
 )
 def test_manifests_reach_the_diagram(
-    arch_settings: SettingsForFastarch,
+    arch_settings: SettingsForArchdocs,
     expected_parts: tuple[str, ...],
     forbidden_parts: tuple[str, ...],
 ) -> None:

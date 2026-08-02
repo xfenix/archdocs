@@ -1,6 +1,6 @@
 # Litestar Test Application
 
-Mock Litestar application for testing fastarch integration. The same sources are served by
+Mock Litestar application for testing archdocs integration. The same sources are served by
 the playground (`just playground`), so this application and its FastAPI neighbour split every
 supported technology between them — half of the list lives here.
 

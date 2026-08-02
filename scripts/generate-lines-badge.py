@@ -3,7 +3,7 @@ import pathlib
 import typing
 
 
-PACKAGE_PATH: typing.Final = pathlib.Path("fastarch")
+PACKAGE_PATH: typing.Final = pathlib.Path("archdocs")
 BADGE_TARGET_PATH: typing.Final = pathlib.Path(".github/badges/lines.json")
 THOUSAND: typing.Final = 1000
 BADGE_COLOR: typing.Final = "#457B9D"

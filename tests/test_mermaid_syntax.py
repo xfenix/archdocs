@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from fastarch.main import SettingsForFastarch
+from archdocs.main import SettingsForArchdocs
 from tests.diagram_parts import (
     EDGE_ARROW,
     collect_defined_node_ids,
@@ -26,7 +26,7 @@ _SERVICE_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-
 
 
 @pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
-def test_every_line_is_valid_mermaid(arch_settings: SettingsForFastarch) -> None:
+def test_every_line_is_valid_mermaid(arch_settings: SettingsForArchdocs) -> None:
     rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     all_lines: typing.Final = rendered_diagram.split("\n")
@@ -50,7 +50,7 @@ def test_every_line_is_valid_mermaid(arch_settings: SettingsForFastarch) -> None
 
 
 @pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
-def test_nodes_are_defined_once_and_grouped(arch_settings: SettingsForFastarch) -> None:
+def test_nodes_are_defined_once_and_grouped(arch_settings: SettingsForArchdocs) -> None:
     rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     all_defined_ids: typing.Final = collect_defined_node_ids(rendered_diagram)

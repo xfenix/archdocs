@@ -1,6 +1,6 @@
 # Showcase Application
 
-Mock FastAPI application that uses every technology fastarch can detect at once, so a single
+Mock FastAPI application that uses every technology archdocs can detect at once, so a single
 served page shows the whole picture. The playground (`just playground`) serves it next to its
 FastAPI and Litestar neighbours, and the screenshot in the root `README.md` is taken from it.
 

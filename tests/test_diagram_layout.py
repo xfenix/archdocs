@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from fastarch.main import SettingsForFastarch
+from archdocs.main import SettingsForArchdocs
 from tests.diagram_parts import collect_edge_ends, collect_group_of_every_node, extract_edge_lines
 from tests.rendered_diagram import (
     ALL_EXAMPLE_SETTINGS,
@@ -65,12 +65,12 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
     ("Billing Service", "Billing_Service"),
-    ("!!!", "fastarch_service"),
+    ("!!!", "archdocs_service"),
 )
 
 
 @pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
-def test_arrows_agree_with_their_side(arch_settings: SettingsForFastarch) -> None:
+def test_arrows_agree_with_their_side(arch_settings: SettingsForArchdocs) -> None:
     rendered_diagram: typing.Final = render_example_diagram(arch_settings)
 
     group_of_node: typing.Final = collect_group_of_every_node(rendered_diagram)

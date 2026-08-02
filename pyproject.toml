@@ -1,5 +1,5 @@
 [project]
-name = "fastarch"
+name = "archdocs"
 version = "1.0.0"
 description = "Package for automatic architecture schemas renderers. Includes FastAPI and Litestar integrations"
 readme = "README.md"

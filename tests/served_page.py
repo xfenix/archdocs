@@ -5,19 +5,19 @@ from fastapi.testclient import TestClient as FastapiTestClient
 from litestar import Litestar
 from litestar.testing import TestClient as LitestarTestClient
 
-from fastarch import settings
-from fastarch.integrations import fastapi as fastapi_integration
-from fastarch.integrations import litestar as litestar_integration
-from fastarch.main import SettingsForFastarch
+from archdocs import settings
+from archdocs.integrations import fastapi as fastapi_integration
+from archdocs.integrations import litestar as litestar_integration
+from archdocs.main import SettingsForArchdocs
 
 
-type PageRenderer = typing.Callable[[SettingsForFastarch | None, str | None], str]
+type PageRenderer = typing.Callable[[SettingsForArchdocs | None, str | None], str]
 
 GOOD_HTTP_CODE: typing.Final = 200
 CONTENT_TYPE_HTML: typing.Final = "text/html"
 
 
-def render_fastapi_page(arch_settings: SettingsForFastarch | None, route_path: str | None, /) -> str:
+def render_fastapi_page(arch_settings: SettingsForArchdocs | None, route_path: str | None, /) -> str:
     fastapi_app: typing.Final = fastapi.FastAPI()
     if route_path is None:
         fastapi_integration.add_architecture_doc_routes(fastapi_app, arch_settings=arch_settings)
@@ -33,7 +33,7 @@ def render_fastapi_page(arch_settings: SettingsForFastarch | None, route_path: s
     return fastapi_response.text
 
 
-def render_litestar_page(arch_settings: SettingsForFastarch | None, route_path: str | None, /) -> str:
+def render_litestar_page(arch_settings: SettingsForArchdocs | None, route_path: str | None, /) -> str:
     litestar_app: typing.Final = Litestar()
     if route_path is None:
         litestar_integration.add_architecture_doc_routes(litestar_app, arch_settings=arch_settings)

@@ -4,7 +4,7 @@ import hypothesis
 import pytest
 from hypothesis import strategies as st
 
-from fastarch import settings
+from archdocs import settings
 from tests.rendered_diagram import build_named_settings
 from tests.served_page import ALL_PAGE_RENDERERS, FRAMEWORK_IDS, PageRenderer
 

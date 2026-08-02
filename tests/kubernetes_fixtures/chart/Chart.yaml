@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kubernetes-test-chart
-description: Chart fixture used by the fastarch kubernetes parser tests
+description: Chart fixture used by the archdocs kubernetes parser tests
 type: application
 version: 0.1.0
 appVersion: "1.0.0"

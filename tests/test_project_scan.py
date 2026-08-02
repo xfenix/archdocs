@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
+from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 from tests.rendered_diagram import KUBERNETES_VARIANTS_ROOT, WITHOUT_MANIFESTS, render_diagram
 
 
@@ -86,7 +86,7 @@ def test_dependencies_stay_out_of_the_diagram(
     (vendored_dir / "vendored.py").write_text(_VENDORED_SOURCE)
 
     rendered_diagram: typing.Final = render_diagram(
-        SettingsForFastarch(
+        SettingsForArchdocs(
             root_dir=project_path,
             service_name="vendor-svc",
             kubernetes_dir=WITHOUT_MANIFESTS,
@@ -101,7 +101,7 @@ def test_dependencies_stay_out_of_the_diagram(
 @pytest.mark.parametrize("sources_subpath", [".", "one"])
 def test_manifests_are_found_above_the_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
     rendered_diagram: typing.Final = render_diagram(
-        SettingsForFastarch(
+        SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
             service_name="above-svc",
         ),
@@ -117,7 +117,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     (templates_dir / "ingress.yaml").write_text(_RAW_INGRESS_MANIFEST)
 
     rendered_diagram: typing.Final = render_diagram(
-        SettingsForFastarch(root_dir=tmp_path, service_name="templates-svc"),
+        SettingsForArchdocs(root_dir=tmp_path, service_name="templates-svc"),
     )
 
     assert "HTTP from-templates.example.com" in rendered_diagram
@@ -144,7 +144,7 @@ def test_configured_dir_wins_over_the_lookup(
     monkeypatch.chdir(decoy_project_path)
 
     rendered_diagram: typing.Final = render_diagram(
-        SettingsForFastarch(
+        SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / "project"),
             service_name="config-svc",
             kubernetes_dir=kubernetes_dir,
@@ -160,7 +160,7 @@ def test_configured_dir_wins_over_the_lookup(
 def test_sources_are_scanned_once_per_engine(tmp_path: pathlib.Path) -> None:
     (tmp_path / "service.py").write_text(_OWN_SOURCE)
     architecture_engine: typing.Final = ArchitectureParserAndRenderer(
-        local_settings=SettingsForFastarch(
+        local_settings=SettingsForArchdocs(
             root_dir=tmp_path,
             service_name="cached-svc",
             kubernetes_dir=WITHOUT_MANIFESTS,
@@ -192,7 +192,7 @@ def test_far_away_manifests_are_ignored(
         (project_path / repository_marker).mkdir()
 
     rendered_diagram: typing.Final = render_diagram(
-        SettingsForFastarch(root_dir=source_dir, service_name="far-svc"),
+        SettingsForArchdocs(root_dir=source_dir, service_name="far-svc"),
     )
 
     assert 'far_svc{"far-svc"}' in rendered_diagram
