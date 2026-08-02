@@ -6,40 +6,20 @@ from archdocs import prefilter, settings
 from archdocs.features.http_clients.const import HttpClientEnum, HttpClientFeatures
 
 
-_HTTPX_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+httpx\b|import\s+httpx\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_HTTPX_ASYNC_PATTERN: typing.Final = py_re.compile(
-    r"\bhttpx\.AsyncClient\b",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_AIOHTTP_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+aiohttp\b|import\s+aiohttp\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_REQUESTS_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+requests\b|import\s+requests\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_NIQUESTS_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+niquests\b|import\s+niquests\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-
 _CLIENT_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        HttpClientEnum.httpx_client: _HTTPX_IMPORT_PATTERN,
-        HttpClientEnum.aiohttp_client: _AIOHTTP_IMPORT_PATTERN,
-        HttpClientEnum.requests_client: _REQUESTS_IMPORT_PATTERN,
-        HttpClientEnum.niquests_client: _NIQUESTS_IMPORT_PATTERN,
+        one_client: py_re.compile(rf"\b(?:from|import)\s+{one_client.value}\b", flags=settings.TYPICAL_RE_FLAGS)
+        for one_client in HttpClientEnum
     },
 )
-
 _ASYNC_DETECTION_PATTERNS: typing.Final = py_re.compile(
-    r"\b(?:async\s+with\s+(?:httpx\.AsyncClient|aiohttp\.ClientSession)|"
-    r"httpx\.AsyncClient|aiohttp\.ClientSession)\b",
+    r"\b(?:httpx\.AsyncClient|aiohttp\.ClientSession)\b",
     flags=settings.TYPICAL_RE_FLAGS,
+)
+_EMPTY_FEATURES: typing.Final = HttpClientFeatures(
+    clients_used=frozenset(),
+    async_used=False,
+    has_external_calls=False,
 )
 
 
@@ -50,18 +30,10 @@ def find_http_client_features(raw_source: str) -> HttpClientFeatures:
         for one_client, one_pattern in _CLIENT_PATTERNS.items()
         if prefilter.contains_any_literal(lowered_source, (one_client.value,)) and one_pattern.search(raw_source)
     }
-
     if not clients_found:
-        return HttpClientFeatures(
-            clients_used=frozenset(),
-            async_used=False,
-            has_external_calls=False,
-        )
-
-    async_used: typing.Final = bool(_ASYNC_DETECTION_PATTERNS.search(raw_source))
-
+        return _EMPTY_FEATURES
     return HttpClientFeatures(
         clients_used=frozenset(clients_found),
-        async_used=async_used,
+        async_used=bool(_ASYNC_DETECTION_PATTERNS.search(raw_source)),
         has_external_calls=True,
     )

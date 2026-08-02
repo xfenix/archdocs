@@ -24,24 +24,26 @@ _BROKER_VARIABLE_PATTERN: typing.Final = py_re.compile(
     r"(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-_SUBSCRIBED_TOPIC_PATTERN: typing.Final = py_re.compile(
-    r"@(?P<variable>\w+)\.subscriber\(\s*[\"'](?P<topic>[^\"']+)[\"']",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_PUBLISHED_TOPIC_PATTERN: typing.Final = py_re.compile(
-    r"@(?P<variable>\w+)\.publisher\(\s*[\"'](?P<topic>[^\"']+)[\"']",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_DESTINATION_ALTERNATIVES: typing.Final = "|".join(const.DESTINATION_KEYWORDS)
-_PUBLISH_CALL_PATTERN: typing.Final = py_re.compile(
-    r"(?P<variable>\w+)\.publish\([^()]*?"
-    rf"\b(?:{_DESTINATION_ALTERNATIVES})\s*=\s*[\"'](?P<topic>[^\"']+)[\"']",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
 _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
     {
-        const.MessageDirection.consumed: (_SUBSCRIBED_TOPIC_PATTERN,),
-        const.MessageDirection.produced: (_PUBLISHED_TOPIC_PATTERN, _PUBLISH_CALL_PATTERN),
+        const.MessageDirection.consumed: (
+            py_re.compile(
+                r"@(?P<variable>\w+)\.subscriber\(\s*[\"'](?P<topic>[^\"']+)[\"']",
+                flags=settings.TYPICAL_RE_FLAGS,
+            ),
+        ),
+        const.MessageDirection.produced: (
+            py_re.compile(
+                r"@(?P<variable>\w+)\.publisher\(\s*[\"'](?P<topic>[^\"']+)[\"']",
+                flags=settings.TYPICAL_RE_FLAGS,
+            ),
+            py_re.compile(
+                r"(?P<variable>\w+)\.publish\([^()]*?\b(?:"
+                + "|".join(const.DESTINATION_KEYWORDS)
+                + r")\s*=\s*[\"'](?P<topic>[^\"']+)[\"']",
+                flags=settings.TYPICAL_RE_FLAGS,
+            ),
+        ),
     },
 )
 _BROKER_NAME_OF_CLASS: typing.Final = types.MappingProxyType(

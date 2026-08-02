@@ -6,62 +6,30 @@ from archdocs import prefilter, settings
 from archdocs.features.task_queues.const import TaskQueueEnum, TaskQueueFeatures
 
 
-_CELERY_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+celery\b|import\s+celery\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_TASKIQ_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+taskiq\b|import\s+taskiq\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_ARQ_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+arq\b|import\s+arq\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_RQ_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+rq\b|import\s+rq\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_DRAMATIQ_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+dramatiq\b|import\s+dramatiq\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_HUEY_IMPORT_PATTERN: typing.Final = py_re.compile(
-    r"\b(?:from\s+huey\b|import\s+huey\b)",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-
 _TASK_DECORATOR_PATTERNS: typing.Final = py_re.compile(
     r"@(?:\w+\.)?(?:task|actor|job)\b",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-
 _WORKER_PATTERNS: typing.Final = py_re.compile(
     r"\b(?:celery\s+worker|taskiq\s+worker|arq\s+worker|rq\s+worker|dramatiq\s+worker|huey\s+worker)\b",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
     {
         "redis": py_re.compile(r"\b(?:redis://|RedisSettings|RedisHuey)\b", flags=settings.TYPICAL_RE_FLAGS),
         "rabbitmq": py_re.compile(r"\b(?:amqp://|rabbitmq://|RabbitMQBroker)\b", flags=settings.TYPICAL_RE_FLAGS),
         "postgresql": py_re.compile(
-            r"\b(?:postgres://|postgresql://|PostgreSQLBroker)\b", flags=settings.TYPICAL_RE_FLAGS
+            r"\b(?:postgres://|postgresql://|PostgreSQLBroker)\b",
+            flags=settings.TYPICAL_RE_FLAGS,
         ),
     },
 )
-
 _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        TaskQueueEnum.celery_queue: _CELERY_IMPORT_PATTERN,
-        TaskQueueEnum.taskiq_queue: _TASKIQ_IMPORT_PATTERN,
-        TaskQueueEnum.arq_queue: _ARQ_IMPORT_PATTERN,
-        TaskQueueEnum.rq_queue: _RQ_IMPORT_PATTERN,
-        TaskQueueEnum.dramatiq_queue: _DRAMATIQ_IMPORT_PATTERN,
-        TaskQueueEnum.huey_queue: _HUEY_IMPORT_PATTERN,
+        one_queue: py_re.compile(rf"\b(?:from|import)\s+{one_queue.value}\b", flags=settings.TYPICAL_RE_FLAGS)
+        for one_queue in TaskQueueEnum
     },
 )
-
 _EMPTY_FEATURES: typing.Final = TaskQueueFeatures(
     queues_used=frozenset(),
     has_tasks=False,

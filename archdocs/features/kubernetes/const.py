@@ -13,7 +13,6 @@ EXPOSED_SERVICE_TYPES: typing.Final = frozenset(("LoadBalancer", "NodePort"))
 ENVIRONMENT_ATTACHMENT: typing.Final = "env"
 VOLUME_ATTACHMENT: typing.Final = "volume"
 GPU_RESOURCE_KEYS: typing.Final = ("nvidia.com/gpu", "amd.com/gpu", "gpu")
-
 REPOSITORY_MARKER_NAME: typing.Final = ".git"
 PARENT_SEARCH_DEPTH: typing.Final = 2
 TEMPLATES_DIR_NAME: typing.Final = "templates"

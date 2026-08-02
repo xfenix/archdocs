@@ -8,7 +8,6 @@ type _KindNames = tuple[str, ...]
 type _ConfigurationPaths = tuple[tuple[values.ValuePath, str, str], ...]
 
 _NAME_KEY: typing.Final = "name"
-_KIND_PATH: typing.Final[values.ValuePath] = ("kind",)
 _TRUE_VALUES: typing.Final = frozenset(("true", "yes", "on"))
 _CONFIGURATION_SOURCE_PATHS: typing.Final[_ConfigurationPaths] = (
     (("configMapRef", _NAME_KEY), const.CONFIG_MAP_KIND, const.ENVIRONMENT_ATTACHMENT),
@@ -108,7 +107,7 @@ def _read_configuration(all_values: values.ManifestValues, /) -> tuple[const.Con
 
 def find_kubernetes_features(raw_source: str) -> const.KubernetesFeatures:
     all_values: typing.Final = values.read_manifest_values(raw_source)
-    all_kinds: typing.Final = values_lookup.read_values(all_values, _KIND_PATH)
+    all_kinds: typing.Final = values_lookup.read_values(all_values, ("kind",))
     return const.KubernetesFeatures(
         traffic_features=_read_traffic(all_values, all_kinds),
         scaling_features=_read_scaling(all_values, all_kinds),

@@ -31,7 +31,6 @@ _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(
     r"\bredis\.Retry\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
-_REDIS_LITERALS: typing.Final = ("redis",)
 _EMPTY_FEATURES: typing.Final = RedisFeatures(
     cluster_or_sentinel=False,
     connection_type=None,
@@ -41,7 +40,7 @@ _EMPTY_FEATURES: typing.Final = RedisFeatures(
 
 
 def find_redis_features(raw_source: str) -> RedisFeatures:
-    if not prefilter.contains_any_literal(raw_source.lower(), _REDIS_LITERALS):
+    if not prefilter.contains_any_literal(raw_source.lower(), ("redis",)):
         return _EMPTY_FEATURES
     if not _REDIS_IMPORT_PATTERN.search(raw_source):
         return _EMPTY_FEATURES
