@@ -10,7 +10,7 @@ from fastarch.main import ArchitectureParserAndRenderer, SettingsForFastarch
 
 
 async def _handle_fastapi_arch_doc_route(
-    _: StarletteRequest,
+    _incoming_request: StarletteRequest,
     arch_engine: ArchitectureParserAndRenderer,
 ) -> StarletteHtmlResponse:
     return StarletteHtmlResponse(_generate_architecture_html(arch_engine))

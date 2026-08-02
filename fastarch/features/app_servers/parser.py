@@ -1,5 +1,5 @@
+import dataclasses
 import re as py_re
-import types
 import typing
 
 from fastarch import prefilter, settings
@@ -10,50 +10,54 @@ _NAMED_BY_MODULE_TEMPLATE: typing.Final = r"\b(?:from|import)\s+{module_name}\b|
 
 
 @typing.final
-class _ServerSignature(typing.NamedTuple):
-    """Empty `pattern` means the server is named by its own module, empty `literals` — by its own name."""
+@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
+class _ServerSignature:
+    server_name: str
+    prefilter_literals: tuple[str, ...]
+    compiled_pattern: py_re.Pattern[str]
 
-    pattern: str = ""
-    literals: tuple[str, ...] = ()
 
-
-# Servers with an explicit pattern ship it inside a library that is imported for a dozen other
-# reasons, so only the serving module counts: a bare `import gevent` is not a wsgi server,
-# `gevent.pywsgi` is. Literals are spelled out only where the pattern can match without the
-# server's own name in the source — a pattern and its literals have to agree, see `prefilter`.
-_SERVER_SIGNATURES: typing.Final = types.MappingProxyType(
-    {
-        ApplicationServerEnum.granian_server: _ServerSignature(),
-        ApplicationServerEnum.uvicorn_server: _ServerSignature(),
-        ApplicationServerEnum.gunicorn_server: _ServerSignature(),
-        ApplicationServerEnum.hypercorn_server: _ServerSignature(),
-        ApplicationServerEnum.daphne_server: _ServerSignature(),
-        ApplicationServerEnum.waitress_server: _ServerSignature(),
-        ApplicationServerEnum.uwsgi_server: _ServerSignature(),
-        ApplicationServerEnum.mod_wsgi_server: _ServerSignature(),
-        ApplicationServerEnum.bjoern_server: _ServerSignature(),
-        ApplicationServerEnum.meinheld_server: _ServerSignature(),
-        ApplicationServerEnum.cheroot_server: _ServerSignature(),
-        ApplicationServerEnum.tornado_server: _ServerSignature(r"\btornado\.(?:httpserver|web|ioloop)\b"),
-        ApplicationServerEnum.gevent_server: _ServerSignature(r"\bgevent\.pywsgi\b"),
-        ApplicationServerEnum.eventlet_server: _ServerSignature(r"\beventlet\.wsgi\b"),
-        ApplicationServerEnum.werkzeug_server: _ServerSignature(
-            r"\bwerkzeug\.serving\b|\brun_simple\s*\(",
-            ("werkzeug", "run_simple"),
-        ),
-        ApplicationServerEnum.wsgiref_server: _ServerSignature(r"\bwsgiref\.simple_server\b"),
-    },
-)
-_COMPILED_SERVER_SIGNATURES: typing.Final = tuple(
-    (
-        one_server.value,
-        one_signature.literals or (one_server.value,),
-        py_re.compile(
-            one_signature.pattern or _NAMED_BY_MODULE_TEMPLATE.format(module_name=one_server.value),
+def _build_server_signature(
+    detected_server: ApplicationServerEnum,
+    /,
+    *,
+    raw_pattern: str = "",
+    prefilter_literals: tuple[str, ...] = (),
+) -> _ServerSignature:
+    return _ServerSignature(
+        server_name=detected_server.value,
+        prefilter_literals=prefilter_literals or (detected_server.value,),
+        compiled_pattern=py_re.compile(
+            raw_pattern or _NAMED_BY_MODULE_TEMPLATE.format(module_name=detected_server.value),
             flags=settings.TYPICAL_RE_FLAGS,
         ),
     )
-    for one_server, one_signature in _SERVER_SIGNATURES.items()
+
+
+_SERVER_SIGNATURES: typing.Final = (
+    _build_server_signature(ApplicationServerEnum.granian_server),
+    _build_server_signature(ApplicationServerEnum.uvicorn_server),
+    _build_server_signature(ApplicationServerEnum.gunicorn_server),
+    _build_server_signature(ApplicationServerEnum.hypercorn_server),
+    _build_server_signature(ApplicationServerEnum.daphne_server),
+    _build_server_signature(ApplicationServerEnum.waitress_server),
+    _build_server_signature(ApplicationServerEnum.uwsgi_server),
+    _build_server_signature(ApplicationServerEnum.mod_wsgi_server),
+    _build_server_signature(ApplicationServerEnum.bjoern_server),
+    _build_server_signature(ApplicationServerEnum.meinheld_server),
+    _build_server_signature(ApplicationServerEnum.cheroot_server),
+    _build_server_signature(
+        ApplicationServerEnum.tornado_server,
+        raw_pattern=r"\btornado\.(?:httpserver|web|ioloop)\b",
+    ),
+    _build_server_signature(ApplicationServerEnum.gevent_server, raw_pattern=r"\bgevent\.pywsgi\b"),
+    _build_server_signature(ApplicationServerEnum.eventlet_server, raw_pattern=r"\beventlet\.wsgi\b"),
+    _build_server_signature(
+        ApplicationServerEnum.werkzeug_server,
+        raw_pattern=r"\bwerkzeug\.serving\b|\brun_simple\s*\(",
+        prefilter_literals=("werkzeug", "run_simple"),
+    ),
+    _build_server_signature(ApplicationServerEnum.wsgiref_server, raw_pattern=r"\bwsgiref\.simple_server\b"),
 )
 _WORKER_CLASS_LITERALS: typing.Final = ("worker_class", "--worker-class")
 _WORKER_CLASS_PATTERN: typing.Final = py_re.compile(
@@ -100,9 +104,10 @@ def _find_servers_behind_worker_class(raw_source: str, lowered_source: str, /) -
 def find_application_server_features(raw_source: str) -> ApplicationServerFeatures:
     lowered_source: typing.Final = raw_source.lower()
     servers_found: typing.Final = {
-        one_server_name
-        for one_server_name, one_literals, one_pattern in _COMPILED_SERVER_SIGNATURES
-        if prefilter.contains_any_literal(lowered_source, one_literals) and one_pattern.search(raw_source)
+        one_signature.server_name
+        for one_signature in _SERVER_SIGNATURES
+        if prefilter.contains_any_literal(lowered_source, one_signature.prefilter_literals)
+        and one_signature.compiled_pattern.search(raw_source)
     } | _find_servers_behind_worker_class(raw_source, lowered_source)
     if not servers_found:
         return ApplicationServerFeatures()

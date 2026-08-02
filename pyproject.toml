@@ -45,7 +45,8 @@ lines-after-imports = 2
 "scripts/*.py" = ["INP001"]
 
 [tool.mypy]
-exclude = ["tests/fastapi/", "tests/litestar/", "tests/showcase/"]
+strict = true
+exclude =["tests/fastapi/", "tests/litestar/", "tests/showcase/"]
 
 [tool.flake8]
 max-line-length = 120

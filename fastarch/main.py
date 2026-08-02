@@ -70,15 +70,15 @@ def _render_manifest_edges(
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ArchitectureParserAndRenderer:
     local_settings: SettingsForFastarch
-    _cache: list[str] = dataclasses.field(default_factory=list)
+    _rendered_diagram_cache: list[str] = dataclasses.field(default_factory=list)
 
     def render_architecture_diagram(self) -> str:
         # "why you doesnt use functools.cache lol"
         # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
-        if self._cache:
-            return self._cache[0]
+        if self._rendered_diagram_cache:
+            return self._rendered_diagram_cache[0]
         full_result: typing.Final = self._render_every_diagram_line()
-        self._cache.append(full_result)
+        self._rendered_diagram_cache.append(full_result)
         return full_result
 
     def _render_every_diagram_line(self) -> str:
