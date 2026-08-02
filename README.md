@@ -1,5 +1,7 @@
 fastarch
 ===
+[![PyPI](https://img.shields.io/pypi/v/fastarch.svg)](https://pypi.org/project/fastarch/)
+[![Python versions](https://img.shields.io/pypi/pyversions/fastarch.svg)](https://pypi.org/project/fastarch/)
 [![CI Pipeline](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/xfenix/fastarch/actions/workflows/ci.yaml)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/coverage.json)](https://xfenix.github.io/fastarch/)
 [![Lines of code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/xfenix/fastarch/main/.github/badges/lines.json)](https://github.com/xfenix/fastarch/tree/main/fastarch)
