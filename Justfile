@@ -41,7 +41,9 @@ screenshot:
 playground port="8000":
   uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir fastarch --reload-dir tests --port {{ port }}
 
-publish:
+# Публикация в pypi: версия проставляется из тега, токен берётся из $PYPI_TOKEN.
+publish version:
+  uv version "{{ version }}"
   rm -rf dist
   uv build
-  uv publish --token $PYPI_TOKEN
+  uv publish --token "$PYPI_TOKEN"
