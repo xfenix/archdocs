@@ -1,12 +1,12 @@
 import typing
 
 from archdocs import diagram_model
-from archdocs.features.http_clients.const import HttpClientFeatures
+from archdocs.features.http_clients.const import HTTPClientFeatures
 
 
 def render_http_client_features(
     service_node: diagram_model.DiagramNode,
-    features_to_draw: HttpClientFeatures,
+    features_to_draw: HTTPClientFeatures,
     /,
 ) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.clients_used:

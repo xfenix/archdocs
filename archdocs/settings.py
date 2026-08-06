@@ -28,7 +28,7 @@ SKIPPED_DIR_NAMES: typing.Final = frozenset(
     ),
 )
 MAX_WORKERS: typing.Final = 10
-SHIFT_LEFT: typing.Final = " " * 4
+LINE_INDENT: typing.Final = " " * 4
 VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION: typing.Final = 3
 EXTERNAL_CLIENT_TITLE_FOR_SCHEMA: typing.Final = "User/Client"
 EXTERNAL_CLIENT_NODE_ID: typing.Final = "external_client"

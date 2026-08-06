@@ -14,7 +14,7 @@ _SERVICE_ROW_ID: typing.Final = "service_row"
 _SERVICE_ROW_OPENING: typing.Final = f'subgraph {_SERVICE_ROW_ID}[" "]'
 _SERVICE_ROW_DIRECTION_LINE: typing.Final = "direction LR"
 _SERVICE_ROW_STYLE_LINE: typing.Final = f"style {_SERVICE_ROW_ID} fill:none,stroke:none"
-_ROW_SHIFT_LEFT: typing.Final = settings.SHIFT_LEFT * 2
+_ROW_INDENT: typing.Final = settings.LINE_INDENT * 2
 
 
 @typing.final
@@ -46,10 +46,10 @@ def render_node_definition(one_node: DiagramNode, /) -> str:
 def render_edge(one_edge: DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
-    escaped_label: typing.Final = one_edge.edge_label.replace(_DOUBLE_QUOTE, "")
-    if not escaped_label:
-        return f"{settings.SHIFT_LEFT}{source_node_id} --> {target_node_id}"
-    return f'{settings.SHIFT_LEFT}{source_node_id} --> |"{escaped_label}"| {target_node_id}'
+    label_without_quotes: typing.Final = one_edge.edge_label.replace(_DOUBLE_QUOTE, "")
+    if not label_without_quotes:
+        return f"{settings.LINE_INDENT}{source_node_id} --> {target_node_id}"
+    return f'{settings.LINE_INDENT}{source_node_id} --> |"{label_without_quotes}"| {target_node_id}'
 
 
 # Mermaid has no coordinates: the page flows top to bottom, and a borderless row with its own
@@ -95,7 +95,7 @@ class MermaidDiagram:
             return ()
         return (
             group_shift + _GROUP_OPENING_TEMPLATE.format(group_name=node_group.name, group_title=node_group.value),
-            *(group_shift + settings.SHIFT_LEFT + render_node_definition(one_node) for one_node in grouped_nodes),
+            *(group_shift + settings.LINE_INDENT + render_node_definition(one_node) for one_node in grouped_nodes),
             group_shift + _GROUP_CLOSING_LINE,
         )
 
@@ -115,27 +115,27 @@ class MermaidDiagram:
 
     def _render_service_row_lines(self, all_nodes: tuple[DiagramNode, ...], /) -> tuple[str, ...]:
         sideways_lines: typing.Final = (
-            *self._render_placement_lines(GroupPlacement.left_of_service, all_nodes, _ROW_SHIFT_LEFT),
-            _ROW_SHIFT_LEFT + render_node_definition(self.service_node),
-            *self._render_placement_lines(GroupPlacement.right_of_service, all_nodes, _ROW_SHIFT_LEFT),
+            *self._render_placement_lines(GroupPlacement.left_of_service, all_nodes, _ROW_INDENT),
+            _ROW_INDENT + render_node_definition(self.service_node),
+            *self._render_placement_lines(GroupPlacement.right_of_service, all_nodes, _ROW_INDENT),
         )
         return (
-            settings.SHIFT_LEFT + _SERVICE_ROW_OPENING,
-            _ROW_SHIFT_LEFT + _SERVICE_ROW_DIRECTION_LINE,
+            settings.LINE_INDENT + _SERVICE_ROW_OPENING,
+            _ROW_INDENT + _SERVICE_ROW_DIRECTION_LINE,
             *sideways_lines,
-            settings.SHIFT_LEFT + _GROUP_CLOSING_LINE,
-            settings.SHIFT_LEFT + _SERVICE_ROW_STYLE_LINE,
+            settings.LINE_INDENT + _GROUP_CLOSING_LINE,
+            settings.LINE_INDENT + _SERVICE_ROW_STYLE_LINE,
         )
 
     def _render_definition_lines(self) -> tuple[str, ...]:
         all_nodes: typing.Final = self._collect_drawn_nodes()
         return (
             *(
-                settings.SHIFT_LEFT + render_node_definition(one_node)
+                settings.LINE_INDENT + render_node_definition(one_node)
                 for one_node in all_nodes
                 if one_node.node_group is None and one_node.defined_node_id != self.service_node.defined_node_id
             ),
-            *self._render_placement_lines(GroupPlacement.above_service, all_nodes, settings.SHIFT_LEFT),
+            *self._render_placement_lines(GroupPlacement.above_service, all_nodes, settings.LINE_INDENT),
             *self._render_service_row_lines(all_nodes),
-            *self._render_placement_lines(GroupPlacement.below_service, all_nodes, settings.SHIFT_LEFT),
+            *self._render_placement_lines(GroupPlacement.below_service, all_nodes, settings.LINE_INDENT),
         )

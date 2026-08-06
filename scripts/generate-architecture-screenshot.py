@@ -30,20 +30,20 @@ def read_playground_page() -> str:
 
 def take_screenshot_of_page(page_html: str, /) -> None:
     with sync_playwright() as playwright_driver:
-        browser: typing.Final = playwright_driver.chromium.launch()
-        page: typing.Final = browser.new_page(
+        chromium_browser: typing.Final = playwright_driver.chromium.launch()
+        showcase_page: typing.Final = chromium_browser.new_page(
             viewport={"width": PAGE_WIDTH, "height": PAGE_HEIGHT_WHILE_RENDERING},
             device_scale_factor=PAGE_PIXEL_RATIO,
         )
-        page.set_content(page_html)
+        showcase_page.set_content(page_html)
         # Обёртка диаграммы прячется стилями и показывается из postRenderCallback мермейда,
         # так что её видимость — это и есть «диаграмма дорисована».
-        page.wait_for_selector(DIAGRAM_SELECTOR, state="visible", timeout=DIAGRAM_RENDER_TIMEOUT_MS)
-        page.evaluate("document.fonts.ready")
+        showcase_page.wait_for_selector(DIAGRAM_SELECTOR, state="visible", timeout=DIAGRAM_RENDER_TIMEOUT_MS)
+        showcase_page.evaluate("document.fonts.ready")
         # Снимается блок страницы, не окно: снимок целого окна не бывает короче него
         # самого и оставил бы под диаграммой полосу пустого фона.
-        page.locator(PAGE_CONTENT_SELECTOR).screenshot(path=SCREENSHOT_TARGET_PATH)
-        browser.close()
+        showcase_page.locator(PAGE_CONTENT_SELECTOR).screenshot(path=SCREENSHOT_TARGET_PATH)
+        chromium_browser.close()
 
 
 if __name__ == "__main__":

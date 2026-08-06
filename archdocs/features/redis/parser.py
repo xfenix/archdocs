@@ -50,7 +50,11 @@ def find_redis_features(raw_source: str) -> RedisFeatures:
     if not _REDIS_IMPORT_PATTERN.search(raw_source):
         return _EMPTY_FEATURES
     connection_type: typing.Final = next(
-        (one_type_name for one_type_name, pattern in _REDIS_CONNECTION_PATTERNS.items() if pattern.search(raw_source)),
+        (
+            one_type_name
+            for one_type_name, one_pattern in _REDIS_CONNECTION_PATTERNS.items()
+            if one_pattern.search(raw_source)
+        ),
         None,
     )
     return RedisFeatures(

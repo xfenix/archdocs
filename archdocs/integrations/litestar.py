@@ -5,7 +5,7 @@ from litestar import Litestar, get
 from litestar.response import Response
 
 from archdocs import settings
-from archdocs.integrations.common import _create_architecture_engine, _generate_architecture_html
+from archdocs.integrations.common import _create_architecture_engine, _render_architecture_html
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 
 
@@ -16,7 +16,7 @@ class _LitestarArchDocRoute:
 
     async def __call__(self) -> Response[str]:
         return Response(
-            _generate_architecture_html(self.arch_engine),
+            _render_architecture_html(self.arch_engine),
             media_type="text/html",
         )
 

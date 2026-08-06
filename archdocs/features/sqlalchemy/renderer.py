@@ -9,12 +9,12 @@ _DSN_CREDENTIALS_PATTERN: typing.Final = py_re.compile(r"://[^/@\s]*@", flags=se
 _DSN_SCHEME_PATTERN: typing.Final = py_re.compile(r"^[^:/\s]+", flags=settings.TYPICAL_RE_FLAGS)
 
 
-def _build_database_node(raw_database_type: str, host_suffix: int | str) -> diagram_model.DiagramNode:
+def _build_database_node(raw_database_type: str, node_suffix: int | str) -> diagram_model.DiagramNode:
     scheme_match: typing.Final = _DSN_SCHEME_PATTERN.search(raw_database_type)
     database_scheme: typing.Final = scheme_match.group() if scheme_match else raw_database_type
     return diagram_model.build_diagram_node(
-        f"{diagram_model.render_node_id(database_scheme)}db{host_suffix}",
-        database_scheme if host_suffix == "" else f"{database_scheme} #{host_suffix}",
+        f"{diagram_model.render_node_id(database_scheme)}db{node_suffix}",
+        database_scheme if node_suffix == "" else f"{database_scheme} #{node_suffix}",
         diagram_model.NodeGroup.data_stores,
     )
 

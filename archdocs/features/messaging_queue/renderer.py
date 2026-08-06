@@ -1,7 +1,7 @@
 import typing
 
 from archdocs import diagram_model
-from archdocs.features.messaging_queue.const import BrokerFlow, MQFeatures
+from archdocs.features.messaging_queue.const import BrokerFlow, MessagingQueueFeatures
 
 
 def _render_flow_edges(
@@ -34,9 +34,9 @@ def _render_flow_edges(
     return tuple(all_edges)
 
 
-def render_mq_features(
+def render_messaging_queue_features(
     service_node: diagram_model.DiagramNode,
-    features_to_draw: MQFeatures,
+    features_to_draw: MessagingQueueFeatures,
     /,
 ) -> tuple[diagram_model.DiagramEdge, ...]:
     return tuple(

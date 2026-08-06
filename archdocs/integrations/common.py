@@ -4,7 +4,7 @@ from archdocs import settings
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 
 
-def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
+def _render_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str:
     rendered_diagram: typing.Final = (
         arch_engine.render_architecture_diagram().replace("&", "&amp;").replace("<", "&lt;")
     )

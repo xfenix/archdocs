@@ -4,7 +4,7 @@ import typing
 
 
 @typing.final
-class HttpClientEnum(enum.Enum):
+class HTTPClientEnum(enum.Enum):
     httpx_client = "httpx"
     aiohttp_client = "aiohttp"
     requests_client = "requests"
@@ -13,6 +13,6 @@ class HttpClientEnum(enum.Enum):
 
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class HttpClientFeatures:
+class HTTPClientFeatures:
     clients_used: frozenset[str]
     async_used: bool
