@@ -73,6 +73,15 @@ is `/docs/architecture/` until you set another one.
 Start the app, open <a href="http://127.0.0.1:8000/docs/architecture/">/docs/architecture/</a>
 and the schema is already there.
 
+The page carries no authentication of its own and it names what it found: database hosts and
+drivers, ingress hosts, ports, queue names, ConfigMaps and Secrets. Credentials are stripped
+out of a DSN before it is drawn, but the rest is your internal topology, so put the route
+behind the same thing you put `/docs` behind, or keep it off your public deployment.
+
+If your app already needs one of the two frameworks, that is all archdocs needs too — it
+declares neither as a dependency. `archdocs[fastapi]` and `archdocs[litestar]` are there when
+you would rather say it out loud.
+
 What archdocs finds
 ===
 * HTTP endpoints: fastapi and litestar routes

@@ -18,6 +18,7 @@ lint mode="fix":
   uv run auto-typing-final {{ if mode == "check" { "--check" } else { "" } }} archdocs tests/*.py scripts/*.py
   uv run mypy .
   uv run flake8 --select=WPS,COP archdocs tests
+  uv run --no-sync python scripts/check-package-contents.py
 
 test *args:
   uv run --no-sync pytest {{ args }}

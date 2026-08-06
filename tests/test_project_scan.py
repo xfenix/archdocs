@@ -1,4 +1,5 @@
 import pathlib
+import types
 import typing
 
 import pytest
@@ -43,6 +44,22 @@ ingress:
   hosts:
     - host: decoy.example.com
 """
+
+
+def _write_legacy_encoded_source(project_path: pathlib.Path, /) -> None:
+    (project_path / "legacy.py").write_bytes("HEADING = 'café'\n".encode("latin-1"))
+
+
+def _write_dangling_symlink(project_path: pathlib.Path, /) -> None:
+    (project_path / "removed.py").symlink_to(project_path / "never-existed.py")
+
+
+_ALL_UNREADABLE_SOURCES: typing.Final = types.MappingProxyType(
+    {
+        "legacy encoding": _write_legacy_encoded_source,
+        "dangling symlink": _write_dangling_symlink,
+    },
+)
 
 
 def _build_charted_project(
@@ -96,6 +113,27 @@ def test_dependencies_stay_out_of_the_diagram(
     assert 'redisdb["redis"]' in rendered_diagram
     assert "celery" not in rendered_diagram
     assert "uvicorn" not in rendered_diagram
+
+
+# The scanned tree is the user's whole project: one file the process cannot decode or open used
+# to raise out of the thread pool and answer the route with 500 instead of the rest of the service.
+@pytest.mark.parametrize("break_one_source", _ALL_UNREADABLE_SOURCES.values(), ids=_ALL_UNREADABLE_SOURCES)
+def test_unreadable_source_costs_only_itself(
+    tmp_path: pathlib.Path,
+    break_one_source: typing.Callable[[pathlib.Path], None],
+) -> None:
+    (tmp_path / "cache.py").write_text(_OWN_SOURCE)
+    break_one_source(tmp_path)
+
+    rendered_diagram: typing.Final = render_diagram(
+        SettingsForArchdocs(
+            root_dir=tmp_path,
+            service_name="unreadable-svc",
+            kubernetes_dir=WITHOUT_MANIFESTS,
+        ),
+    )
+
+    assert 'redisdb["redis"]' in rendered_diagram
 
 
 @pytest.mark.parametrize("sources_subpath", [".", "one"])

@@ -2,7 +2,7 @@ import re as py_re
 import types
 import typing
 
-from archdocs import settings
+from archdocs import prefilter, settings
 from archdocs.features.messaging_queue import const
 
 
@@ -49,6 +49,7 @@ _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
 _BROKER_NAME_OF_CLASS: typing.Final = types.MappingProxyType(
     {one_broker_class: one_broker.value for one_broker, one_broker_class in const.BROKER_CLASS_OF_NAME.items()},
 )
+_FASTSTREAM_LITERALS: typing.Final = ("faststream",)
 _EMPTY_FEATURES: typing.Final = const.MQFeatures()
 
 
@@ -98,7 +99,7 @@ def _build_broker_flow(raw_source: str, broker_of_variable: dict[str, str], brok
 
 
 def find_faststream_features(raw_source: str) -> const.MQFeatures:
-    if "faststream" not in raw_source:
+    if not prefilter.contains_any_literal(raw_source.lower(), _FASTSTREAM_LITERALS):
         return _EMPTY_FEATURES
     if not _SUBSCRIBER_DECORATOR_RE.search(raw_source) and not _PRODUCER_RE.search(raw_source):
         return _EMPTY_FEATURES
