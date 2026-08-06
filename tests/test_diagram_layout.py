@@ -4,14 +4,7 @@ import typing
 import pytest
 
 from archdocs.main import SettingsForArchdocs
-from tests.diagram_parts import collect_edge_ends, collect_group_of_every_node, extract_edge_lines
-from tests.rendered_diagram import (
-    ALL_EXAMPLE_SETTINGS,
-    SETTINGS_ARGUMENT,
-    SHOWCASE_SETTINGS,
-    build_named_settings,
-    render_example_diagram,
-)
+from tests import diagram_parts, diagram_rendering
 
 
 # Mermaid has no coordinates: a diagram is laid out from the direction of its arrows and from
@@ -69,12 +62,12 @@ _ALL_SERVICE_NAMES: typing.Final = (
 )
 
 
-@pytest.mark.parametrize(SETTINGS_ARGUMENT, ALL_EXAMPLE_SETTINGS)
+@pytest.mark.parametrize(diagram_rendering.SETTINGS_ARGUMENT, diagram_rendering.ALL_EXAMPLE_SETTINGS)
 def test_arrows_agree_with_their_side(arch_settings: SettingsForArchdocs) -> None:
-    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
+    rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(arch_settings)
 
-    group_of_node: typing.Final = collect_group_of_every_node(rendered_diagram)
-    all_edge_ends: typing.Final = collect_edge_ends(rendered_diagram)
+    group_of_node: typing.Final = diagram_parts.collect_group_of_every_node(rendered_diagram)
+    all_edge_ends: typing.Final = diagram_parts.collect_edge_ends(rendered_diagram)
     all_target_groups: typing.Final = {group_of_node.get(one_ends.target_id) for one_ends in all_edge_ends}
     all_source_groups: typing.Final = {group_of_node.get(one_ends.source_id) for one_ends in all_edge_ends}
     assert all_edge_ends
@@ -83,14 +76,19 @@ def test_arrows_agree_with_their_side(arch_settings: SettingsForArchdocs) -> Non
 
 
 def test_showcase_nodes_sit_in_their_groups() -> None:
-    rendered_diagram: typing.Final = render_example_diagram(SHOWCASE_SETTINGS)
+    rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(diagram_rendering.SHOWCASE_SETTINGS)
 
-    assert collect_group_of_every_node(rendered_diagram) == _EXPECTED_SHOWCASE_GROUPS
-    assert all(_SHOWCASE_NODE_ID in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
+    assert diagram_parts.collect_group_of_every_node(rendered_diagram) == _EXPECTED_SHOWCASE_GROUPS
+    assert all(
+        _SHOWCASE_NODE_ID in one_edge_line for one_edge_line in diagram_parts.extract_edge_lines(rendered_diagram)
+    )
 
 
 def test_groups_sit_around_the_service() -> None:
-    all_lines: typing.Final = [one_line.strip() for one_line in render_example_diagram(SHOWCASE_SETTINGS).split("\n")]
+    all_lines: typing.Final = [
+        one_line.strip()
+        for one_line in diagram_rendering.render_example_diagram(diagram_rendering.SHOWCASE_SETTINGS).split("\n")
+    ]
 
     all_positions: typing.Final = [
         next(line_index for line_index, one_line in enumerate(all_lines) if one_line.startswith(one_mark))
@@ -101,14 +99,20 @@ def test_groups_sit_around_the_service() -> None:
 
 @pytest.mark.parametrize(("service_name", "expected_node_id"), _ALL_SERVICE_NAMES)
 def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: str) -> None:
-    rendered_diagram: typing.Final = render_example_diagram(build_named_settings(service_name))
+    rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
+        diagram_rendering.build_named_settings(service_name)
+    )
 
     assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram
-    assert all(expected_node_id in one_edge_line for one_edge_line in extract_edge_lines(rendered_diagram))
+    assert all(
+        expected_node_id in one_edge_line for one_edge_line in diagram_parts.extract_edge_lines(rendered_diagram)
+    )
 
 
 def test_credentials_never_reach_the_diagram() -> None:
-    rendered_diagram: typing.Final = render_example_diagram(build_named_settings("secretive-svc"))
+    rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
+        diagram_rendering.build_named_settings("secretive-svc")
+    )
 
     assert "user:password" not in rendered_diagram
     assert "://***@" in rendered_diagram

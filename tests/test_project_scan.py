@@ -5,7 +5,7 @@ import typing
 import pytest
 
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
-from tests.rendered_diagram import KUBERNETES_VARIANTS_ROOT, WITHOUT_MANIFESTS, render_diagram
+from tests import diagram_rendering
 
 
 _OWN_SOURCE: typing.Final = """import redis
@@ -102,11 +102,11 @@ def test_dependencies_stay_out_of_the_diagram(
     vendored_dir.mkdir(parents=True)
     (vendored_dir / "vendored.py").write_text(_VENDORED_SOURCE)
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=project_path,
             service_name="vendor-svc",
-            kubernetes_dir=WITHOUT_MANIFESTS,
+            kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
 
@@ -125,11 +125,11 @@ def test_unreadable_source_costs_only_itself(
     (tmp_path / "cache.py").write_text(_OWN_SOURCE)
     break_one_source(tmp_path)
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=tmp_path,
             service_name="unreadable-svc",
-            kubernetes_dir=WITHOUT_MANIFESTS,
+            kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
 
@@ -138,7 +138,7 @@ def test_unreadable_source_costs_only_itself(
 
 @pytest.mark.parametrize("sources_subpath", [".", "one"])
 def test_manifests_are_found_above_the_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
             service_name="above-svc",
@@ -154,7 +154,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     templates_dir.mkdir(parents=True)
     (templates_dir / "ingress.yaml").write_text(_RAW_INGRESS_MANIFEST)
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(root_dir=tmp_path, service_name="templates-svc"),
     )
 
@@ -165,7 +165,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
 @pytest.mark.parametrize(
     ("kubernetes_dir", "expected_part", "forbidden_part"),
     [
-        (KUBERNETES_VARIANTS_ROOT / "loadbalancer", "LoadBalancer", "neighbour.example.com"),
+        (diagram_rendering.KUBERNETES_VARIANTS_ROOT / "loadbalancer", "LoadBalancer", "neighbour.example.com"),
         ("there-is-no-such-chart", 'config_svc{"config-svc"}', "neighbour.example.com"),
         (_CHART_RELATIVE_PATH, "HTTP neighbour.example.com", "decoy.example.com"),
     ],
@@ -181,7 +181,7 @@ def test_configured_dir_wins_over_the_search(
     _build_charted_project(decoy_project_path, chart_values=_DECOY_CHART_VALUES)
     monkeypatch.chdir(decoy_project_path)
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / "project"),
             service_name="config-svc",
@@ -201,7 +201,7 @@ def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
     (chart_dir / "broken.yaml").symlink_to(chart_dir / "never-existed.yaml")
     (chart_dir.parent / "values.yaml").symlink_to(chart_dir.parent / "never-existed-values.yaml")
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(root_dir=source_dir, service_name="broken-chart-svc"),
     )
 
@@ -217,7 +217,7 @@ def test_sources_are_scanned_once_per_engine(tmp_path: pathlib.Path) -> None:
         local_settings=SettingsForArchdocs(
             root_dir=tmp_path,
             service_name="cached-svc",
-            kubernetes_dir=WITHOUT_MANIFESTS,
+            kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
     first_diagram: typing.Final = architecture_engine.render_architecture_diagram()
@@ -245,7 +245,7 @@ def test_far_away_manifests_are_ignored(
     if repository_marker:
         (project_path / repository_marker).mkdir()
 
-    rendered_diagram: typing.Final = render_diagram(
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(root_dir=source_dir, service_name="far-svc"),
     )
 

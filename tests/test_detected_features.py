@@ -6,8 +6,8 @@ import hypothesis
 import pytest
 from hypothesis import strategies as st
 
+from tests import diagram_rendering
 from tests.diagram_parts import EDGE_ARROW
-from tests.rendered_diagram import SHOWCASE_SETTINGS, render_example_diagram, render_source_diagram
 
 
 # What a parser found is only interesting once it reaches an arrow, so every case here is one
@@ -477,7 +477,7 @@ def test_source_reaches_the_diagram(
     expected_parts: tuple[str, ...],
     forbidden_parts: tuple[str, ...],
 ) -> None:
-    rendered_diagram: typing.Final = render_source_diagram(tmp_path, source_code)
+    rendered_diagram: typing.Final = diagram_rendering.render_source_diagram(tmp_path, source_code)
 
     for one_expected_part in expected_parts:
         assert one_expected_part in rendered_diagram, one_expected_part
@@ -487,14 +487,14 @@ def test_source_reaches_the_diagram(
 
 @pytest.mark.parametrize("server_name", _ALL_SERVER_SOURCES)
 def test_every_server_reaches_the_diagram(tmp_path: pathlib.Path, server_name: str) -> None:
-    rendered_diagram: typing.Final = render_source_diagram(tmp_path, _ALL_SERVER_SOURCES[server_name])
+    rendered_diagram: typing.Final = diagram_rendering.render_source_diagram(tmp_path, _ALL_SERVER_SOURCES[server_name])
 
     assert f'external_client --> |"Served by {server_name}"| app_svc' in rendered_diagram
 
 
 @pytest.mark.parametrize("feature_mark", _REQUIRED_SHOWCASE_MARKS)
 def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
-    assert feature_mark in render_example_diagram(SHOWCASE_SETTINGS)
+    assert feature_mark in diagram_rendering.render_example_diagram(diagram_rendering.SHOWCASE_SETTINGS)
 
 
 @hypothesis.settings(
@@ -504,4 +504,4 @@ def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
 )
 @hypothesis.given(source_code=_UNRELATED_SOURCE_STRATEGY)
 def test_unrelated_source_draws_the_service_alone(tmp_path: pathlib.Path, source_code: str) -> None:
-    assert EDGE_ARROW not in render_source_diagram(tmp_path, source_code)
+    assert EDGE_ARROW not in diagram_rendering.render_source_diagram(tmp_path, source_code)

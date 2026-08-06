@@ -4,12 +4,7 @@ import pathlib
 import typing
 from concurrent import futures
 
-from archdocs import diagram_model, mermaid_syntax, settings
-from archdocs.mapping import (
-    MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS,
-    MAPPING_OF_PARSERS_AND_RENDERERS,
-    ManifestFeatureFunctions,
-)
+from archdocs import diagram_model, mapping, mermaid_syntax, settings
 
 
 @typing.final
@@ -20,7 +15,7 @@ class SettingsForArchdocs:
     kubernetes_dir: str | pathlib.Path | None = None
 
 
-type _ParsedManifests = tuple[tuple[ManifestFeatureFunctions[typing.Any], typing.Any], ...]
+type _ParsedManifests = tuple[tuple[mapping.ManifestFeatureFunctions[typing.Any], typing.Any], ...]
 
 
 def _read_source_text(one_source_file: pathlib.Path, /) -> str:
@@ -45,7 +40,7 @@ def _parse_every_manifest(
                 one_manifest_functions.read_source(root_path, configured_manifest_dir),
             ),
         )
-        for one_manifest_functions in MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS.values()
+        for one_manifest_functions in mapping.MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS.values()
     )
 
 
@@ -126,7 +121,7 @@ class ArchitectureParserAndRenderer:
         raw_file_source: typing.Final = _read_source_text(one_source_file)
         return tuple(
             one_edge
-            for one_feature_functions in MAPPING_OF_PARSERS_AND_RENDERERS.values()
+            for one_feature_functions in mapping.MAPPING_OF_PARSERS_AND_RENDERERS.values()
             for one_edge in one_feature_functions.render_edges(
                 service_node,
                 one_feature_functions.parse_source(raw_file_source),

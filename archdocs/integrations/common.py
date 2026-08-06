@@ -1,6 +1,6 @@
 import typing
 
-from archdocs import settings
+from archdocs import mermaid_syntax, settings
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 
 
@@ -14,7 +14,7 @@ def _render_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> str
     prefix_end: typing.Final = placeholder_match.start()
     suffix_start: typing.Final = placeholder_match.end()
     diagram_block: typing.Final = (
-        f"{placeholder_match.group('pre_open')}{settings.DIAGRAM_HEADER}\n"
+        f"{placeholder_match.group('pre_open')}{mermaid_syntax.DIAGRAM_HEADER}\n"
         f"{rendered_diagram}{placeholder_match.group('pre_close')}"
     )
     return settings.UI_HTML_TEMPLATE[:prefix_end] + diagram_block + settings.UI_HTML_TEMPLATE[suffix_start:]

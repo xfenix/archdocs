@@ -3,10 +3,10 @@ import enum
 import types
 import typing
 
-from archdocs import settings
-from archdocs.diagram_model import DiagramEdge, DiagramNode, NodeGroup
+from archdocs import diagram_model, settings
 
 
+DIAGRAM_HEADER: typing.Final = "graph TB"
 _DOUBLE_QUOTE: typing.Final = '"'
 _GROUP_OPENING_TEMPLATE: typing.Final = 'subgraph group_{group_name}["{group_title}"]'
 _GROUP_CLOSING_LINE: typing.Final = "end"
@@ -27,23 +27,31 @@ class GroupPlacement(enum.Enum):
 
 PLACEMENT_OF_NODE_GROUP: typing.Final = types.MappingProxyType(
     {
-        NodeGroup.configuration: GroupPlacement.above_service,
-        NodeGroup.inbound_api: GroupPlacement.left_of_service,
-        NodeGroup.messaging_and_tasks: GroupPlacement.right_of_service,
-        NodeGroup.outbound_calls: GroupPlacement.right_of_service,
-        NodeGroup.data_stores: GroupPlacement.below_service,
+        diagram_model.NodeGroup.configuration: GroupPlacement.above_service,
+        diagram_model.NodeGroup.inbound_api: GroupPlacement.left_of_service,
+        diagram_model.NodeGroup.messaging_and_tasks: GroupPlacement.right_of_service,
+        diagram_model.NodeGroup.outbound_calls: GroupPlacement.right_of_service,
+        diagram_model.NodeGroup.data_stores: GroupPlacement.below_service,
+    },
+)
+# The templates live next to the quote-stripping below: how a shape is written in mermaid and
+# what its label may contain is one piece of knowledge, and the model does not hold any of it.
+_TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
+    {
+        diagram_model.NodeShape.plain_node: '{defined_node_id}["{node_label}"]',
+        diagram_model.NodeShape.service_node: '{defined_node_id}{{"{node_label}"}}',
     },
 )
 
 
-def render_node_definition(one_node: DiagramNode, /) -> str:
-    return one_node.node_shape.value.format(
+def render_node_definition(one_node: diagram_model.DiagramNode, /) -> str:
+    return _TEMPLATE_OF_NODE_SHAPE[one_node.node_shape].format(
         defined_node_id=one_node.defined_node_id,
         node_label=one_node.node_label.replace(_DOUBLE_QUOTE, ""),
     )
 
 
-def render_edge(one_edge: DiagramEdge, /) -> str:
+def render_edge(one_edge: diagram_model.DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
     label_without_quotes: typing.Final = one_edge.edge_label.replace(_DOUBLE_QUOTE, "")
@@ -57,8 +65,8 @@ def render_edge(one_edge: DiagramEdge, /) -> str:
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class MermaidDiagram:
-    service_node: DiagramNode
-    all_edges: tuple[DiagramEdge, ...]
+    service_node: diagram_model.DiagramNode
+    all_edges: tuple[diagram_model.DiagramEdge, ...]
 
     def render_every_line(self) -> str:
         return "\n".join(
@@ -68,7 +76,7 @@ class MermaidDiagram:
             ),
         )
 
-    def _collect_drawn_nodes(self) -> tuple[DiagramNode, ...]:
+    def _collect_drawn_nodes(self) -> tuple[diagram_model.DiagramNode, ...]:
         return tuple(
             {
                 one_node.defined_node_id: one_node
@@ -85,8 +93,8 @@ class MermaidDiagram:
 
     def _render_group_lines(
         self,
-        node_group: NodeGroup,
-        all_nodes: tuple[DiagramNode, ...],
+        node_group: diagram_model.NodeGroup,
+        all_nodes: tuple[diagram_model.DiagramNode, ...],
         group_shift: str,
         /,
     ) -> tuple[str, ...]:
@@ -102,18 +110,18 @@ class MermaidDiagram:
     def _render_placement_lines(
         self,
         group_placement: GroupPlacement,
-        all_nodes: tuple[DiagramNode, ...],
+        all_nodes: tuple[diagram_model.DiagramNode, ...],
         group_shift: str,
         /,
     ) -> tuple[str, ...]:
         return tuple(
             one_group_line
-            for one_node_group in NodeGroup
+            for one_node_group in diagram_model.NodeGroup
             if PLACEMENT_OF_NODE_GROUP[one_node_group] is group_placement
             for one_group_line in self._render_group_lines(one_node_group, all_nodes, group_shift)
         )
 
-    def _render_service_row_lines(self, all_nodes: tuple[DiagramNode, ...], /) -> tuple[str, ...]:
+    def _render_service_row_lines(self, all_nodes: tuple[diagram_model.DiagramNode, ...], /) -> tuple[str, ...]:
         sideways_lines: typing.Final = (
             *self._render_placement_lines(GroupPlacement.left_of_service, all_nodes, _ROW_INDENT),
             _ROW_INDENT + render_node_definition(self.service_node),
