@@ -5,12 +5,13 @@ from archdocs import prefilter, settings
 from archdocs.features.http_api.const import HTTPApiFeatures
 
 
-# A route decorator is called with a path literal (possibly empty, possibly an f-string) or with
-# nothing at all: anything looser counts `@mock.patch("src.payments")` in a test file that also
-# imports a TestClient as REST traffic. Paths passed as `path=` keywords slip away — that trade
-# is taken knowingly.
+# A route decorator is called with a path literal (possibly empty, possibly an f-string, with
+# leading `{...}` expressions allowed) or with nothing at all: anything looser counts
+# `@mock.patch("src.payments")` in a test file that also imports a TestClient as REST traffic.
+# Paths passed as `path=` keywords slip away — that trade is taken knowingly.
 _SERVED_METHOD_PATTERN: typing.Final = py_re.compile(
-    r"@(?:\w+\.)?(post|put|patch|delete|get|head|options|trace)\s*\(\s*(?:\)|[frbu]{0,2}[\"'](?:/|[\"']))",
+    r"@(?:\w+\.)?(post|put|patch|delete|get|head|options|trace)\s*\(\s*"
+    r"(?:\)|[frbu]{0,2}[\"'](?:\{[^}\"']*\})*(?:/|[\"']))",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 # A decorated method alone says nothing — every router library spells them the same way — so the

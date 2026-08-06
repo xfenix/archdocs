@@ -39,6 +39,16 @@ _ROUTE_WITHOUT_FRAMEWORK_SOURCE: typing.Final = """@router.get("/x")
 async def read_items() -> list[dict]:
     return []
 """
+_PREFIXED_ROUTE_SOURCE: typing.Final = """import fastapi
+
+API_PREFIX = "/api/v1"
+router = fastapi.APIRouter()
+
+
+@router.get(f"{API_PREFIX}/items")
+async def read_items() -> list[dict]:
+    return []
+"""
 _MOCKED_TEST_SOURCE: typing.Final = """from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -258,6 +268,11 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "route without a framework": (_ROUTE_WITHOUT_FRAMEWORK_SOURCE, (), ("REST",)),
+        "route behind an f-string prefix": (
+            _PREFIXED_ROUTE_SOURCE,
+            ('external_client --> |"REST (get)"| app_svc',),
+            (),
+        ),
         "mocked test file is not an api": (_MOCKED_TEST_SOURCE, (), ("REST",)),
         "async http client": (
             _ASYNC_CLIENT_SOURCE,
