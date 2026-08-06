@@ -3,7 +3,7 @@ import types
 import typing
 
 from archdocs import prefilter, settings
-from archdocs.features.redis.const import RedisFeatures
+from archdocs.features.redis.const import RedisConnectionKind, RedisFeatures
 
 
 _REDIS_IMPORT_PATTERN: typing.Final = py_re.compile(
@@ -14,12 +14,15 @@ _ASYNC_REDIS_PATTERN: typing.Final = py_re.compile(
     r"\b(?:from\s+redis\.asyncio\b|import\s+redis\.asyncio\b)",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+type _ConnectionPatterns = types.MappingProxyType[RedisConnectionKind, py_re.Pattern[str]]
+
 # Declaration order is probing order, so the specific kinds go before plain: a file importing
 # both a Sentinel and a plain Redis client is drawn by the topology, not by the fallback.
-_REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType(
+_REDIS_CONNECTION_PATTERNS: typing.Final[_ConnectionPatterns] = types.MappingProxyType(
     {
         "sentinel": py_re.compile(
-            r"\b(?:redis\.(?:asyncio\.)?sentinel\.|from\s+redis(?:\.asyncio)?(?:\.sentinel)?\s+import\s+).*\bSentinel\b",
+            r"\b(?:redis\.(?:asyncio\.)?sentinel\.|from\s+redis(?:\.asyncio)?(?:\.sentinel)?\s+import\s+)"
+            r".*\bSentinel\b",
             flags=settings.TYPICAL_RE_FLAGS,
         ),
         "cluster": py_re.compile(

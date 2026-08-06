@@ -20,7 +20,7 @@ class SettingsForArchdocs:
     kubernetes_dir: str | pathlib.Path | None = None
 
 
-type _ParsedManifests = tuple[tuple[ManifestFeatureFunctions, typing.Any], ...]
+type _ParsedManifests = tuple[tuple[ManifestFeatureFunctions[typing.Any], typing.Any], ...]
 
 
 def _read_source_text(one_src_file: pathlib.Path, /) -> str:

@@ -68,7 +68,7 @@ def _collect_broker_of_variable(raw_source: str, /) -> dict[str, str]:
 
 def _collect_topics_of_broker(
     raw_source: str,
-    broker_of_variable: dict[str, str],
+    broker_of_variable: typing.Mapping[str, str],
     message_direction: const.MessageDirection,
     broker_name: str,
     /,
@@ -83,7 +83,12 @@ def _collect_topics_of_broker(
     )
 
 
-def _build_broker_flow(raw_source: str, broker_of_variable: dict[str, str], broker_name: str, /) -> const.BrokerFlow:
+def _build_broker_flow(
+    raw_source: str,
+    broker_of_variable: typing.Mapping[str, str],
+    broker_name: str,
+    /,
+) -> const.BrokerFlow:
     return const.BrokerFlow(
         broker_name=broker_name,
         consumes=bool(_SUBSCRIBER_DECORATOR_RE.search(raw_source)),

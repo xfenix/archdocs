@@ -5,7 +5,7 @@ from archdocs.features.kubernetes import const, values, values_lookup
 
 
 type _KindNames = tuple[str, ...]
-type _ConfigurationPaths = tuple[tuple[values.ValuePath, str, str], ...]
+type _ConfigurationPaths = tuple[tuple[values.ValuePath, const.ConfigurationKind, const.AttachmentKind], ...]
 
 _NAME_KEY: typing.Final = "name"
 _TRUE_VALUES: typing.Final = frozenset(("true", "yes", "on"))

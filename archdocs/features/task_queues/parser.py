@@ -38,13 +38,13 @@ _EMPTY_FEATURES: typing.Final = TaskQueueFeatures(
 )
 
 
-def _find_used_queues(raw_source: str, /) -> set[str]:
+def _find_used_queues(raw_source: str, /) -> frozenset[str]:
     lowered_source: typing.Final = raw_source.lower()
-    return {
+    return frozenset(
         one_queue.value
         for one_queue, one_pattern in _QUEUE_IMPORT_PATTERNS.items()
         if prefilter.contains_any_literal(lowered_source, (one_queue.value,)) and one_pattern.search(raw_source)
-    }
+    )
 
 
 def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
@@ -52,7 +52,7 @@ def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
     if not queues_found:
         return _EMPTY_FEATURES
     return TaskQueueFeatures(
-        queues_used=frozenset(queues_found),
+        queues_used=queues_found,
         has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),
         has_workers=bool(_WORKER_PATTERNS.search(raw_source)),
         brokers_detected=frozenset(

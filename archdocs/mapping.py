@@ -24,11 +24,17 @@ from archdocs.features.task_queues import parser as task_queues_parser
 from archdocs.features.task_queues import renderer as task_queues_renderer
 
 
+# The type variable is the registry's safety net: an entry pairing one feature's parser with
+# another feature's renderer — the realistic slip when a new feature is copied from a neighbour —
+# fails right here under mypy instead of failing at runtime on somebody's diagram.
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class _FeatureFunctions:
-    parse_source: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[diagram_model.DiagramNode, typing.Any], tuple[diagram_model.DiagramEdge, ...]]
+class _FeatureFunctions[ParsedFeaturesT]:
+    parse_source: typing.Callable[[str], ParsedFeaturesT]
+    render_diagram: typing.Callable[
+        [diagram_model.DiagramNode, ParsedFeaturesT],
+        tuple[diagram_model.DiagramEdge, ...],
+    ]
 
 
 @typing.final
@@ -42,7 +48,9 @@ class AllCurrentFeatures(enum.Enum):
     app_servers = 7
 
 
-MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
+type _FeatureRegistry = types.MappingProxyType[AllCurrentFeatures, _FeatureFunctions[typing.Any]]
+
+MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final[_FeatureRegistry] = types.MappingProxyType(
     {
         AllCurrentFeatures.fastapi_litestar: _FeatureFunctions(
             parse_source=httpapi_parser.find_fastapi_and_litestar_features,
@@ -78,11 +86,14 @@ MAPPING_OF_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
 
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class ManifestFeatureFunctions:
+class ManifestFeatureFunctions[ParsedManifestsT]:
     read_source: typing.Callable[[pathlib.Path, str | pathlib.Path | None], str]
-    parse_manifests: typing.Callable[[str], typing.Any]
-    render_diagram: typing.Callable[[diagram_model.DiagramNode, typing.Any], tuple[diagram_model.DiagramEdge, ...]]
-    render_node_annotations: typing.Callable[[typing.Any], tuple[str, ...]]
+    parse_manifests: typing.Callable[[str], ParsedManifestsT]
+    render_diagram: typing.Callable[
+        [diagram_model.DiagramNode, ParsedManifestsT],
+        tuple[diagram_model.DiagramEdge, ...],
+    ]
+    render_node_annotations: typing.Callable[[ParsedManifestsT], tuple[str, ...]]
 
 
 @typing.final
@@ -90,7 +101,9 @@ class AllCurrentManifestFeatures(enum.Enum):
     kubernetes = 1
 
 
-MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final = types.MappingProxyType(
+type _ManifestRegistry = types.MappingProxyType[AllCurrentManifestFeatures, ManifestFeatureFunctions[typing.Any]]
+
+MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS: typing.Final[_ManifestRegistry] = types.MappingProxyType(
     {
         AllCurrentManifestFeatures.kubernetes: ManifestFeatureFunctions(
             read_source=kubernetes_manifest_files.read_kubernetes_manifests,
