@@ -36,14 +36,23 @@ def collect_required_files() -> tuple[str, ...]:
 def build_wheel_into(build_dir: pathlib.Path, /) -> pathlib.Path:
     uv_executable: typing.Final = shutil.which("uv")
     if uv_executable is None:
-        message: typing.Final = "uv not found on PATH, cannot build the wheel"
-        raise RuntimeError(message)
-    subprocess.run(  # noqa: S603 — команда сборки фиксирована, пользовательского ввода тут нет
+        sys.exit("uv не найден в PATH: собирать колесо нечем")
+    # Вывод сборки прячется, пока она удаётся, и показывается целиком, когда нет: проверка
+    # живёт в `just lint`, где трейсбек без причины падения читать некому.
+    finished_build: typing.Final = subprocess.run(  # noqa: S603 — команда фиксирована, ввода тут нет
         [uv_executable, "build", "--wheel", "--out-dir", str(build_dir)],
-        check=True,
+        check=False,
         capture_output=True,
+        text=True,
     )
-    return next(build_dir.glob(WHEEL_PATTERN))
+    if finished_build.returncode:
+        sys.exit(
+            f"uv build завершился кодом {finished_build.returncode}:\n{finished_build.stdout}{finished_build.stderr}",
+        )
+    all_built_wheels: typing.Final = sorted(build_dir.glob(WHEEL_PATTERN))
+    if not all_built_wheels:
+        sys.exit(f"uv build отработал успешно, но колеса в {build_dir} не оставил")
+    return all_built_wheels[0]
 
 
 def find_missing_files() -> tuple[str, ...]:
