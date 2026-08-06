@@ -10,7 +10,6 @@ BADGE_COLOR: typing.Final = "#457B9D"
 
 
 def count_code_lines(source_path: pathlib.Path) -> int:
-    """Считает строки кода: пустые и строки-комментарии не в счёт, докстринги — в счёт."""
     return sum(
         1
         for one_line in source_path.read_text(encoding="utf-8").splitlines()

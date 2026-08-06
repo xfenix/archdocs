@@ -193,6 +193,21 @@ def test_configured_dir_wins_over_the_search(
     assert forbidden_part not in rendered_diagram
 
 
+# A typo in root_dir is the emptiest possible project, not an error page: the service node
+# still has to appear, alone.
+def test_missing_root_dir_draws_the_service_alone(tmp_path: pathlib.Path) -> None:
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
+        SettingsForArchdocs(
+            root_dir=tmp_path / "never-created",
+            service_name="missing-svc",
+            kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
+        ),
+    )
+
+    assert 'missing_svc{"missing-svc"}' in rendered_diagram
+    assert " --> " not in rendered_diagram
+
+
 # Manifests are hunted through the same foreign tree as the sources: a dangling symlink next
 # to the chart used to raise out of the walk and answer the route with 500 instead of the chart.
 def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
