@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "archdocs"
 version = "1.0.0"
@@ -10,6 +14,24 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
+
+# Обе интеграции опциональны: пакету самому ни fastapi, ни litestar не нужен, а
+# импортирует он ровно тот, к которому пользователь его привязывает.
+[project.optional-dependencies]
+fastapi = ["fastapi>=0.100"]
+litestar = ["litestar>=2.0"]
+
+[project.urls]
+Repository = "https://github.com/xfenix/archdocs"
+Coverage = "https://xfenix.github.io/archdocs/"
+
+# Колесо собирается из каталога пакета целиком: `template.html` и `py.typed` — это
+# не данные рядом с кодом, а часть пакета, без шаблона импорт падает на месте.
+[tool.hatch.build.targets.wheel]
+packages = ["archdocs"]
+
+[tool.hatch.build.targets.sdist]
+include = ["archdocs"]
 
 [tool.ruff]
 fix = true
@@ -58,14 +80,19 @@ max-line-length = 120
 exclude = ["tests/fastapi", "tests/litestar", "tests/showcase"]
 # Каждая фича добавляет в реестр mapping.py по паре импортов, парсер и рендерер.
 max-imports = 30
-per-file-ignores = ["tests/*.py:WPS218"]
+# WPS202 считает членами модуля сами тесты: потолок в семь функций на файл — это потолок на
+# число проверок в наборе, а не на сложность кода, который они проверяют.
+per-file-ignores = ["tests/*.py:WPS218,WPS202"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-n auto --cov=. --cov-report=term-missing"
 
 [tool.coverage.run]
-omit = ["tests/fastapi/*", "scripts/*"]
+# Примеры приложений — это вход для парсеров, а не код под тестом: один список исключений
+# на все три, как у ruff и mypy. Сейчас в отчёт доезжает только `tests/fastapi`, потому что
+# лишь у него есть `__init__.py`, — заводить его соседям не должно ронять покрытие.
+omit = ["tests/fastapi/*", "tests/litestar/*", "tests/showcase/*", "scripts/*"]
 branch = true
 
 [tool.coverage.report]

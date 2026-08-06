@@ -6,6 +6,7 @@
 .hypothesis
 __pycache__
 dist
-experimental.egg-info
+/build
+*.egg-info
 /coverage.json
 /htmlcov

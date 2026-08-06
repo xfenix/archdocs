@@ -1,6 +1,7 @@
 import pathlib
 import re as py_re
 import typing
+from importlib import resources
 
 
 FILES_SEARCH_PATTERN: typing.Final = "*.py"
@@ -39,10 +40,13 @@ TYPICAL_RE_FLAGS: typing.Final = py_re.IGNORECASE | py_re.MULTILINE | py_re.UNIC
 DEFAULT_PATH: typing.Final = "/docs/architecture/"
 DEFAULT_ROOT_DIR: typing.Final = pathlib.Path()
 DEFAULT_SERVICE_NAME: typing.Final = "example-service"
-UI_PLACEHOLDER_PATTER: typing.Final = py_re.compile(
+UI_PLACEHOLDER_PATTERN: typing.Final = py_re.compile(
     r"(?P<pre_open><pre[^>]*>)(?P<pre_body>.*?)(?P<pre_close></pre>)",
     flags=TYPICAL_RE_FLAGS,
 )
+# The template is read through the package rather than through `__file__`: a wheel that shipped
+# without it fails here, on import, and `scripts/check-package-contents.py` is what catches that
+# before the wheel leaves the machine.
 UI_HTML_TEMPLATE: typing.Final = " ".join(
-    pathlib.Path(__file__).parent.joinpath("template.html").read_text().strip().split(),
+    resources.files(__package__).joinpath("template.html").read_text(encoding="utf-8").split(),
 )

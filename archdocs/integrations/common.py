@@ -1,4 +1,3 @@
-import dataclasses
 import typing
 
 from archdocs import settings
@@ -9,7 +8,7 @@ def _generate_architecture_html(arch_engine: ArchitectureParserAndRenderer) -> s
     rendered_diagram: typing.Final = (
         arch_engine.render_architecture_diagram().replace("&", "&amp;").replace("<", "&lt;")
     )
-    placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTER.search(settings.UI_HTML_TEMPLATE)
+    placeholder_match: typing.Final = settings.UI_PLACEHOLDER_PATTERN.search(settings.UI_HTML_TEMPLATE)
     if placeholder_match is None:
         return settings.UI_HTML_TEMPLATE
     prefix_end: typing.Final = placeholder_match.start()
@@ -30,10 +29,3 @@ def _create_architecture_engine(
             service_name=settings.DEFAULT_SERVICE_NAME,
         )
     return ArchitectureParserAndRenderer(local_settings=arch_settings)
-
-
-@typing.final
-@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class ArchitectureRouteConfig:
-    route_path: str
-    arch_settings: SettingsForArchdocs | None

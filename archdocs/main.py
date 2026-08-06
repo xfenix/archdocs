@@ -12,13 +12,6 @@ from archdocs.mapping import (
 )
 
 
-"""TODO:
-
-parsers from settings.py typical configuration
-parsers from docker-compose.yml?
-"""
-
-
 @typing.final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class SettingsForArchdocs:
@@ -28,6 +21,16 @@ class SettingsForArchdocs:
 
 
 type _ParsedManifests = tuple[tuple[ManifestFeatureFunctions, typing.Any], ...]
+
+
+def _read_source_text(one_src_file: pathlib.Path, /) -> str:
+    # The scanned tree is somebody's whole project, not a curated corpus: a source in a legacy
+    # encoding, a symlink into nowhere or a file the process may not open costs that one file and
+    # nothing else. Without this the page answers 500 instead of drawing the rest of the service.
+    try:
+        return one_src_file.read_text(errors="ignore")
+    except OSError:
+        return ""
 
 
 def _parse_every_manifest(
@@ -70,7 +73,9 @@ def _render_manifest_edges(
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ArchitectureParserAndRenderer:
     local_settings: SettingsForArchdocs
-    _rendered_diagram_cache: list[str] = dataclasses.field(default_factory=list)
+    # The cache is state, not identity: leaving it out of `__eq__` keeps the frozen dataclass
+    # hashable, which a list field would otherwise take away.
+    _rendered_diagram_cache: list[str] = dataclasses.field(default_factory=list, compare=False)
 
     def render_architecture_diagram(self) -> str:
         # "why you doesnt use functools.cache lol"
@@ -118,7 +123,7 @@ class ArchitectureParserAndRenderer:
         one_src_file: pathlib.Path,
         /,
     ) -> tuple[diagram_model.DiagramEdge, ...]:
-        raw_file_source: typing.Final = one_src_file.read_text()
+        raw_file_source: typing.Final = _read_source_text(one_src_file)
         return tuple(
             one_edge
             for one_feature_functions in MAPPING_OF_PARSERS_AND_RENDERERS.values()
