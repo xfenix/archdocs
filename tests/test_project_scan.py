@@ -193,6 +193,22 @@ def test_configured_dir_wins_over_the_search(
     assert forbidden_part not in rendered_diagram
 
 
+# Manifests are hunted through the same foreign tree as the sources: a dangling symlink next
+# to the chart used to raise out of the walk and answer the route with 500 instead of the chart.
+def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
+    source_dir: typing.Final = _build_charted_project(tmp_path)
+    chart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH
+    (chart_dir / "broken.yaml").symlink_to(chart_dir / "never-existed.yaml")
+    (chart_dir.parent / "values.yaml").symlink_to(chart_dir.parent / "never-existed-values.yaml")
+
+    rendered_diagram: typing.Final = render_diagram(
+        SettingsForArchdocs(root_dir=source_dir, service_name="broken-chart-svc"),
+    )
+
+    assert 'broken_chart_svc{"broken-chart-svc (replicas 4)"}' in rendered_diagram
+    assert "HTTP neighbour.example.com" in rendered_diagram
+
+
 # A mounted route keeps one engine alive, and a rescan on every request would walk the whole
 # tree again: sources edited under a running process wait for a restart, see the playground.
 def test_sources_are_scanned_once_per_engine(tmp_path: pathlib.Path) -> None:

@@ -14,17 +14,20 @@ _ASYNC_REDIS_PATTERN: typing.Final = py_re.compile(
     r"\b(?:from\s+redis\.asyncio\b|import\s+redis\.asyncio\b)",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+# Declaration order is probing order, so the specific kinds go before plain: a file importing
+# both a Sentinel and a plain Redis client is drawn by the topology, not by the fallback.
 _REDIS_CONNECTION_PATTERNS: typing.Final = types.MappingProxyType(
     {
-        "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b", flags=settings.TYPICAL_RE_FLAGS),
         "sentinel": py_re.compile(
-            r"\b(?:redis\.sentinel\.|from\s+redis(?:\.sentinel)?\s+import\s+).*\bSentinel\b",
+            r"\b(?:redis\.(?:asyncio\.)?sentinel\.|from\s+redis(?:\.asyncio)?(?:\.sentinel)?\s+import\s+).*\bSentinel\b",
             flags=settings.TYPICAL_RE_FLAGS,
         ),
         "cluster": py_re.compile(
-            r"\b(?:redis\.cluster\.|from\s+redis(?:\.cluster)?\s+import\s+).*\bRedisCluster\b",
+            r"\b(?:redis\.(?:asyncio\.)?cluster\.|from\s+redis(?:\.asyncio)?(?:\.cluster)?\s+import\s+)"
+            r".*\bRedisCluster\b",
             flags=settings.TYPICAL_RE_FLAGS,
         ),
+        "plain": py_re.compile(r"\b(?:redis\.|from\s+redis\s+import\s+).*\bRedis\b", flags=settings.TYPICAL_RE_FLAGS),
     },
 )
 _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(

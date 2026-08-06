@@ -7,8 +7,11 @@ from archdocs.features.messaging_queue import const
 
 
 _SUBSCRIBER_DECORATOR_RE: typing.Final = py_re.compile(r"@\w+\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS)
+# The `\b` is not decoration: without it every position inside a long word run — a base64 blob
+# in a string is enough — starts its own `\w+` attempt, and one file costs seconds instead of
+# microseconds.
 _PRODUCER_RE: typing.Final = py_re.compile(
-    r"(?:@\w+\.(?:publisher|producer)|\w+\.publish)\(",
+    r"(?:@\w+\.(?:publisher|producer)|\b\w+\.publish)\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
@@ -20,8 +23,10 @@ _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
         for one_broker in const.BrokersEnum
     },
 )
+# A broker assignment always opens its line, and the anchor is what caps the cost: unanchored,
+# every position of a long word run starts a `\w+` attempt that backtracks hunting for `=`.
 _BROKER_VARIABLE_PATTERN: typing.Final = py_re.compile(
-    r"(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
+    r"^[ \t]*(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
