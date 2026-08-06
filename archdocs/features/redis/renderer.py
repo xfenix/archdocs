@@ -32,7 +32,7 @@ def render_redis_features(
             ],
         ),
     )
-    if not features_to_draw.cluster_or_sentinel:
+    if features_to_draw.connection_type not in ("sentinel", "cluster"):
         return (
             diagram_model.DiagramEdge(
                 source_node=service_node,

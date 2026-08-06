@@ -16,4 +16,3 @@ class HttpClientEnum(enum.Enum):
 class HttpClientFeatures:
     clients_used: frozenset[str]
     async_used: bool
-    has_external_calls: bool

@@ -38,7 +38,6 @@ _REDIS_RETRY_PATTERN: typing.Final = py_re.compile(
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _EMPTY_FEATURES: typing.Final = RedisFeatures(
-    cluster_or_sentinel=False,
     connection_type=None,
     async_used=False,
     retry_used=False,
@@ -56,7 +55,6 @@ def find_redis_features(raw_source: str) -> RedisFeatures:
     )
     return RedisFeatures(
         connection_type=connection_type,
-        cluster_or_sentinel=connection_type in ("sentinel", "cluster"),
         async_used=bool(_ASYNC_REDIS_PATTERN.search(raw_source)),
         retry_used=bool(_REDIS_RETRY_PATTERN.search(raw_source)),
     )

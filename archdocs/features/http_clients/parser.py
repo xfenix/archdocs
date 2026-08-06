@@ -19,7 +19,6 @@ _ASYNC_DETECTION_PATTERNS: typing.Final = py_re.compile(
 _EMPTY_FEATURES: typing.Final = HttpClientFeatures(
     clients_used=frozenset(),
     async_used=False,
-    has_external_calls=False,
 )
 
 
@@ -35,5 +34,4 @@ def find_http_client_features(raw_source: str) -> HttpClientFeatures:
     return HttpClientFeatures(
         clients_used=frozenset(clients_found),
         async_used=bool(_ASYNC_DETECTION_PATTERNS.search(raw_source)),
-        has_external_calls=True,
     )

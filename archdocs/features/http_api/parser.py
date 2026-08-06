@@ -20,7 +20,7 @@ _FRAMEWORK_IMPORT_PATTERN: typing.Final = py_re.compile(
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _FRAMEWORK_LITERALS: typing.Final = ("fastapi", "litestar")
-_EMPTY_FEATURES: typing.Final = HTTPApiFeatures(served_methods=frozenset(), served_methods_existed=False)
+_EMPTY_FEATURES: typing.Final = HTTPApiFeatures(served_methods=frozenset())
 
 
 def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
@@ -28,5 +28,4 @@ def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
         return _EMPTY_FEATURES
     if not _FRAMEWORK_IMPORT_PATTERN.search(raw_source):
         return _EMPTY_FEATURES
-    served_methods: typing.Final = frozenset(_SERVED_METHOD_PATTERN.findall(raw_source))
-    return HTTPApiFeatures(served_methods=served_methods, served_methods_existed=bool(served_methods))
+    return HTTPApiFeatures(served_methods=frozenset(_SERVED_METHOD_PATTERN.findall(raw_source)))

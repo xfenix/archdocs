@@ -9,7 +9,7 @@ def render_http_client_features(
     features_to_draw: HttpClientFeatures,
     /,
 ) -> tuple[diagram_model.DiagramEdge, ...]:
-    if not features_to_draw.has_external_calls or not features_to_draw.clients_used:
+    if not features_to_draw.clients_used:
         return ()
 
     properties_on_arrow: typing.Final = ", ".join(

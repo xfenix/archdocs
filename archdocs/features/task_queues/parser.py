@@ -6,10 +6,6 @@ from archdocs import prefilter, settings
 from archdocs.features.task_queues.const import TaskQueueEnum, TaskQueueFeatures
 
 
-_TASK_DECORATOR_PATTERNS: typing.Final = py_re.compile(
-    r"@(?:\w+\.)?(?:task|actor|job)\b",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
 _WORKER_PATTERNS: typing.Final = py_re.compile(
     r"\b(?:celery\s+worker|taskiq\s+worker|arq\s+worker|rq\s+worker|dramatiq\s+worker|huey\s+worker)\b",
     flags=settings.TYPICAL_RE_FLAGS,
@@ -32,7 +28,6 @@ _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
 )
 _EMPTY_FEATURES: typing.Final = TaskQueueFeatures(
     queues_used=frozenset(),
-    has_tasks=False,
     has_workers=False,
     brokers_detected=frozenset(),
 )
@@ -53,7 +48,6 @@ def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
         return _EMPTY_FEATURES
     return TaskQueueFeatures(
         queues_used=queues_found,
-        has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),
         has_workers=bool(_WORKER_PATTERNS.search(raw_source)),
         brokers_detected=frozenset(
             one_broker_name
