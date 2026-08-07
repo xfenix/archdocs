@@ -2,6 +2,11 @@ import dataclasses
 import typing
 
 
+# The narrow pair keeps the columns of the configuration table in `parser.py` from being
+# swappable: both are strings, and only the types tell a kind from an attachment.
+type ConfigurationKind = typing.Literal["ConfigMap", "Secret"]
+type AttachmentKind = typing.Literal["env", "volume"]
+
 CONFIG_MAP_KIND: typing.Final = "ConfigMap"
 SECRET_KIND: typing.Final = "Secret"  # noqa: S105 — a manifest kind, not a credential
 INGRESS_KIND: typing.Final = "Ingress"
@@ -30,9 +35,9 @@ class ResourceAmounts:
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
 class ConfigurationSource:
-    source_kind: str
+    source_kind: ConfigurationKind
     source_name: str
-    attachment_kind: str
+    attachment_kind: AttachmentKind
 
 
 @typing.final

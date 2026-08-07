@@ -9,7 +9,7 @@ def render_http_api_features(
     features_to_draw: HTTPApiFeatures,
     /,
 ) -> tuple[diagram_model.DiagramEdge, ...]:
-    if not features_to_draw.served_methods_existed:
+    if not features_to_draw.served_methods:
         return ()
     served_methods: typing.Final = ", ".join(sorted(features_to_draw.served_methods))
     return (

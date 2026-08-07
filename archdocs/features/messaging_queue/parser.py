@@ -6,9 +6,12 @@ from archdocs import prefilter, settings
 from archdocs.features.messaging_queue import const
 
 
-_SUBSCRIBER_DECORATOR_RE: typing.Final = py_re.compile(r"@\w+\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS)
-_PRODUCER_RE: typing.Final = py_re.compile(
-    r"(?:@\w+\.(?:publisher|producer)|\w+\.publish)\(",
+_SUBSCRIBER_DECORATOR_PATTERN: typing.Final = py_re.compile(r"@\w+\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS)
+# The `\b` is not decoration: without it every position inside a long word run — a base64 blob
+# in a string is enough — starts its own `\w+` attempt, and one file costs seconds instead of
+# microseconds.
+_PRODUCER_PATTERN: typing.Final = py_re.compile(
+    r"(?:@\w+\.(?:publisher|producer)|\b\w+\.publish)\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
@@ -17,11 +20,13 @@ _BROKER_PATTERNS: typing.Final = types.MappingProxyType(
             rf"\bfaststream\.{one_broker.value}\b",
             flags=settings.TYPICAL_RE_FLAGS,
         )
-        for one_broker in const.BrokersEnum
+        for one_broker in const.BrokerEnum
     },
 )
+# A broker assignment always opens its line, and the anchor is what caps the cost: unanchored,
+# every position of a long word run starts a `\w+` attempt that backtracks hunting for `=`.
 _BROKER_VARIABLE_PATTERN: typing.Final = py_re.compile(
-    r"(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
+    r"^[ \t]*(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
@@ -50,7 +55,7 @@ _BROKER_NAME_OF_CLASS: typing.Final = types.MappingProxyType(
     {one_broker_class: one_broker.value for one_broker, one_broker_class in const.BROKER_CLASS_OF_NAME.items()},
 )
 _FASTSTREAM_LITERALS: typing.Final = ("faststream",)
-_EMPTY_FEATURES: typing.Final = const.MQFeatures()
+_EMPTY_FEATURES: typing.Final = const.MessagingQueueFeatures()
 
 
 def _collect_broker_of_variable(raw_source: str, /) -> dict[str, str]:
@@ -63,7 +68,7 @@ def _collect_broker_of_variable(raw_source: str, /) -> dict[str, str]:
 
 def _collect_topics_of_broker(
     raw_source: str,
-    broker_of_variable: dict[str, str],
+    broker_of_variable: typing.Mapping[str, str],
     message_direction: const.MessageDirection,
     broker_name: str,
     /,
@@ -78,11 +83,16 @@ def _collect_topics_of_broker(
     )
 
 
-def _build_broker_flow(raw_source: str, broker_of_variable: dict[str, str], broker_name: str, /) -> const.BrokerFlow:
+def _build_broker_flow(
+    raw_source: str,
+    broker_of_variable: typing.Mapping[str, str],
+    broker_name: str,
+    /,
+) -> const.BrokerFlow:
     return const.BrokerFlow(
         broker_name=broker_name,
-        consumes=bool(_SUBSCRIBER_DECORATOR_RE.search(raw_source)),
-        produces=bool(_PRODUCER_RE.search(raw_source)),
+        consumes=bool(_SUBSCRIBER_DECORATOR_PATTERN.search(raw_source)),
+        produces=bool(_PRODUCER_PATTERN.search(raw_source)),
         consumed_topics=_collect_topics_of_broker(
             raw_source,
             broker_of_variable,
@@ -98,13 +108,13 @@ def _build_broker_flow(raw_source: str, broker_of_variable: dict[str, str], brok
     )
 
 
-def find_faststream_features(raw_source: str) -> const.MQFeatures:
+def find_faststream_features(raw_source: str) -> const.MessagingQueueFeatures:
     if not prefilter.contains_any_literal(raw_source.lower(), _FASTSTREAM_LITERALS):
         return _EMPTY_FEATURES
-    if not _SUBSCRIBER_DECORATOR_RE.search(raw_source) and not _PRODUCER_RE.search(raw_source):
+    if not _SUBSCRIBER_DECORATOR_PATTERN.search(raw_source) and not _PRODUCER_PATTERN.search(raw_source):
         return _EMPTY_FEATURES
     broker_of_variable: typing.Final = _collect_broker_of_variable(raw_source)
-    return const.MQFeatures(
+    return const.MessagingQueueFeatures(
         broker_flows=tuple(
             _build_broker_flow(raw_source, broker_of_variable, one_broker.value)
             for one_broker, one_pattern in _BROKER_PATTERNS.items()

@@ -6,11 +6,7 @@ from archdocs import prefilter, settings
 from archdocs.features.task_queues.const import TaskQueueEnum, TaskQueueFeatures
 
 
-_TASK_DECORATOR_PATTERNS: typing.Final = py_re.compile(
-    r"@(?:\w+\.)?(?:task|actor|job)\b",
-    flags=settings.TYPICAL_RE_FLAGS,
-)
-_WORKER_PATTERNS: typing.Final = py_re.compile(
+_WORKER_PATTERN: typing.Final = py_re.compile(
     r"\b(?:celery\s+worker|taskiq\s+worker|arq\s+worker|rq\s+worker|dramatiq\s+worker|huey\s+worker)\b",
     flags=settings.TYPICAL_RE_FLAGS,
 )
@@ -32,19 +28,18 @@ _QUEUE_IMPORT_PATTERNS: typing.Final = types.MappingProxyType(
 )
 _EMPTY_FEATURES: typing.Final = TaskQueueFeatures(
     queues_used=frozenset(),
-    has_tasks=False,
     has_workers=False,
     brokers_detected=frozenset(),
 )
 
 
-def _find_used_queues(raw_source: str, /) -> set[str]:
+def _find_used_queues(raw_source: str, /) -> frozenset[str]:
     lowered_source: typing.Final = raw_source.lower()
-    return {
+    return frozenset(
         one_queue.value
         for one_queue, one_pattern in _QUEUE_IMPORT_PATTERNS.items()
         if prefilter.contains_any_literal(lowered_source, (one_queue.value,)) and one_pattern.search(raw_source)
-    }
+    )
 
 
 def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
@@ -52,9 +47,8 @@ def find_task_queue_features(raw_source: str) -> TaskQueueFeatures:
     if not queues_found:
         return _EMPTY_FEATURES
     return TaskQueueFeatures(
-        queues_used=frozenset(queues_found),
-        has_tasks=bool(_TASK_DECORATOR_PATTERNS.search(raw_source)),
-        has_workers=bool(_WORKER_PATTERNS.search(raw_source)),
+        queues_used=queues_found,
+        has_workers=bool(_WORKER_PATTERN.search(raw_source)),
         brokers_detected=frozenset(
             one_broker_name
             for one_broker_name, broker_pattern in _BROKER_PATTERNS.items()

@@ -4,12 +4,7 @@ import pathlib
 import typing
 from concurrent import futures
 
-from archdocs import diagram_model, mermaid_syntax, settings
-from archdocs.mapping import (
-    MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS,
-    MAPPING_OF_PARSERS_AND_RENDERERS,
-    ManifestFeatureFunctions,
-)
+from archdocs import diagram_model, mapping, mermaid_syntax, settings
 
 
 @typing.final
@@ -20,15 +15,15 @@ class SettingsForArchdocs:
     kubernetes_dir: str | pathlib.Path | None = None
 
 
-type _ParsedManifests = tuple[tuple[ManifestFeatureFunctions, typing.Any], ...]
+type _ParsedManifests = tuple[tuple[mapping.ManifestFeatureFunctions[typing.Any], typing.Any], ...]
 
 
-def _read_source_text(one_src_file: pathlib.Path, /) -> str:
+def _read_source_text(one_source_file: pathlib.Path, /) -> str:
     # The scanned tree is somebody's whole project, not a curated corpus: a source in a legacy
     # encoding, a symlink into nowhere or a file the process may not open costs that one file and
     # nothing else. Without this the page answers 500 instead of drawing the rest of the service.
     try:
-        return one_src_file.read_text(errors="ignore")
+        return one_source_file.read_text(errors="ignore")
     except OSError:
         return ""
 
@@ -45,7 +40,7 @@ def _parse_every_manifest(
                 one_manifest_functions.read_source(root_path, configured_manifest_dir),
             ),
         )
-        for one_manifest_functions in MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS.values()
+        for one_manifest_functions in mapping.MAPPING_OF_MANIFEST_PARSERS_AND_RENDERERS.values()
     )
 
 
@@ -65,7 +60,7 @@ def _render_manifest_edges(
     return tuple(
         one_edge
         for one_manifest_functions, one_parsed_manifest in all_parsed_manifests
-        for one_edge in one_manifest_functions.render_diagram(service_node, one_parsed_manifest)
+        for one_edge in one_manifest_functions.render_edges(service_node, one_parsed_manifest)
     )
 
 
@@ -82,9 +77,9 @@ class ArchitectureParserAndRenderer:
         # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
         if self._rendered_diagram_cache:
             return self._rendered_diagram_cache[0]
-        full_result: typing.Final = self._render_every_diagram_line()
-        self._rendered_diagram_cache.append(full_result)
-        return full_result
+        rendered_diagram: typing.Final = self._render_every_diagram_line()
+        self._rendered_diagram_cache.append(rendered_diagram)
+        return rendered_diagram
 
     def _render_every_diagram_line(self) -> str:
         root_path: typing.Final = pathlib.Path(self.local_settings.root_dir).resolve()
@@ -95,39 +90,39 @@ class ArchitectureParserAndRenderer:
         )
         all_edges: typing.Final = (
             *_render_manifest_edges(service_node, all_parsed_manifests),
-            *self._process_source_files(service_node, root_path),
+            *self._render_source_edges(service_node, root_path),
         )
         return mermaid_syntax.MermaidDiagram(service_node=service_node, all_edges=all_edges).render_every_line()
 
-    def _process_source_files(
+    def _render_source_edges(
         self,
         service_node: diagram_model.DiagramNode,
         root_path: pathlib.Path,
         /,
     ) -> tuple[diagram_model.DiagramEdge, ...]:
         py_files: typing.Final = sorted(
-            one_src_file
-            for one_src_file in root_path.rglob(settings.FILES_SEARCH_PATTERN)
-            if settings.SKIPPED_DIR_NAMES.isdisjoint(one_src_file.relative_to(root_path).parts)
+            one_source_file
+            for one_source_file in root_path.rglob(settings.FILES_SEARCH_PATTERN)
+            if settings.SKIPPED_DIR_NAMES.isdisjoint(one_source_file.relative_to(root_path).parts)
         )
         with futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS) as executor:
-            all_rendered_files: typing.Final = executor.map(
-                functools.partial(self._process_one_file, service_node),
+            all_file_edges: typing.Final = executor.map(
+                functools.partial(self._render_one_file_edges, service_node),
                 py_files,
             )
-            return tuple(one_edge for one_file_edges in all_rendered_files for one_edge in one_file_edges)
+            return tuple(one_edge for one_file_edges in all_file_edges for one_edge in one_file_edges)
 
-    def _process_one_file(
+    def _render_one_file_edges(
         self,
         service_node: diagram_model.DiagramNode,
-        one_src_file: pathlib.Path,
+        one_source_file: pathlib.Path,
         /,
     ) -> tuple[diagram_model.DiagramEdge, ...]:
-        raw_file_source: typing.Final = _read_source_text(one_src_file)
+        raw_file_source: typing.Final = _read_source_text(one_source_file)
         return tuple(
             one_edge
-            for one_feature_functions in MAPPING_OF_PARSERS_AND_RENDERERS.values()
-            for one_edge in one_feature_functions.render_diagram(
+            for one_feature_functions in mapping.MAPPING_OF_PARSERS_AND_RENDERERS.values()
+            for one_edge in one_feature_functions.render_edges(
                 service_node,
                 one_feature_functions.parse_source(raw_file_source),
             )

@@ -5,8 +5,8 @@ import pytest
 from hypothesis import strategies as st
 
 from archdocs import settings
-from tests.rendered_diagram import build_named_settings
-from tests.served_page import ALL_PAGE_RENDERERS, FRAMEWORK_IDS, PageRenderer
+from tests import served_page
+from tests.diagram_rendering import build_named_settings
 
 
 # Minifying the template by joining on "" used to glue attributes onto their tags, turning the
@@ -27,8 +27,8 @@ _NAME_ALPHABET: typing.Final = st.characters(whitelist_categories=["Ll", "Lu"], 
 _NAME_STRATEGY: typing.Final = st.text(min_size=1, max_size=10, alphabet=_NAME_ALPHABET)
 
 
-@pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
-def test_default_route_serves_a_whole_document(render_page: PageRenderer) -> None:
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
+def test_default_route_serves_a_whole_document(render_page: served_page.PageRenderer) -> None:
     page_html: typing.Final = render_page(build_named_settings(_SERVICE_NAME), None)
 
     for one_required_tag in _REQUIRED_PAGE_TAGS:
@@ -38,8 +38,8 @@ def test_default_route_serves_a_whole_document(render_page: PageRenderer) -> Non
 
 # Without settings the scan starts from the working directory, which under pytest is the
 # repository itself: the page has to name the default service and draw its node.
-@pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
-def test_omitted_settings_draw_the_default(render_page: PageRenderer) -> None:
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
+def test_omitted_settings_draw_the_default(render_page: served_page.PageRenderer) -> None:
     page_html: typing.Final = render_page(None, None)
 
     assert 'example_service{"example-service' in page_html
@@ -47,9 +47,9 @@ def test_omitted_settings_draw_the_default(render_page: PageRenderer) -> None:
 
 # A template shipped without a `<pre>` slot has nowhere to put the diagram: the page still has
 # to be a page.
-@pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
 def test_template_without_a_slot_is_served_whole(
-    render_page: PageRenderer,
+    render_page: served_page.PageRenderer,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(settings, "UI_HTML_TEMPLATE", _TEMPLATE_WITHOUT_A_SLOT)
@@ -59,19 +59,19 @@ def test_template_without_a_slot_is_served_whole(
     assert page_html == _TEMPLATE_WITHOUT_A_SLOT
 
 
-@pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
-def test_markup_characters_are_escaped(render_page: PageRenderer) -> None:
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
+def test_markup_characters_are_escaped(render_page: served_page.PageRenderer) -> None:
     page_html: typing.Final = render_page(build_named_settings(_MARKED_UP_SERVICE_NAME), None)
 
     assert 'svc&lt;b>&amp;x"}' in page_html
     assert "svc<b>" not in page_html
 
 
-@pytest.mark.parametrize(_RENDERER_ARGUMENT, ALL_PAGE_RENDERERS, ids=FRAMEWORK_IDS)
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
 @hypothesis.settings(deadline=None, max_examples=_HYPOTHESIS_EXAMPLES)
 @hypothesis.given(service_name=_NAME_STRATEGY, route_value=_NAME_STRATEGY)
 def test_any_service_name_and_route_are_served(
-    render_page: PageRenderer,
+    render_page: served_page.PageRenderer,
     service_name: str,
     route_value: str,
 ) -> None:

@@ -17,6 +17,5 @@ class TaskQueueEnum(enum.Enum):
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
 class TaskQueueFeatures:
     queues_used: frozenset[str]
-    has_tasks: bool
     has_workers: bool
     brokers_detected: frozenset[str]

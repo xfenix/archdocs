@@ -4,20 +4,16 @@ import typing
 import pytest
 
 from archdocs.main import SettingsForArchdocs
-from tests.rendered_diagram import (
-    FASTAPI_ROOT,
-    KUBERNETES_VARIANTS_ROOT,
-    LITESTAR_ROOT,
-    TESTS_ROOT,
-    render_example_diagram,
-)
+from tests import diagram_rendering
 
 
 _FIXTURE_ANNOTATIONS: typing.Final = "replicas 3, HPA 2-10, target CPU 70%, cpu 100m-500m, RAM 128Mi-512Mi, GPU 1"
 _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
     {
         "chart of the project": (
-            SettingsForArchdocs(root_dir=TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"),
+            SettingsForArchdocs(
+                root_dir=diagram_rendering.TESTS_ROOT / "kubernetes_fixtures", service_name="kubernetes-svc"
+            ),
             (
                 f'kubernetes_svc{{"kubernetes-svc ({_FIXTURE_ANNOTATIONS})"}}',
                 'external_client --> |"HTTPS api.example.com"| kubernetes_svc',
@@ -26,9 +22,9 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
         ),
         "manifests and code on one node": (
             SettingsForArchdocs(
-                root_dir=LITESTAR_ROOT,
+                root_dir=diagram_rendering.LITESTAR_ROOT,
                 service_name="merged-svc",
-                kubernetes_dir=TESTS_ROOT / "kubernetes_fixtures" / "chart",
+                kubernetes_dir=diagram_rendering.TESTS_ROOT / "kubernetes_fixtures" / "chart",
             ),
             (
                 f'merged_svc{{"merged-svc ({_FIXTURE_ANNOTATIONS})"}}',
@@ -43,54 +39,54 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
         ),
         "disabled toggles": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="disabled-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "disabled",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "disabled",
             ),
             ('disabled_svc{"disabled-svc (replicas 2)"}',),
             ("never.example.com", "Ingress", "HPA"),
         ),
         "ingress without its own tls": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="plain-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "plain_ingress",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "plain_ingress",
             ),
             ('external_client --> |"HTTP plain.example.com"| plain_svc',),
             ("HTTPS",),
         ),
         "load balancer entrypoint": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="entry-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "loadbalancer",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "loadbalancer",
             ),
             ('external_client --> |"LoadBalancer, port 8080"| entry_svc',),
             (),
         ),
         "node port entrypoint": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="entry-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "nodeport",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "nodeport",
             ),
             ('external_client --> |"NodePort"| entry_svc',),
             (),
         ),
         "ingress entrypoint": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="entry-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "bare_ingress",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "bare_ingress",
             ),
             ('external_client --> |"Ingress"| entry_svc',),
             (),
         ),
         "plain manifests without a chart": (
             SettingsForArchdocs(
-                root_dir=FASTAPI_ROOT,
+                root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="stateful-svc",
-                kubernetes_dir=KUBERNETES_VARIANTS_ROOT / "statefulset",
+                kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "statefulset",
             ),
             (
                 'stateful_svc{"stateful-svc (StatefulSet, replicas 2, cpu 250m-1, RAM 256Mi-1Gi)"}',
@@ -114,7 +110,7 @@ def test_manifests_reach_the_diagram(
     expected_parts: tuple[str, ...],
     forbidden_parts: tuple[str, ...],
 ) -> None:
-    rendered_diagram: typing.Final = render_example_diagram(arch_settings)
+    rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(arch_settings)
 
     for one_expected_part in expected_parts:
         assert one_expected_part in rendered_diagram, one_expected_part

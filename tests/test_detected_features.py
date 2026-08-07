@@ -6,8 +6,8 @@ import hypothesis
 import pytest
 from hypothesis import strategies as st
 
+from tests import diagram_rendering
 from tests.diagram_parts import EDGE_ARROW
-from tests.rendered_diagram import SHOWCASE_SETTINGS, render_example_diagram, render_source_diagram
 
 
 # What a parser found is only interesting once it reaches an arrow, so every case here is one
@@ -38,6 +38,24 @@ async def create_item(data: dict) -> dict:
 _ROUTE_WITHOUT_FRAMEWORK_SOURCE: typing.Final = """@router.get("/x")
 async def read_items() -> list[dict]:
     return []
+"""
+_PREFIXED_ROUTE_SOURCE: typing.Final = """import fastapi
+
+API_PREFIX = "/api/v1"
+router = fastapi.APIRouter()
+
+
+@router.get(f"{API_PREFIX}/items")
+async def read_items() -> list[dict]:
+    return []
+"""
+_MOCKED_TEST_SOURCE: typing.Final = """from unittest import mock
+
+from fastapi.testclient import TestClient
+
+
+@mock.patch("src.payments.fetch_payment_status")
+def test_fetching(fetch_mock: mock.MagicMock) -> None: ...
 """
 _ASYNC_CLIENT_SOURCE: typing.Final = """import httpx
 
@@ -96,6 +114,16 @@ _REDIS_SENTINEL_SOURCE: typing.Final = """from redis.sentinel import Sentinel
 
 sentinel_client = Sentinel([("sentinel-one", 26379)])
 """
+_ASYNC_REDIS_CLUSTER_SOURCE: typing.Final = """from redis.asyncio import RedisCluster
+
+
+cluster_client = RedisCluster(startup_nodes=[])
+"""
+_ASYNC_REDIS_SENTINEL_SOURCE: typing.Final = """from redis.asyncio.sentinel import Sentinel
+
+
+sentinel_client = Sentinel([("sentinel-one", 26379)])
+"""
 _REDIS_IMPORT_ONLY_SOURCE: typing.Final = """import redis
 
 
@@ -116,6 +144,21 @@ replica_engine = create_engine(
     pool_size=10,
 )
 """
+_DOUBLE_QUOTED_REPLICA_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+replica_engine = create_engine(
+    "postgresql+psycopg://user:password@pg-replica-one:5432,pg-replica-two:5432/orders",
+    pool_size=10,
+)
+"""
+_LINES_BETWEEN_ENGINE_AND_POOL: typing.Final = 40
+_POOL_FAR_FROM_THE_ENGINE_SOURCE: typing.Final = (
+    "from sqlalchemy import create_engine\n\n\n"
+    "replica_engine = create_engine('postgresql+psycopg://pg-replica-one:5432,pg-replica-two:5432/orders')\n"
+    + "# padding that keeps the unrelated pool far away from the engine call\n" * _LINES_BETWEEN_ENGINE_AND_POOL
+    + "adapter_settings = {'pool_maxsize': 10}\n"
+)
 _DATABASE_URL_BEHIND_A_CONSTANT_SOURCE: typing.Final = """from sqlalchemy import create_engine
 
 from src.config import DATABASE_URL
@@ -194,6 +237,15 @@ import fastapi
 
 app = fastapi.FastAPI()
 """
+_THREAD_POOL_SOURCE: typing.Final = """from concurrent.futures import ThreadPoolExecutor
+
+import uvicorn
+
+
+executor = ThreadPoolExecutor(max_workers=10)
+transport = 8080
+uvicorn.run("src.main:app")
+"""
 _ASYNC_DATABASE_EDGE: typing.Final = (
     'app_svc --> |"async, postgresql+asyncpg://***@pg-primary:5432/orders'
     '?target_session_attrs=read-write"| postgresql_asyncpgdb'
@@ -201,6 +253,8 @@ _ASYNC_DATABASE_EDGE: typing.Final = (
 _REPLICA_DATABASE_EDGE: typing.Final = (
     'app_svc --> |"postgresql+psycopg://***@pg-replica-one:5432,pg-replica-two:5432/orders"| postgresql_psycopgdb0'
 )
+_PLAIN_REDIS_NODE_MARK: typing.Final = "redisdb["
+_CREDENTIALS_MARK: typing.Final = "user:password"
 _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
     {
         "every served method": (
@@ -214,6 +268,12 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "route without a framework": (_ROUTE_WITHOUT_FRAMEWORK_SOURCE, (), ("REST",)),
+        "route behind an f-string prefix": (
+            _PREFIXED_ROUTE_SOURCE,
+            ('external_client --> |"REST (get)"| app_svc',),
+            (),
+        ),
+        "mocked test file is not an api": (_MOCKED_TEST_SOURCE, (), ("REST",)),
         "async http client": (
             _ASYNC_CLIENT_SOURCE,
             ('app_svc --> |"HTTP (async, httpx)"| External_API', 'External_API["External API"]'),
@@ -244,18 +304,28 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
         "redis cluster": (
             _REDIS_CLUSTER_SOURCE,
             ('redisdb_cluster0["redis cluster #0"]', 'redisdb_cluster2["redis cluster #2"]', "app_svc --> redisdb"),
-            ("redisdb[",),
+            (_PLAIN_REDIS_NODE_MARK,),
         ),
         "redis sentinel": (
             _REDIS_SENTINEL_SOURCE,
             ('redisdb_sentinel0["redis sentinel #0"]', 'redisdb_sentinel2["redis sentinel #2"]'),
-            ("redisdb[",),
+            (_PLAIN_REDIS_NODE_MARK,),
+        ),
+        "redis cluster over asyncio": (
+            _ASYNC_REDIS_CLUSTER_SOURCE,
+            ('redisdb_cluster0["redis cluster #0"]', '|"async"|'),
+            (_PLAIN_REDIS_NODE_MARK,),
+        ),
+        "redis sentinel over asyncio": (
+            _ASYNC_REDIS_SENTINEL_SOURCE,
+            ('redisdb_sentinel0["redis sentinel #0"]', '|"async"|'),
+            (_PLAIN_REDIS_NODE_MARK,),
         ),
         "redis import alone": (_REDIS_IMPORT_ONLY_SOURCE, (), ("redisdb",)),
         "async database": (
             _ASYNC_DATABASE_SOURCE,
             ('postgresql_asyncpgdb["postgresql+asyncpg"]', _ASYNC_DATABASE_EDGE),
-            ("user:password",),
+            (_CREDENTIALS_MARK,),
         ),
         "replicated database": (
             _REPLICA_DATABASE_SOURCE,
@@ -264,7 +334,17 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
                 'postgresql_psycopgdb2["postgresql+psycopg #2"]',
                 _REPLICA_DATABASE_EDGE,
             ),
-            ("user:password",),
+            (_CREDENTIALS_MARK,),
+        ),
+        "replicated database in double quotes": (
+            _DOUBLE_QUOTED_REPLICA_SOURCE,
+            ('postgresql_psycopgdb0["postgresql+psycopg #0"]', 'postgresql_psycopgdb2["postgresql+psycopg #2"]'),
+            (_CREDENTIALS_MARK,),
+        ),
+        "pool far from the engine call": (
+            _POOL_FAR_FROM_THE_ENGINE_SOURCE,
+            ('postgresql_psycopgdb0["postgresql+psycopg #0"]',),
+            ("postgresql_psycopgdb1",),
         ),
         "database url behind a constant": (_DATABASE_URL_BEHIND_A_CONSTANT_SOURCE, (), ('db["',)),
         "consumed messages": (
@@ -295,6 +375,11 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "carrier library is not a server": (_CARRIER_LIBRARIES_SOURCE, (), ("Served by",)),
+        "thread pool is not a server worker": (
+            _THREAD_POOL_SOURCE,
+            ('external_client --> |"Served by uvicorn"| app_svc',),
+            ("workers", "port 8080"),
+        ),
     },
 )
 _ALL_SERVER_SOURCES: typing.Final = types.MappingProxyType(
@@ -407,7 +492,7 @@ def test_source_reaches_the_diagram(
     expected_parts: tuple[str, ...],
     forbidden_parts: tuple[str, ...],
 ) -> None:
-    rendered_diagram: typing.Final = render_source_diagram(tmp_path, source_code)
+    rendered_diagram: typing.Final = diagram_rendering.render_source_diagram(tmp_path, source_code)
 
     for one_expected_part in expected_parts:
         assert one_expected_part in rendered_diagram, one_expected_part
@@ -417,14 +502,14 @@ def test_source_reaches_the_diagram(
 
 @pytest.mark.parametrize("server_name", _ALL_SERVER_SOURCES)
 def test_every_server_reaches_the_diagram(tmp_path: pathlib.Path, server_name: str) -> None:
-    rendered_diagram: typing.Final = render_source_diagram(tmp_path, _ALL_SERVER_SOURCES[server_name])
+    rendered_diagram: typing.Final = diagram_rendering.render_source_diagram(tmp_path, _ALL_SERVER_SOURCES[server_name])
 
     assert f'external_client --> |"Served by {server_name}"| app_svc' in rendered_diagram
 
 
 @pytest.mark.parametrize("feature_mark", _REQUIRED_SHOWCASE_MARKS)
 def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
-    assert feature_mark in render_example_diagram(SHOWCASE_SETTINGS)
+    assert feature_mark in diagram_rendering.render_example_diagram(diagram_rendering.SHOWCASE_SETTINGS)
 
 
 @hypothesis.settings(
@@ -434,4 +519,4 @@ def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
 )
 @hypothesis.given(source_code=_UNRELATED_SOURCE_STRATEGY)
 def test_unrelated_source_draws_the_service_alone(tmp_path: pathlib.Path, source_code: str) -> None:
-    assert EDGE_ARROW not in render_source_diagram(tmp_path, source_code)
+    assert EDGE_ARROW not in diagram_rendering.render_source_diagram(tmp_path, source_code)

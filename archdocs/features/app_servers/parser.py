@@ -48,12 +48,14 @@ _WORKER_CLASS_PATTERN: typing.Final = py_re.compile(
     r"(?:worker_class\s*=|--worker-class)[\s=\"']*(?P<worker_class>[\w.]+)",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+# The left anchors keep neighbours out of the numbers: `ThreadPoolExecutor(max_workers=10)`
+# is not ten server workers and `transport = 8080` is not a listen port.
 _WORKERS_COUNT_PATTERN: typing.Final = py_re.compile(
-    r"(?:workers\s*=|--workers|\s-w)[\s=\"']*(?P<found_number>\d{1,3})\b",
+    r"(?:\bworkers\s*=|--workers|\s-w)[\s=\"']*(?P<found_number>\d{1,3})\b",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _LISTEN_PORT_PATTERN: typing.Final = py_re.compile(
-    r"(?:(?:port\s*=|--port)[\s=\"']*|(?:bind|--bind)[\s=\"']*[\w.\[\]]*:)(?P<found_number>\d{2,5})\b",
+    r"(?:(?:(?<![a-z])port\s*=|--port)[\s=\"']*|\bbind[\s=\"']*[\w.\[\]]*:)(?P<found_number>\d{2,5})\b",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _TLS_PATTERN: typing.Final = py_re.compile(

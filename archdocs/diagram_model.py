@@ -9,10 +9,11 @@ from archdocs import settings
 _UNSAFE_NODE_ID_PATTERN: typing.Final = py_re.compile(r"[^A-Za-z0-9_]+")
 
 
+# How a shape is spelled in mermaid is `mermaid_syntax`'s knowledge: the model only names them.
 @typing.final
 class NodeShape(enum.Enum):
-    plain_node = '{defined_node_id}["{node_label}"]'
-    service_node = '{defined_node_id}{{"{node_label}"}}'
+    plain_node = enum.auto()
+    service_node = enum.auto()
 
 
 # Declaration order is emission order, and mermaid lays a group out where it is written.

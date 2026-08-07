@@ -5,8 +5,13 @@ from archdocs import prefilter, settings
 from archdocs.features.http_api.const import HTTPApiFeatures
 
 
+# A route decorator is called with a path literal (possibly empty, possibly an f-string, with
+# leading `{...}` expressions allowed) or with nothing at all: anything looser counts
+# `@mock.patch("src.payments")` in a test file that also imports a TestClient as REST traffic.
+# Paths passed as `path=` keywords slip away — that trade is taken knowingly.
 _SERVED_METHOD_PATTERN: typing.Final = py_re.compile(
-    r"@(?:\w+\.)?(post|put|patch|delete|get|head|options|trace)\b",
+    r"@(?:\w+\.)?(post|put|patch|delete|get|head|options|trace)\s*\(\s*"
+    r"(?:\)|[frbu]{0,2}[\"'](?:\{[^}\"']*\})*(?:/|[\"']))",
     flags=settings.TYPICAL_RE_FLAGS,
 )
 # A decorated method alone says nothing — every router library spells them the same way — so the
@@ -16,7 +21,7 @@ _FRAMEWORK_IMPORT_PATTERN: typing.Final = py_re.compile(
     flags=settings.TYPICAL_RE_FLAGS,
 )
 _FRAMEWORK_LITERALS: typing.Final = ("fastapi", "litestar")
-_EMPTY_FEATURES: typing.Final = HTTPApiFeatures(served_methods=frozenset(), served_methods_existed=False)
+_EMPTY_FEATURES: typing.Final = HTTPApiFeatures(served_methods=frozenset())
 
 
 def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
@@ -24,5 +29,4 @@ def find_fastapi_and_litestar_features(raw_source: str) -> HTTPApiFeatures:
         return _EMPTY_FEATURES
     if not _FRAMEWORK_IMPORT_PATTERN.search(raw_source):
         return _EMPTY_FEATURES
-    served_methods: typing.Final = frozenset(_SERVED_METHOD_PATTERN.findall(raw_source))
-    return HTTPApiFeatures(served_methods=served_methods, served_methods_existed=bool(served_methods))
+    return HTTPApiFeatures(served_methods=frozenset(_SERVED_METHOD_PATTERN.findall(raw_source)))

@@ -5,7 +5,7 @@ import typing
 
 
 @typing.final
-class BrokersEnum(enum.Enum):
+class BrokerEnum(enum.Enum):
     rabbit_broker = "rabbit"
     kafka_broker = "kafka"
     nats_broker = "nats"
@@ -14,10 +14,10 @@ class BrokersEnum(enum.Enum):
 
 BROKER_CLASS_OF_NAME: typing.Final = types.MappingProxyType(
     {
-        BrokersEnum.rabbit_broker: "RabbitBroker",
-        BrokersEnum.kafka_broker: "KafkaBroker",
-        BrokersEnum.nats_broker: "NatsBroker",
-        BrokersEnum.redis_broker: "RedisBroker",
+        BrokerEnum.rabbit_broker: "RabbitBroker",
+        BrokerEnum.kafka_broker: "KafkaBroker",
+        BrokerEnum.nats_broker: "NatsBroker",
+        BrokerEnum.redis_broker: "RedisBroker",
     },
 )
 DESTINATION_KEYWORDS: typing.Final = ("queue", "topic", "subject", "channel", "stream", "list")
@@ -41,5 +41,5 @@ class BrokerFlow:
 
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class MQFeatures:
+class MessagingQueueFeatures:
     broker_flows: tuple[BrokerFlow, ...] = ()

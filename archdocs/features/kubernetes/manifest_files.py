@@ -10,10 +10,20 @@ _API_VERSION_PATTERN: typing.Final = py_re.compile(r"^apiVersion:", flags=settin
 _KIND_PATTERN: typing.Final = py_re.compile(r"^kind:", flags=settings.TYPICAL_RE_FLAGS)
 
 
+def _read_manifest_text(one_file_path: pathlib.Path, /) -> str:
+    # Mirrors `main._read_source_text`: manifests are hunted through somebody's whole tree and
+    # a couple of directories above it, so a dangling symlink or a file the process may not open
+    # costs that one file — not the whole page.
+    try:
+        return one_file_path.read_text(errors="ignore")
+    except OSError:
+        return ""
+
+
 def _is_manifest_file(one_file_path: pathlib.Path, /) -> bool:
     if one_file_path.stem == const.VALUES_FILE_STEM:
         return True
-    file_source: typing.Final = one_file_path.read_text(errors="ignore")
+    file_source: typing.Final = _read_manifest_text(one_file_path)
     return bool(_API_VERSION_PATTERN.search(file_source) and _KIND_PATTERN.search(file_source))
 
 
@@ -70,5 +80,5 @@ def read_kubernetes_manifests(root_path: pathlib.Path, configured_dir: str | pat
     if manifest_dir is None:
         return ""
     return "".join(
-        f"{one_manifest_file.read_text(errors='ignore')}\n" for one_manifest_file in _find_manifest_files(manifest_dir)
+        f"{_read_manifest_text(one_manifest_file)}\n" for one_manifest_file in _find_manifest_files(manifest_dir)
     )

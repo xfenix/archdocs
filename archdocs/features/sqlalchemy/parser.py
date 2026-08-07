@@ -6,9 +6,12 @@ from archdocs.features.sqlalchemy.const import SQLAlchemyFeatures
 
 
 _ASYNC_ENGINE_PATTERN: typing.Final = py_re.compile(r"sqlalchemy\.ext\.asyncio", settings.TYPICAL_RE_FLAGS)
-_POOLING_PATTERN: typing.Final = py_re.compile(r"create_engine\(.+pool_", settings.TYPICAL_RE_FLAGS)
+# The windows are what keep both patterns honest on somebody's whole project: an unbounded gap
+# reads "pool_ anywhere later in the file" as pooling and costs quadratic time on sources where
+# `create_engine(` repeats without a match, a killer measured in minutes on a single file.
+_POOLING_PATTERN: typing.Final = py_re.compile(r"create_engine\(.{0,2000}?pool_", settings.TYPICAL_RE_FLAGS)
 _MULTIPLE_HOSTS_PATTERN: typing.Final = py_re.compile(
-    r"create_engine\([^)]*'(?:postgresql|mysql|mariadb|oracle|mssql)\+[^']*://[^/]+,[^/]+/",
+    r"create_engine\([^)'\"]{0,200}['\"](?:postgresql|mysql|mariadb|oracle|mssql)\+[^'\"]*://[^/,]+(?:,[^/,]+)+/",
     settings.TYPICAL_RE_FLAGS,
 )
 _TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
