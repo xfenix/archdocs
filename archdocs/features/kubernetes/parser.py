@@ -5,7 +5,7 @@ from archdocs.features.kubernetes import const, values, values_lookup
 
 
 type _KindNames = tuple[str, ...]
-type _ConfigurationPaths = tuple[tuple[values.ValuePath, const.ConfigurationKind, const.AttachmentKind], ...]
+type _ConfigurationPaths = tuple[tuple[const.ValuePath, const.ConfigurationKind, const.AttachmentKind], ...]
 
 _NAME_KEY: typing.Final = "name"
 _TRUE_VALUES: typing.Final = frozenset(("true", "yes", "on"))
@@ -22,8 +22,8 @@ _CONFIGURATION_SOURCE_PATHS: typing.Final[_ConfigurationPaths] = (
 
 
 def _read_toggle(
-    all_values: values.ManifestValues,
-    toggle_path: values.ValuePath,
+    all_values: const.ManifestValues,
+    toggle_path: const.ValuePath,
     kind_name: str,
     all_kinds: _KindNames,
     /,
@@ -34,7 +34,7 @@ def _read_toggle(
     return kind_name in all_kinds
 
 
-def _read_amounts(all_values: values.ManifestValues, /, *resource_keys: str) -> const.ResourceAmounts:
+def _read_amounts(all_values: const.ManifestValues, /, *resource_keys: str) -> const.ResourceAmounts:
     return const.ResourceAmounts(
         requested_amount=values_lookup.read_first_value(
             all_values,
@@ -47,7 +47,7 @@ def _read_amounts(all_values: values.ManifestValues, /, *resource_keys: str) -> 
     )
 
 
-def _read_traffic(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.TrafficFeatures:
+def _read_traffic(all_values: const.ManifestValues, all_kinds: _KindNames, /) -> const.TrafficFeatures:
     ingress_enabled: typing.Final = _read_toggle(all_values, ("ingress", "enabled"), const.INGRESS_KIND, all_kinds)
     return const.TrafficFeatures(
         ingress_enabled=ingress_enabled,
@@ -61,7 +61,7 @@ def _read_traffic(all_values: values.ManifestValues, all_kinds: _KindNames, /) -
     )
 
 
-def _read_scaling(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.ScalingFeatures:
+def _read_scaling(all_values: const.ManifestValues, all_kinds: _KindNames, /) -> const.ScalingFeatures:
     plain_scaling: typing.Final = const.ScalingFeatures(
         workload_kind=next((one_kind for one_kind in all_kinds if one_kind in const.WORKLOAD_KINDS), ""),
         replica_count=values_lookup.read_int_value(all_values, ("replicaCount",), ("spec", "replicas")),
@@ -80,7 +80,7 @@ def _read_scaling(all_values: values.ManifestValues, all_kinds: _KindNames, /) -
     )
 
 
-def _read_resources(all_values: values.ManifestValues, all_kinds: _KindNames, /) -> const.ResourceFeatures:
+def _read_resources(all_values: const.ManifestValues, all_kinds: _KindNames, /) -> const.ResourceFeatures:
     return const.ResourceFeatures(
         cpu_amounts=_read_amounts(all_values, "cpu"),
         memory_amounts=_read_amounts(all_values, "memory"),
@@ -91,7 +91,7 @@ def _read_resources(all_values: values.ManifestValues, all_kinds: _KindNames, /)
     )
 
 
-def _read_configuration(all_values: values.ManifestValues, /) -> tuple[const.ConfigurationSource, ...]:
+def _read_configuration(all_values: const.ManifestValues, /) -> tuple[const.ConfigurationSource, ...]:
     return tuple(
         dict.fromkeys(
             const.ConfigurationSource(

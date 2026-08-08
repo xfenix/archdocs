@@ -73,8 +73,8 @@ class ArchitectureParserAndRenderer:
     _rendered_diagram_cache: list[str] = dataclasses.field(default_factory=list, compare=False)
 
     def render_architecture_diagram(self) -> str:
-        # "why you doesnt use functools.cache lol"
-        # https://docs.astral.sh/ruff/rules/cached-instance-method/#cached-instance-method-b019
+        # Not `functools.cache`: on a method it keeps the instance alive for the process
+        # lifetime, which is exactly what ruff B019 forbids.
         if self._rendered_diagram_cache:
             return self._rendered_diagram_cache[0]
         rendered_diagram: typing.Final = self._render_every_diagram_line()
