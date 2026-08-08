@@ -24,6 +24,18 @@ TEMPLATES_DIR_NAME: typing.Final = "templates"
 VALUES_FILE_STEM: typing.Final = "values"
 MANIFEST_FILE_SUFFIXES: typing.Final = (".yaml", ".yml")
 
+type ValuePath = tuple[str, ...]
+
+
+@typing.final
+@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
+class ManifestValue:
+    value_path: ValuePath
+    raw_value: str
+
+
+type ManifestValues = tuple[ManifestValue, ...]
+
 
 @typing.final
 @dataclasses.dataclass(slots=True, kw_only=True, frozen=True)

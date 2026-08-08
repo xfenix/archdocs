@@ -4,8 +4,8 @@ install:
   uv lock --upgrade
   uv sync --all-extras --frozen
 
-# Один список проверок на локалку и на пайплайн: `just lint` правит код на месте,
-# `just lint check` тот же список только проверяет — этот режим и гоняет CI.
+# One list of checks for local runs and for the pipeline: `just lint` fixes code in place,
+# `just lint check` only verifies the same list — that is the mode CI runs.
 lint mode="fix":
   #!/usr/bin/env sh
   set -e
@@ -23,26 +23,26 @@ lint mode="fix":
 test *args:
   uv run --no-sync pytest {{ args }}
 
-# Html-отчёт покрытия для github pages и json бейджа для shields.io.
+# Coverage html report for github pages and the badge json for shields.io.
 coverage: (test "--cov-report=html" "--cov-report=json")
   uv run --no-sync python scripts/generate-coverage-badge.py
 
-# Json бейджа со строками кода пакета для shields.io.
+# Badge json with the package's lines of code for shields.io.
 lines:
   uv run --no-sync python scripts/generate-lines-badge.py
 
-# Пересъёмка `screenshot.png` для README со страницы showcase — той же, что даёт песочница.
-# Браузер ставится сюда же, в .venv, и повторный запуск ничего не качает.
+# Re-shoots `screenshot.png` for README from the showcase page — the same one the playground serves.
+# The browser installs into the same .venv, so a repeated run downloads nothing.
 screenshot:
   uv run --no-sync playwright install chromium
   PYTHONPATH=. uv run --no-sync python scripts/generate-architecture-screenshot.py
 
-# Песочница: FastAPI-приложение, которое отдаёт страницы archdocs по примерам из tests/.
-# Диаграмма кэшируется на процесс, поэтому правки пакета и примеров видны за счёт --reload.
+# Playground: a FastAPI application serving archdocs pages for the examples from tests/.
+# The diagram is cached per process, so package and example edits show up thanks to --reload.
 playground port="8000":
   uv run --no-sync uvicorn tests.playground:playground_app --reload --reload-dir archdocs --reload-dir tests --port {{ port }}
 
-# Публикация в pypi: версия проставляется из тега, авторизация через trusted publisher (OIDC).
+# Publishing to pypi: the version comes from the tag, auth via trusted publisher (OIDC).
 publish version:
   uv version "{{ version }}"
   rm -rf dist

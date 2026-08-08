@@ -80,7 +80,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/badges/coverage.json .github/badges/lines.json
           git diff --cached --quiet || {
-            git commit -m "chore: обновление бейджей [skip ci]"
+            git commit -m "chore: update badges [skip ci]"
             git pull --rebase --autostash
             git push
           }
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/deploy-pages@v5
         id: deployment
 
-  # Публикация в pypi по тегу вида `1.2.3` или `v1.2.3`, версия берётся из имени тега.
+  # Publishing to pypi on a `1.2.3` or `v1.2.3` tag, the version comes from the tag name.
   publish:
     needs: [lint, test]
     if: startsWith(github.ref, 'refs/tags/')

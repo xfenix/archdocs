@@ -1,18 +1,9 @@
-import dataclasses
 import re as py_re
 import types
 import typing
 
 from archdocs import prefilter, settings
-from archdocs.features.app_servers.const import ApplicationServerEnum, ApplicationServerFeatures
-
-
-@typing.final
-@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
-class _ServerSignature:
-    server_name: str
-    prefilter_literals: tuple[str, ...]
-    compiled_pattern: py_re.Pattern[str]
+from archdocs.features.app_servers.const import ApplicationServerEnum, ApplicationServerFeatures, ServerSignature
 
 
 # Servers not found by the module name alone: each has its own entry point, and werkzeug
@@ -30,7 +21,7 @@ _LITERALS_OF_SERVER: typing.Final = types.MappingProxyType(
     {ApplicationServerEnum.werkzeug_server: ("werkzeug", "run_simple")},
 )
 _SERVER_SIGNATURES: typing.Final = tuple(
-    _ServerSignature(
+    ServerSignature(
         server_name=one_server.value,
         prefilter_literals=_LITERALS_OF_SERVER.get(one_server, (one_server.value,)),
         compiled_pattern=py_re.compile(

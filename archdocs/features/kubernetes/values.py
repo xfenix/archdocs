@@ -1,5 +1,6 @@
-import dataclasses
 import typing
+
+from archdocs.features.kubernetes import const
 
 
 _COMMENT_PREFIX: typing.Final = "#"
@@ -10,17 +11,7 @@ _LIST_ITEM_INDENT: typing.Final = 2
 _QUOTE_CHARACTERS: typing.Final = "\"'"
 _MEANINGLESS_VALUES: typing.Final = frozenset(("{}", "[]", "null", "~"))
 
-
-@typing.final
-@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
-class ManifestValue:
-    value_path: tuple[str, ...]
-    raw_value: str
-
-
-type ManifestValues = tuple[ManifestValue, ...]
-type ValuePath = tuple[str, ...]
-type ParentKeys = list[tuple[int, str]]
+type _ParentKeys = list[tuple[int, str]]
 
 
 def _remove_list_prefix(raw_indent: int, raw_content: str, /) -> tuple[int, str]:
@@ -33,21 +24,21 @@ def _make_one_value(
     line_indent: int,
     value_key: str,
     raw_value: str,
-    parent_keys: ParentKeys,
+    parent_keys: _ParentKeys,
     /,
-) -> ManifestValue | None:
+) -> const.ManifestValue | None:
     if not raw_value:
         parent_keys.append((line_indent, value_key))
         return None
     if _TEMPLATE_MARKER in raw_value or raw_value in _MEANINGLESS_VALUES:
         return None
-    return ManifestValue(
+    return const.ManifestValue(
         value_path=(*(one_parent_key for _, one_parent_key in parent_keys), value_key),
         raw_value=raw_value,
     )
 
 
-def _read_one_pair(raw_indent: int, raw_content: str, parent_keys: ParentKeys, /) -> ManifestValue | None:
+def _read_one_pair(raw_indent: int, raw_content: str, parent_keys: _ParentKeys, /) -> const.ManifestValue | None:
     line_indent, line_content = _remove_list_prefix(raw_indent, raw_content)
     value_key, key_separator, raw_value = line_content.partition(":")
     if not key_separator:
@@ -62,17 +53,17 @@ def _read_one_pair(raw_indent: int, raw_content: str, parent_keys: ParentKeys, /
     )
 
 
-def _read_one_line(raw_line: str, parent_keys: ParentKeys, /) -> ManifestValue | None:
+def _read_one_line(raw_line: str, parent_keys: _ParentKeys, /) -> const.ManifestValue | None:
     line_content: typing.Final = raw_line.strip()
     if not line_content or line_content.startswith((_COMMENT_PREFIX, _TEMPLATE_MARKER)):
         return None
     return _read_one_pair(len(raw_line) - len(raw_line.lstrip()), line_content, parent_keys)
 
 
-def read_manifest_values(raw_source: str) -> ManifestValues:
+def read_manifest_values(raw_source: str) -> const.ManifestValues:
     # Templated yaml is not yaml, so the nesting is restored from the indentation alone and every
     # `{{ ... }}` value is dropped: what a rendered chart would put there is nobody's guess here.
-    parent_keys: typing.Final[ParentKeys] = []
+    parent_keys: typing.Final[_ParentKeys] = []
     all_read_values: typing.Final = [
         _read_one_line(one_raw_line, parent_keys) for one_raw_line in raw_source.split("\n")
     ]

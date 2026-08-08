@@ -9,9 +9,9 @@ from tests.playground import playground_app, render_example_path
 
 SCREENSHOT_TARGET_PATH: typing.Final = pathlib.Path("screenshot.png")
 SCREENSHOT_EXAMPLE_NAME: typing.Final = "showcase"
-# Ширина повторяет ту, под которую вставлен снимок в `README.md`: мермейд ужимает svg
-# по ширине обёртки, так что от неё зависит масштаб диаграммы. Двойная плотность пикселей
-# оставляет подписи узлов читаемыми после такого ужатия.
+# The width mirrors the one the screenshot is embedded with in `README.md`: mermaid shrinks
+# the svg to the wrapper's width, so the diagram's scale depends on it. The doubled pixel
+# density keeps the node labels readable after that shrinking.
 PAGE_WIDTH: typing.Final = 900
 PAGE_HEIGHT_WHILE_RENDERING: typing.Final = 800
 PAGE_PIXEL_RATIO: typing.Final = 2
@@ -36,12 +36,12 @@ def take_screenshot_of_page(page_html: str, /) -> None:
             device_scale_factor=PAGE_PIXEL_RATIO,
         )
         showcase_page.set_content(page_html)
-        # Обёртка диаграммы прячется стилями и показывается из postRenderCallback мермейда,
-        # так что её видимость — это и есть «диаграмма дорисована».
+        # The diagram wrapper is hidden by styles and revealed from mermaid's postRenderCallback,
+        # so its visibility is exactly "the diagram has finished rendering".
         showcase_page.wait_for_selector(DIAGRAM_SELECTOR, state="visible", timeout=DIAGRAM_RENDER_TIMEOUT_MS)
         showcase_page.evaluate("document.fonts.ready")
-        # Снимается блок страницы, не окно: снимок целого окна не бывает короче него
-        # самого и оставил бы под диаграммой полосу пустого фона.
+        # The page block is captured, not the window: a whole-window shot is never shorter than
+        # the window itself and would leave a strip of empty background under the diagram.
         showcase_page.locator(PAGE_CONTENT_SELECTOR).screenshot(path=SCREENSHOT_TARGET_PATH)
         chromium_browser.close()
 
