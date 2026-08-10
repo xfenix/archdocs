@@ -5,13 +5,13 @@ import pytest
 from hypothesis import strategies as st
 
 from archdocs import settings
-from tests import served_page
+from tests import diagram_rendering, served_page
 from tests.diagram_rendering import build_named_settings
 
 
 # Minifying the template by joining on "" used to glue attributes onto their tags, turning the
 # mermaid script tag into `<scriptsrc=...>`: the served document is the only proof there is.
-_SERVICE_NAME: typing.Final = "page-svc"
+_SERVICE_NAME: typing.Final = diagram_rendering.generate_random_service_name()
 _MARKED_UP_SERVICE_NAME: typing.Final = "svc<b>&x"
 _RENDERER_ARGUMENT: typing.Final = "render_page"
 _HYPOTHESIS_EXAMPLES: typing.Final = 20

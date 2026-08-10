@@ -54,6 +54,7 @@ litestar = [
 dev = [
     { name = "auto-typing-final" },
     { name = "community-of-python-flake8-plugin" },
+    { name = "faker" },
     { name = "fastapi" },
     { name = "flake8-pyproject" },
     { name = "httpx2" },
@@ -81,6 +82,7 @@ provides-extras = ["fastapi", "litestar"]
 dev = [
     { name = "auto-typing-final", specifier = ">=1.0.4" },
     { name = "community-of-python-flake8-plugin", specifier = ">=0.6.0" },
+    { name = "faker", specifier = ">=40.36.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "flake8-pyproject", specifier = ">=1.2.4" },
     { name = "httpx2", specifier = ">=2.9.1" },

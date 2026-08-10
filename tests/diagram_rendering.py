@@ -2,9 +2,15 @@ import functools
 import pathlib
 import typing
 
+from faker import Faker
+
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 from tests.playground import PLAYGROUND_EXAMPLES
 
+
+# Faker only ever hands out lower-case words here, so the node id a random name collapses to is
+# a plain hyphen-to-underscore swap — the same swap a test author would otherwise write by hand.
+_RANDOM_NAME_GENERATOR: typing.Final = Faker()
 
 SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
@@ -39,6 +45,14 @@ def build_named_settings(service_name: str, /) -> SettingsForArchdocs:
         service_name=service_name,
         kubernetes_dir=WITHOUT_MANIFESTS,
     )
+
+
+def generate_random_service_name() -> str:
+    return f"{_RANDOM_NAME_GENERATOR.word()}-{_RANDOM_NAME_GENERATOR.word()}"
+
+
+def build_expected_node_id(service_name: str, /) -> str:
+    return service_name.replace("-", "_")
 
 
 def render_source_diagram(project_path: pathlib.Path, source_code: str, /) -> str:

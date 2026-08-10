@@ -111,7 +111,7 @@ def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: s
 
 def test_credentials_never_reach_the_diagram() -> None:
     rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
-        diagram_rendering.build_named_settings("secretive-svc")
+        diagram_rendering.build_named_settings(diagram_rendering.generate_random_service_name())
     )
 
     assert "user:password" not in rendered_diagram

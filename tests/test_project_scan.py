@@ -44,6 +44,12 @@ ingress:
   hosts:
     - host: decoy.example.com
 """
+# Shared by the "no chart matches" row below: without a chart the service node renders bare,
+# from the name alone, so the parametrize table needs the same random name the test builds with.
+_UNCHARTED_SERVICE_NAME: typing.Final = diagram_rendering.generate_random_service_name()
+_UNCHARTED_NODE_MARK: typing.Final = (
+    f'{diagram_rendering.build_expected_node_id(_UNCHARTED_SERVICE_NAME)}{{"{_UNCHARTED_SERVICE_NAME}"}}'
+)
 
 
 def _write_legacy_encoded_source(project_path: pathlib.Path, /) -> None:
@@ -105,7 +111,7 @@ def test_dependencies_stay_out_of_the_diagram(
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=project_path,
-            service_name="vendor-svc",
+            service_name=diagram_rendering.generate_random_service_name(),
             kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
@@ -128,7 +134,7 @@ def test_unreadable_source_costs_only_itself(
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=tmp_path,
-            service_name="unreadable-svc",
+            service_name=diagram_rendering.generate_random_service_name(),
             kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
@@ -138,14 +144,17 @@ def test_unreadable_source_costs_only_itself(
 
 @pytest.mark.parametrize("sources_subpath", [".", "one"])
 def test_manifests_are_found_above_the_sources(tmp_path: pathlib.Path, sources_subpath: str) -> None:
+    service_name: typing.Final = diagram_rendering.generate_random_service_name()
+    expected_node_id: typing.Final = diagram_rendering.build_expected_node_id(service_name)
+
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / sources_subpath, chart_path=tmp_path / _CHART_RELATIVE_PATH),
-            service_name="above-svc",
+            service_name=service_name,
         ),
     )
 
-    assert 'above_svc{"above-svc (replicas 4)"}' in rendered_diagram
+    assert f'{expected_node_id}{{"{service_name} (replicas 4)"}}' in rendered_diagram
     assert "HTTP neighbour.example.com" in rendered_diagram
 
 
@@ -155,7 +164,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     (templates_dir / "ingress.yaml").write_text(_RAW_INGRESS_MANIFEST)
 
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
-        SettingsForArchdocs(root_dir=tmp_path, service_name="templates-svc"),
+        SettingsForArchdocs(root_dir=tmp_path, service_name=diagram_rendering.generate_random_service_name()),
     )
 
     assert "HTTP from-templates.example.com" in rendered_diagram
@@ -166,9 +175,10 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     ("kubernetes_dir", "expected_part", "forbidden_part"),
     [
         (diagram_rendering.KUBERNETES_VARIANTS_ROOT / "loadbalancer", "LoadBalancer", "neighbour.example.com"),
-        ("there-is-no-such-chart", 'config_svc{"config-svc"}', "neighbour.example.com"),
+        ("there-is-no-such-chart", _UNCHARTED_NODE_MARK, "neighbour.example.com"),
         (_CHART_RELATIVE_PATH, "HTTP neighbour.example.com", "decoy.example.com"),
     ],
+    ids=["configured dir wins over a search hit", "no chart falls back to a bare node", "relative configured dir"],
 )
 def test_configured_dir_wins_over_the_search(
     tmp_path: pathlib.Path,
@@ -184,7 +194,7 @@ def test_configured_dir_wins_over_the_search(
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=_build_charted_project(tmp_path / "project"),
-            service_name="config-svc",
+            service_name=_UNCHARTED_SERVICE_NAME,
             kubernetes_dir=kubernetes_dir,
         ),
     )
@@ -196,31 +206,36 @@ def test_configured_dir_wins_over_the_search(
 # A typo in root_dir is the emptiest possible project, not an error page: the service node
 # still has to appear, alone.
 def test_missing_root_dir_draws_the_service_alone(tmp_path: pathlib.Path) -> None:
+    service_name: typing.Final = diagram_rendering.generate_random_service_name()
+    expected_node_id: typing.Final = diagram_rendering.build_expected_node_id(service_name)
+
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(
             root_dir=tmp_path / "never-created",
-            service_name="missing-svc",
+            service_name=service_name,
             kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
 
-    assert 'missing_svc{"missing-svc"}' in rendered_diagram
+    assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram
     assert " --> " not in rendered_diagram
 
 
 # Manifests are hunted through the same foreign tree as the sources: a dangling symlink next
 # to the chart used to raise out of the walk and answer the route with 500 instead of the chart.
 def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
+    service_name: typing.Final = diagram_rendering.generate_random_service_name()
+    expected_node_id: typing.Final = diagram_rendering.build_expected_node_id(service_name)
     source_dir: typing.Final = _build_charted_project(tmp_path)
     chart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH
     (chart_dir / "broken.yaml").symlink_to(chart_dir / "never-existed.yaml")
     (chart_dir.parent / "values.yaml").symlink_to(chart_dir.parent / "never-existed-values.yaml")
 
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
-        SettingsForArchdocs(root_dir=source_dir, service_name="broken-chart-svc"),
+        SettingsForArchdocs(root_dir=source_dir, service_name=service_name),
     )
 
-    assert 'broken_chart_svc{"broken-chart-svc (replicas 4)"}' in rendered_diagram
+    assert f'{expected_node_id}{{"{service_name} (replicas 4)"}}' in rendered_diagram
     assert "HTTP neighbour.example.com" in rendered_diagram
 
 
@@ -231,7 +246,7 @@ def test_sources_are_scanned_once_per_engine(tmp_path: pathlib.Path) -> None:
     architecture_engine: typing.Final = ArchitectureParserAndRenderer(
         local_settings=SettingsForArchdocs(
             root_dir=tmp_path,
-            service_name="cached-svc",
+            service_name=diagram_rendering.generate_random_service_name(),
             kubernetes_dir=diagram_rendering.WITHOUT_MANIFESTS,
         ),
     )
@@ -259,10 +274,12 @@ def test_far_away_manifests_are_ignored(
     )
     if repository_marker:
         (project_path / repository_marker).mkdir()
+    service_name: typing.Final = diagram_rendering.generate_random_service_name()
+    expected_node_id: typing.Final = diagram_rendering.build_expected_node_id(service_name)
 
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
-        SettingsForArchdocs(root_dir=source_dir, service_name="far-svc"),
+        SettingsForArchdocs(root_dir=source_dir, service_name=service_name),
     )
 
-    assert 'far_svc{"far-svc"}' in rendered_diagram
+    assert f'{expected_node_id}{{"{service_name}"}}' in rendered_diagram
     assert "decoy.example.com" not in rendered_diagram

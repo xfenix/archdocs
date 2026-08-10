@@ -29,6 +29,7 @@ Coverage = "https://xfenix.github.io/archdocs/"
 dev = [
     "auto-typing-final>=1.0.4",
     "community-of-python-flake8-plugin>=0.6.0",
+    "faker>=40.36.0",
     "fastapi>=0.141.1",
     "flake8-pyproject>=1.2.4",
     "httpx2>=2.9.1",
