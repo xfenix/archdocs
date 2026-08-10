@@ -6,7 +6,6 @@ from hypothesis import strategies as st
 
 from archdocs import settings
 from tests import diagram_rendering, served_page
-from tests.diagram_rendering import build_named_settings
 
 
 # Minifying the template by joining on "" used to glue attributes onto their tags, turning the
@@ -29,7 +28,7 @@ _NAME_STRATEGY: typing.Final = st.text(min_size=1, max_size=10, alphabet=_NAME_A
 
 @pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
 def test_default_route_serves_a_whole_document(render_page: served_page.PageRenderer) -> None:
-    page_html: typing.Final = render_page(build_named_settings(_SERVICE_NAME), None)
+    page_html: typing.Final = render_page(diagram_rendering.build_named_settings(_SERVICE_NAME), None)
 
     for one_required_tag in _REQUIRED_PAGE_TAGS:
         assert one_required_tag in page_html, one_required_tag
@@ -54,14 +53,14 @@ def test_template_without_a_slot_is_served_whole(
 ) -> None:
     monkeypatch.setattr(settings, "UI_HTML_TEMPLATE", _TEMPLATE_WITHOUT_A_SLOT)
 
-    page_html: typing.Final = render_page(build_named_settings(_SERVICE_NAME), None)
+    page_html: typing.Final = render_page(diagram_rendering.build_named_settings(_SERVICE_NAME), None)
 
     assert page_html == _TEMPLATE_WITHOUT_A_SLOT
 
 
 @pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
 def test_markup_characters_are_escaped(render_page: served_page.PageRenderer) -> None:
-    page_html: typing.Final = render_page(build_named_settings(_MARKED_UP_SERVICE_NAME), None)
+    page_html: typing.Final = render_page(diagram_rendering.build_named_settings(_MARKED_UP_SERVICE_NAME), None)
 
     assert 'svc&lt;b>&amp;x"}' in page_html
     assert "svc<b>" not in page_html
@@ -75,6 +74,6 @@ def test_any_service_name_and_route_are_served(
     service_name: str,
     route_value: str,
 ) -> None:
-    page_html: typing.Final = render_page(build_named_settings(service_name), f"/{route_value}")
+    page_html: typing.Final = render_page(diagram_rendering.build_named_settings(service_name), f"/{route_value}")
 
     assert service_name in page_html

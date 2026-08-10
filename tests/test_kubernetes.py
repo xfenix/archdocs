@@ -107,8 +107,10 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
                 kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "statefulset",
             ),
             (
-                (f'{_STATEFUL_NODE_ID}{{"{_STATEFUL_SERVICE_NAME} '
-                f'(StatefulSet, replicas 2, cpu 250m-1, RAM 256Mi-1Gi)"}}'),
+                (
+                    f'{_STATEFUL_NODE_ID}{{"{_STATEFUL_SERVICE_NAME} '
+                    f'(StatefulSet, replicas 2, cpu 250m-1, RAM 256Mi-1Gi)"}}'
+                ),
                 f'external_client --> |"NodePort, port 8080"| {_STATEFUL_NODE_ID}',
                 f'Secret_stateful_secrets --> |"env"| {_STATEFUL_NODE_ID}',
                 f'{_STATEFUL_NODE_ID} --> |"volume 20Gi"| PersistentVolume',

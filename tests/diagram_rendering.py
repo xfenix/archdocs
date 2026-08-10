@@ -2,16 +2,14 @@ import functools
 import pathlib
 import typing
 
-from faker import Faker
+import faker
 
+from archdocs.diagram_model import render_node_id
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 from tests.playground import PLAYGROUND_EXAMPLES
 
 
-# Faker only ever hands out lower-case words here, so the node id a random name collapses to is
-# a plain hyphen-to-underscore swap — the same swap a test author would otherwise write by hand.
-_RANDOM_NAME_GENERATOR: typing.Final = Faker()
-
+_RANDOM_NAME_GENERATOR: typing.Final = faker.Faker()
 SETTINGS_ARGUMENT: typing.Final = "arch_settings"
 TESTS_ROOT: typing.Final = pathlib.Path(__file__).parent
 FASTAPI_ROOT: typing.Final = TESTS_ROOT / "fastapi"
@@ -52,7 +50,7 @@ def generate_random_service_name() -> str:
 
 
 def build_expected_node_id(service_name: str, /) -> str:
-    return service_name.replace("-", "_")
+    return render_node_id(service_name)
 
 
 def render_source_diagram(project_path: pathlib.Path, source_code: str, /) -> str:
