@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import re as py_re
 import typing
 
 
@@ -21,6 +22,14 @@ class ApplicationServerEnum(enum.Enum):
     eventlet_server = "eventlet"
     werkzeug_server = "werkzeug"
     wsgiref_server = "wsgiref"
+
+
+@typing.final
+@dataclasses.dataclass(slots=True, kw_only=True, frozen=True)
+class ServerSignature:
+    server_name: str
+    prefilter_literals: tuple[str, ...]
+    compiled_pattern: py_re.Pattern[str]
 
 
 @typing.final

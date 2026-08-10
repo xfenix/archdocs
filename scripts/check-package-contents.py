@@ -1,9 +1,9 @@
-"""Проверка, что в колесо попадает не только `.py`.
+"""Check that more than just `.py` files land in the wheel.
 
-`archdocs/template.html` читается на импорте `settings.py`. Колесо без шаблона — это не
-«потерялась картинка», это `FileNotFoundError` на первом же `import archdocs.main`.
-Ни тесты, ни линтеры такого не видят: в исходниках файл лежит на месте, собранного колеса
-они не касаются. Собрать колесо и посмотреть внутрь — единственный способ проверить.
+`archdocs/template.html` is read when `settings.py` is imported. A wheel without the template
+is not a "missing picture" — it is a `FileNotFoundError` on the very first `import archdocs.main`.
+Neither tests nor linters see this: in the sources the file is in place, and the built wheel
+never crosses their path. Building the wheel and looking inside is the only way to check.
 """
 
 import pathlib
@@ -36,10 +36,10 @@ def collect_required_files() -> tuple[str, ...]:
 def build_wheel_into(build_dir: pathlib.Path, /) -> pathlib.Path:
     uv_executable: typing.Final = shutil.which("uv")
     if uv_executable is None:
-        sys.exit("uv не найден в PATH: собирать колесо нечем")
-    # Вывод сборки прячется, пока она удаётся, и показывается целиком, когда нет: проверка
-    # живёт в `just lint`, где трейсбек без причины падения читать некому.
-    finished_build: typing.Final = subprocess.run(  # noqa: S603 — команда фиксирована, ввода тут нет
+        sys.exit("uv not found in PATH: nothing to build the wheel with")
+    # The build output is hidden while the build succeeds and shown in full when it does not:
+    # the check lives in `just lint`, where a traceback without the failure reason helps nobody.
+    finished_build: typing.Final = subprocess.run(  # noqa: S603 — the command is fixed, no user input here
         [uv_executable, "build", "--wheel", "--out-dir", str(build_dir)],
         check=False,
         capture_output=True,
@@ -47,11 +47,11 @@ def build_wheel_into(build_dir: pathlib.Path, /) -> pathlib.Path:
     )
     if finished_build.returncode:
         sys.exit(
-            f"uv build завершился кодом {finished_build.returncode}:\n{finished_build.stdout}{finished_build.stderr}",
+            f"uv build exited with code {finished_build.returncode}:\n{finished_build.stdout}{finished_build.stderr}",
         )
     all_built_wheels: typing.Final = sorted(build_dir.glob(WHEEL_PATTERN))
     if not all_built_wheels:
-        sys.exit(f"uv build отработал успешно, но колеса в {build_dir} не оставил")
+        sys.exit(f"uv build finished successfully but left no wheel in {build_dir}")
     return all_built_wheels[0]
 
 
@@ -68,7 +68,7 @@ def report_missing_files() -> None:
     missing_files: typing.Final = find_missing_files()
     if not missing_files:
         return
-    sys.stdout.write(f"Файлы пакета не попали в колесо: {', '.join(missing_files)}\n")
+    sys.stdout.write(f"Package files missing from the wheel: {', '.join(missing_files)}\n")
     sys.exit(1)
 
 
