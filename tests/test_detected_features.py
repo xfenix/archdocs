@@ -164,6 +164,31 @@ _POOL_FAR_FROM_THE_ENGINE_SOURCE: typing.Final = (
     + "# padding that keeps the unrelated pool far away from the engine call\n" * _LINES_BETWEEN_ENGINE_AND_POOL
     + "adapter_settings = {'pool_maxsize': 10}\n"
 )
+_SESSION_ATTRS_BESIDE_THE_DSN_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+primary_engine = create_engine(
+    "postgresql+psycopg://user:password@pg-primary:5432/orders",
+    connect_args={"target_session_attrs": "read-write"},
+)
+"""
+_SESSION_ATTRS_IN_A_SETTING_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+TARGET_SESSION_ATTRS = "standby"
+
+replica_engine = create_engine("postgresql+psycopg://pg-replica:5432/orders")
+"""
+_SESSION_ATTRS_IN_LIBPQ_OPTIONS_SOURCE: typing.Final = '''from sqlalchemy import create_engine
+
+
+LIBPQ_OPTIONS = "host=pg-one,pg-two target_session_attrs=read-write"
+
+primary_engine = create_engine(
+    "postgresql+psycopg://pg-one:5432/orders",
+    connect_args={"options": LIBPQ_OPTIONS},
+)
+'''
 _DATABASE_URL_BEHIND_A_CONSTANT_SOURCE: typing.Final = """from sqlalchemy import create_engine
 
 from src.config import DATABASE_URL
@@ -368,10 +393,28 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             (_PLAIN_REDIS_NODE_MARK,),
         ),
         "redis import alone": (_REDIS_IMPORT_ONLY_SOURCE, (), ("redisdb",)),
+        # The dsn is drawn whole, so the attribute inside it is already on the arrow: repeating it
+        # beside the dsn is what the forbidden part guards against.
         "async database": (
             _ASYNC_DATABASE_SOURCE,
             ('postgresql_asyncpgdb["postgresql+asyncpg"]', _ASYNC_DATABASE_EDGE),
+            (_CREDENTIALS_MARK, "read-write, read-write"),
+        ),
+        "session attrs beside the dsn": (
+            _SESSION_ATTRS_BESIDE_THE_DSN_SOURCE,
+            ('app_svc --> |"postgresql+psycopg://***@pg-primary:5432/orders, read-write"| postgresql_psycopgdb',),
             (_CREDENTIALS_MARK,),
+        ),
+        # The libpq keyword/value spelling quotes the whole string, not the value inside it.
+        "session attrs in libpq options": (
+            _SESSION_ATTRS_IN_LIBPQ_OPTIONS_SOURCE,
+            ('app_svc --> |"postgresql+psycopg://pg-one:5432/orders, read-write"| postgresql_psycopgdb',),
+            (),
+        ),
+        "session attrs in a setting": (
+            _SESSION_ATTRS_IN_A_SETTING_SOURCE,
+            ('app_svc --> |"postgresql+psycopg://pg-replica:5432/orders, standby"| postgresql_psycopgdb',),
+            (),
         ),
         "replicated database": (
             _REPLICA_DATABASE_SOURCE,
@@ -498,6 +541,7 @@ _ALL_FEATURE_LITERALS: typing.Final = (
     "redis",
     "sqlalchemy",
     "create_engine",
+    "target_session_attrs",
     "postgresql",
     "mysql",
     "sqlite",

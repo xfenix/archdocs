@@ -26,12 +26,20 @@ def render_sqlalchemy_features(
 ) -> tuple[diagram_model.DiagramEdge, ...]:
     if not features_to_draw.database_type:
         return ()
+    drawn_dsn: typing.Final = _DSN_CREDENTIALS_PATTERN.sub("://***@", features_to_draw.database_type)
+    # A dsn carrying the attribute in its query string already spells it out on the arrow, so the
+    # separate mention is what the attribute set outside the dsn — `connect_args`, a setting —
+    # would otherwise lose.
+    session_attrs_to_draw: typing.Final = (
+        "" if features_to_draw.target_session_attrs in drawn_dsn else features_to_draw.target_session_attrs
+    )
     properties_on_arrow: typing.Final = ", ".join(
         filter(
             None,
             [
                 "async" if features_to_draw.async_used else "",
-                _DSN_CREDENTIALS_PATTERN.sub("://***@", features_to_draw.database_type),
+                drawn_dsn,
+                session_attrs_to_draw,
             ],
         ),
     )
