@@ -8,6 +8,7 @@ from tests import diagram_rendering
 
 
 _FIXTURE_ANNOTATIONS: typing.Final = "replicas 3, HPA 2-10, target CPU 70%, cpu 100m-500m, RAM 128Mi-512Mi, GPU 1"
+_STATEFULSET_ANNOTATIONS: typing.Final = "StatefulSet, replicas 2, HPA 2-6, target CPU 80%, cpu 250m-1, RAM 256Mi-1Gi"
 _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
     {
         "chart of the project": (
@@ -44,16 +45,22 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
                 kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "disabled",
             ),
             ('disabled_svc{"disabled-svc (replicas 2)"}',),
-            ("never.example.com", "Ingress", "HPA"),
+            ("never.example.com", "Ingress", "HPA", "PersistentVolume"),
         ),
+        # The second host spells its own name with quotes: a label carrying one closes the edge
+        # early and takes the whole diagram down with it, so the quote may not reach the page.
         "ingress without its own tls": (
             SettingsForArchdocs(
                 root_dir=diagram_rendering.FASTAPI_ROOT,
                 service_name="plain-svc",
                 kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "plain_ingress",
             ),
-            ('external_client --> |"HTTP plain.example.com"| plain_svc',),
-            ("HTTPS",),
+            (
+                'plain_svc{"plain-svc (replicas 1, cpu 50m)"}',
+                'external_client --> |"HTTP plain.example.com"| plain_svc',
+                'external_client --> |"HTTP quoted.example.com"| plain_svc',
+            ),
+            ("HTTPS", '"example"'),
         ),
         "load balancer entrypoint": (
             SettingsForArchdocs(
@@ -70,7 +77,11 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
                 service_name="entry-svc",
                 kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "nodeport",
             ),
-            ('external_client --> |"NodePort"| entry_svc',),
+            (
+                'entry_svc{"entry-svc (RAM up to 512Mi)"}',
+                'external_client --> |"NodePort"| entry_svc',
+                'entry_svc --> |"volume 5Gi"| PersistentVolume',
+            ),
             (),
         ),
         "ingress entrypoint": (
@@ -89,7 +100,7 @@ _ALL_MANIFEST_CASES: typing.Final = types.MappingProxyType(
                 kubernetes_dir=diagram_rendering.KUBERNETES_VARIANTS_ROOT / "statefulset",
             ),
             (
-                'stateful_svc{"stateful-svc (StatefulSet, replicas 2, cpu 250m-1, RAM 256Mi-1Gi)"}',
+                f'stateful_svc{{"stateful-svc ({_STATEFULSET_ANNOTATIONS})"}}',
                 'external_client --> |"NodePort, port 8080"| stateful_svc',
                 'Secret_stateful_secrets --> |"env"| stateful_svc',
                 'stateful_svc --> |"volume 20Gi"| PersistentVolume',

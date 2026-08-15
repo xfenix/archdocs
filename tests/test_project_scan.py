@@ -34,6 +34,8 @@ kind: Ingress
 metadata:
   name: mychart
 spec:
+  tls:
+    - secretName: from-templates-tls
   rules:
     - host: from-templates.example.com
 """
@@ -44,6 +46,8 @@ ingress:
   hosts:
     - host: decoy.example.com
 """
+_SUBCHART_VALUES: typing.Final = "replicaCount: 9\n"
+_NEIGHBOUR_HOST_EDGE: typing.Final = "HTTP neighbour.example.com"
 
 
 def _write_legacy_encoded_source(project_path: pathlib.Path, /) -> None:
@@ -54,10 +58,27 @@ def _write_dangling_symlink(project_path: pathlib.Path, /) -> None:
     (project_path / "removed.py").symlink_to(project_path / "never-existed.py")
 
 
+def _write_legacy_encoded_manifest(chart_path: pathlib.Path, /) -> None:
+    (chart_path / "legacy.yaml").write_bytes(
+        "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: café\n".encode("latin-1"),
+    )
+
+
+def _write_dangling_manifest_symlinks(chart_path: pathlib.Path, /) -> None:
+    (chart_path / "broken.yaml").symlink_to(chart_path / "never-existed.yaml")
+    (chart_path.parent / "values.yaml").symlink_to(chart_path.parent / "never-existed-values.yaml")
+
+
 _ALL_UNREADABLE_SOURCES: typing.Final = types.MappingProxyType(
     {
         "legacy encoding": _write_legacy_encoded_source,
         "dangling symlink": _write_dangling_symlink,
+    },
+)
+_ALL_UNREADABLE_MANIFESTS: typing.Final = types.MappingProxyType(
+    {
+        "legacy encoding": _write_legacy_encoded_manifest,
+        "dangling symlink": _write_dangling_manifest_symlinks,
     },
 )
 
@@ -146,7 +167,7 @@ def test_manifests_are_found_above_the_sources(tmp_path: pathlib.Path, sources_s
     )
 
     assert 'above_svc{"above-svc (replicas 4)"}' in rendered_diagram
-    assert "HTTP neighbour.example.com" in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
 
 
 def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
@@ -158,7 +179,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
         SettingsForArchdocs(root_dir=tmp_path, service_name="templates-svc"),
     )
 
-    assert "HTTP from-templates.example.com" in rendered_diagram
+    assert "HTTPS from-templates.example.com" in rendered_diagram
 
 
 # The decoy chart is what the working directory would offer a relative path.
@@ -167,7 +188,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
     [
         (diagram_rendering.KUBERNETES_VARIANTS_ROOT / "loadbalancer", "LoadBalancer", "neighbour.example.com"),
         ("there-is-no-such-chart", 'config_svc{"config-svc"}', "neighbour.example.com"),
-        (_CHART_RELATIVE_PATH, "HTTP neighbour.example.com", "decoy.example.com"),
+        (_CHART_RELATIVE_PATH, _NEIGHBOUR_HOST_EDGE, "decoy.example.com"),
     ],
 )
 def test_configured_dir_wins_over_the_search(
@@ -208,20 +229,40 @@ def test_missing_root_dir_draws_the_service_alone(tmp_path: pathlib.Path) -> Non
     assert " --> " not in rendered_diagram
 
 
-# Manifests are hunted through the same foreign tree as the sources: a dangling symlink next
-# to the chart used to raise out of the walk and answer the route with 500 instead of the chart.
-def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
+# Manifests are hunted through the same foreign tree as the sources: a dangling symlink or a
+# manifest in a legacy encoding next to the chart used to raise out of the walk and answer the
+# route with 500 instead of the chart.
+@pytest.mark.parametrize("break_one_manifest", _ALL_UNREADABLE_MANIFESTS.values(), ids=_ALL_UNREADABLE_MANIFESTS)
+def test_unreadable_manifest_costs_only_itself(
+    tmp_path: pathlib.Path,
+    break_one_manifest: typing.Callable[[pathlib.Path], None],
+) -> None:
     source_dir: typing.Final = _build_charted_project(tmp_path)
-    chart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH
-    (chart_dir / "broken.yaml").symlink_to(chart_dir / "never-existed.yaml")
-    (chart_dir.parent / "values.yaml").symlink_to(chart_dir.parent / "never-existed-values.yaml")
+    break_one_manifest(tmp_path / _CHART_RELATIVE_PATH)
 
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(
         SettingsForArchdocs(root_dir=source_dir, service_name="broken-chart-svc"),
     )
 
     assert 'broken_chart_svc{"broken-chart-svc (replicas 4)"}' in rendered_diagram
-    assert "HTTP neighbour.example.com" in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
+
+
+# Helm reads a subchart's values under the ones of the chart that pulls it in, so the chart the
+# diagram is drawn from is the outer one — even though `charts/` sorts before `values.yaml`.
+def test_subchart_values_lose_to_the_chart(tmp_path: pathlib.Path) -> None:
+    source_dir: typing.Final = _build_charted_project(tmp_path)
+    subchart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH / "charts" / "redis"
+    subchart_dir.mkdir(parents=True)
+    (subchart_dir / "Chart.yaml").write_text("apiVersion: v2\nname: redis\n")
+    (subchart_dir / "values.yaml").write_text(_SUBCHART_VALUES)
+
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(
+        SettingsForArchdocs(root_dir=source_dir, service_name="subchart-svc"),
+    )
+
+    assert 'subchart_svc{"subchart-svc (replicas 4)"}' in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
 
 
 # A mounted route keeps one engine alive, and a rescan on every request would walk the whole

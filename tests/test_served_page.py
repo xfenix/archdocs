@@ -12,7 +12,12 @@ from tests.diagram_rendering import build_named_settings
 # Minifying the template by joining on "" used to glue attributes onto their tags, turning the
 # mermaid script tag into `<scriptsrc=...>`: the served document is the only proof there is.
 _SERVICE_NAME: typing.Final = "page-svc"
-_MARKED_UP_SERVICE_NAME: typing.Final = "svc<b>&x"
+# A quote in the name closes the node label early and takes the whole render down with it, so
+# it may not reach the page at all — the markup characters around it have to survive escaped.
+_MARKED_UP_SERVICE_NAME: typing.Final = 'svc<b>&"x'
+# The template ships a demo diagram inside its `<pre>`: the page has to replace that slot, not
+# grow a second one next to it.
+_TEMPLATE_DEMO_MARK: typing.Final = "Example Start Node"
 _RENDERER_ARGUMENT: typing.Final = "render_page"
 _HYPOTHESIS_EXAMPLES: typing.Final = 20
 _TEMPLATE_WITHOUT_A_SLOT: typing.Final = "<!DOCTYPE html><html lang='en'><body>no room here</body></html>"
@@ -32,8 +37,9 @@ def test_default_route_serves_a_whole_document(render_page: served_page.PageRend
     page_html: typing.Final = render_page(build_named_settings(_SERVICE_NAME), None)
 
     for one_required_tag in _REQUIRED_PAGE_TAGS:
-        assert one_required_tag in page_html, one_required_tag
+        assert page_html.count(one_required_tag) == 1, one_required_tag
     assert _SERVICE_NAME in page_html
+    assert _TEMPLATE_DEMO_MARK not in page_html
 
 
 # Without settings the scan starts from the working directory, which under pytest is the

@@ -32,7 +32,6 @@ def render_sqlalchemy_features(
             [
                 "async" if features_to_draw.async_used else "",
                 _DSN_CREDENTIALS_PATTERN.sub("://***@", features_to_draw.database_type),
-                features_to_draw.target_session_attrs,
             ],
         ),
     )

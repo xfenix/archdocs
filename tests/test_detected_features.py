@@ -87,6 +87,11 @@ import huey
 import rq
 import taskiq
 """
+_TWO_BROKER_QUEUE_SOURCE: typing.Final = """import celery
+
+
+celery_app = celery.Celery(broker="amqp://localhost:5672/", backend="redis://localhost:6379/1")
+"""
 _RABBITMQ_BROKER_SOURCE: typing.Final = """import dramatiq
 
 
@@ -206,6 +211,38 @@ rabbit_broker = RabbitBroker("amqp://localhost:5672/")
 @rabbit_broker.subscriber(COMMANDS_QUEUE)
 async def handle_command(command: dict) -> None: ...
 """
+_TWO_TOPIC_FLOW_SOURCE: typing.Final = """from faststream.kafka import KafkaBroker
+
+
+kafka_broker = KafkaBroker("localhost:9092")
+
+
+@kafka_broker.subscriber("orders")
+async def handle_order(order: dict) -> None: ...
+
+
+@kafka_broker.subscriber("payments")
+async def handle_payment(payment: dict) -> None: ...
+
+
+@kafka_broker.publisher("orders-done")
+async def publish_order_done(order: dict) -> dict:
+    return order
+
+
+@kafka_broker.publisher("payments-done")
+async def publish_payment_done(payment: dict) -> dict:
+    return payment
+"""
+_PIPED_TOPIC_SOURCE: typing.Final = """from faststream.nats import NatsBroker
+
+
+nats_broker = NatsBroker("nats://localhost:4222")
+
+
+@nats_broker.subscriber("orders|paid")
+async def handle_paid_order(order: dict) -> None: ...
+"""
 _BROKER_WITHOUT_A_FLOW_SOURCE: typing.Final = """from faststream.kafka import KafkaBroker
 
 
@@ -237,6 +274,14 @@ import fastapi
 
 app = fastapi.FastAPI()
 """
+_MENTIONS_WITHOUT_IMPORTS_SOURCE: typing.Final = '''"""Runbook of the service.
+
+Work is handed over to celery, taskiq, arq, rq, dramatiq and huey workers, and the payments
+API is called over httpx, aiohttp, requests and niquests.
+"""
+
+RUNBOOK_URL = "https://wiki.example.com/runbook"
+'''
 _THREAD_POOL_SOURCE: typing.Final = """from concurrent.futures import ThreadPoolExecutor
 
 import uvicorn
@@ -294,6 +339,7 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             ('app_svc --> |"Tasks (arq, celery, dramatiq, huey, rq, taskiq)"| TaskQueue_Worker',),
             (),
         ),
+        "queue behind two brokers": (_TWO_BROKER_QUEUE_SOURCE, ('"Tasks (celery, rabbitmq, redis)"',), ()),
         "rabbitmq backed queue": (_RABBITMQ_BROKER_SOURCE, ('"Tasks (dramatiq, rabbitmq)"',), ()),
         "postgresql backed queue": (_POSTGRESQL_BROKER_SOURCE, ('"Tasks (huey, postgresql)"',), ('db["',)),
         "redis cache": (
@@ -362,6 +408,13 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             ('app_svc --> |"events"| rabbit',),
             ("rabbit -->",),
         ),
+        "every topic of one broker": (
+            _TWO_TOPIC_FLOW_SOURCE,
+            ('kafka --> |"orders, payments"| app_svc', 'app_svc --> |"orders-done, payments-done"| kafka'),
+            (),
+        ),
+        # The pipe is the edge label's own delimiter: a topic carrying one may not reach the page.
+        "topic spelled with a pipe": (_PIPED_TOPIC_SOURCE, ('nats --> |"orderspaid"| app_svc',), ("orders|paid",)),
         "topic behind a constant": (_TOPIC_BEHIND_A_CONSTANT_SOURCE, ("rabbit --> app_svc",), ('|"',)),
         "broker without a flow": (_BROKER_WITHOUT_A_FLOW_SOURCE, (), ("kafka",)),
         "application server properties": (
@@ -375,6 +428,8 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             (),
         ),
         "carrier library is not a server": (_CARRIER_LIBRARIES_SOURCE, (), ("Served by",)),
+        # A name in prose is what the prefilter matches on, and only the import decides.
+        "technology named but never imported": (_MENTIONS_WITHOUT_IMPORTS_SOURCE, (), (EDGE_ARROW,)),
         "thread pool is not a server worker": (
             _THREAD_POOL_SOURCE,
             ('external_client --> |"Served by uvicorn"| app_svc',),
@@ -443,7 +498,6 @@ _ALL_FEATURE_LITERALS: typing.Final = (
     "redis",
     "sqlalchemy",
     "create_engine",
-    "target_session_attrs",
     "postgresql",
     "mysql",
     "sqlite",
