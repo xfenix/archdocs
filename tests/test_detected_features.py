@@ -179,7 +179,7 @@ TARGET_SESSION_ATTRS = "standby"
 
 replica_engine = create_engine("postgresql+psycopg://pg-replica:5432/orders")
 """
-_SESSION_ATTRS_IN_LIBPQ_OPTIONS_SOURCE: typing.Final = '''from sqlalchemy import create_engine
+_SESSION_ATTRS_IN_LIBPQ_OPTIONS_SOURCE: typing.Final = """from sqlalchemy import create_engine
 
 
 LIBPQ_OPTIONS = "host=pg-one,pg-two target_session_attrs=read-write"
@@ -188,7 +188,7 @@ primary_engine = create_engine(
     "postgresql+psycopg://pg-one:5432/orders",
     connect_args={"options": LIBPQ_OPTIONS},
 )
-'''
+"""
 _DATABASE_URL_BEHIND_A_CONSTANT_SOURCE: typing.Final = """from sqlalchemy import create_engine
 
 from src.config import DATABASE_URL
