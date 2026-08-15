@@ -58,6 +58,8 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
     ("Billing Service", "Billing_Service"),
+    # Only the separators are stripped off the ends: a name may open and close with a letter.
+    ("Xray-svc", "Xray_svc"),
     ("!!!", "archdocs_service"),
 )
 
