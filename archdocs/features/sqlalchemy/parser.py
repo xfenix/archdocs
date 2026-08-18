@@ -14,8 +14,12 @@ _MULTIPLE_HOSTS_PATTERN: typing.Final = py_re.compile(
     r"create_engine\([^)'\"]{0,200}['\"](?:postgresql|mysql|mariadb|oracle|mssql)\+[^'\"]*://[^/,]+(?:,[^/,]+)+/",
     settings.TYPICAL_RE_FLAGS,
 )
+# The attribute is written three ways and the value is hyphenated in the two that matter:
+# `?target_session_attrs=read-write` inside a dsn, `"target_session_attrs": "read-write"` in
+# `connect_args`, and a bare setting. Quotes around the key and around the value are optional
+# on purpose — demanding them is what used to make this pattern unable to match a dsn at all.
 _TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
-    r"target_session_attrs\s*=\s*['\"](\w+)['\"]",
+    r"target_session_attrs['\"]?\s*[=:]\s*['\"]?(?P<attrs_value>[\w-]+)",
     settings.TYPICAL_RE_FLAGS,
 )
 _DB_TYPE_PATTERN: typing.Final = py_re.compile(
@@ -55,6 +59,6 @@ def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
         async_used=_ASYNC_ENGINE_PATTERN.search(raw_source) is not None,
         pooling_used=_POOLING_PATTERN.search(raw_source) is not None,
         multiple_hosts=_MULTIPLE_HOSTS_PATTERN.search(raw_source) is not None,
-        target_session_attrs=target_session_attrs_match.group(1) if target_session_attrs_match else "",
+        target_session_attrs=target_session_attrs_match.group("attrs_value") if target_session_attrs_match else "",
         database_type=database_type_match.group(1) if database_type_match else "",
     )

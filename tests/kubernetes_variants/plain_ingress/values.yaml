@@ -4,6 +4,11 @@ ingress:
   enabled: true
   hosts:
     - host: plain.example.com
+    - host: quoted."example".com
+
+resources:
+  requests:
+    cpu: 50m
 
 imagePullSecrets:
   - secretName: registry-credentials
