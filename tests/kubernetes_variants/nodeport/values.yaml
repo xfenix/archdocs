@@ -1,2 +1,6 @@
 service:
   type: NodePort
+
+resources:
+  limits:
+    memory: 512Mi

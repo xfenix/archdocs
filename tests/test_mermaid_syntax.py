@@ -16,8 +16,9 @@ from tests import diagram_parts, diagram_rendering, factories, generated_project
 _GROUP_OPENING_MARK: typing.Final = "subgraph "
 _GROUP_CLOSING_LINE: typing.Final = "end"
 _LINE_INDENT: typing.Final = " " * 4
-# An edge is a bare node id on each end of the arrow and a label either absent or quoted whole.
-_WELL_FORMED_EDGE_PATTERN: typing.Final = py_re.compile(r'[A-Za-z0-9_]+ --> (?:\|"[^"]+"\| )?[A-Za-z0-9_]+')
+# An edge is a bare node id on each end of the arrow and a label either absent or quoted whole:
+# a quote or a pipe inside the label closes it early and the whole diagram stops rendering.
+_WELL_FORMED_EDGE_PATTERN: typing.Final = py_re.compile(r'[A-Za-z0-9_]+ --> (?:\|"[^"|]+"\| )?[A-Za-z0-9_]+')
 _ID_LESS_NODE_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*\{")
 _SERVICE_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\{"')
 _GENERATED_EXAMPLES: typing.Final = 25

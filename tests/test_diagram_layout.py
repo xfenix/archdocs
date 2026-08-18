@@ -62,6 +62,9 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
     ("Billing Service", "Billing_Service"),
+    # Only the separators are stripped off the ends: a name may open and close with a letter.
+    ("Xray-svc", "Xray_svc"),
+    # Whitespace inside a name is the name, and only a line break would end the statement early.
     ("Two  Spaces", "Two_Spaces"),
     ("!!!", "archdocs_service"),
 )

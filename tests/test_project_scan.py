@@ -34,9 +34,13 @@ kind: Ingress
 metadata:
   name: mychart
 spec:
+  tls:
+    - secretName: from-templates-tls
   rules:
     - host: {_TEMPLATED_CHART.ingress_host}
 """
+_SUBCHART_VALUES: typing.Final = "replicaCount: 9\n"
+_NEIGHBOUR_HOST_EDGE: typing.Final = f"HTTPS {_NEIGHBOUR_CHART.ingress_host}"
 
 
 def _write_legacy_encoded_source(project_path: pathlib.Path, /) -> None:
@@ -47,10 +51,29 @@ def _write_dangling_symlink(project_path: pathlib.Path, /) -> None:
     (project_path / "removed.py").symlink_to(project_path / "never-existed.py")
 
 
+def _write_legacy_encoded_manifest(chart_path: pathlib.Path, /) -> None:
+    (chart_path / "legacy.yaml").write_bytes(
+        "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: café\n".encode("latin-1"),
+    )
+
+
+def _write_dangling_manifest_symlinks(chart_path: pathlib.Path, /) -> None:
+    (chart_path / "broken.yaml").symlink_to(chart_path / "never-existed.yaml")
+    (chart_path.parent / generated_project.VALUES_FILE_NAME).symlink_to(
+        chart_path.parent / "never-existed-values.yaml",
+    )
+
+
 _ALL_UNREADABLE_SOURCES: typing.Final = types.MappingProxyType(
     {
         "legacy encoding": _write_legacy_encoded_source,
         "dangling symlink": _write_dangling_symlink,
+    },
+)
+_ALL_UNREADABLE_MANIFESTS: typing.Final = types.MappingProxyType(
+    {
+        "legacy encoding": _write_legacy_encoded_manifest,
+        "dangling symlink": _write_dangling_manifest_symlinks,
     },
 )
 
@@ -131,7 +154,7 @@ def test_manifests_are_found_above_the_sources(tmp_path: pathlib.Path, sources_s
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(arch_settings)
 
     assert f'{{"{arch_settings.service_name} (replicas {_NEIGHBOUR_CHART.replica_count}' in rendered_diagram
-    assert f"HTTPS {_NEIGHBOUR_CHART.ingress_host}" in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
 
 
 def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
@@ -143,7 +166,7 @@ def test_chart_is_found_by_its_templates(tmp_path: pathlib.Path) -> None:
         factories.SettingsFactory.build(root_dir=tmp_path, kubernetes_dir=None),
     )
 
-    assert f"HTTP {_TEMPLATED_CHART.ingress_host}" in rendered_diagram
+    assert f"HTTPS {_TEMPLATED_CHART.ingress_host}" in rendered_diagram
 
 
 # The decoy chart is what the working directory would offer a relative path.
@@ -192,19 +215,40 @@ def test_missing_root_dir_draws_the_service_alone(tmp_path: pathlib.Path) -> Non
     assert " --> " not in rendered_diagram
 
 
-# Manifests are hunted through the same foreign tree as the sources: a dangling symlink next
-# to the chart used to raise out of the walk and answer the route with 500 instead of the chart.
-def test_unreadable_manifest_costs_only_itself(tmp_path: pathlib.Path) -> None:
+# Manifests are hunted through the same foreign tree as the sources: a dangling symlink or a
+# manifest in a legacy encoding next to the chart used to raise out of the walk and answer the
+# route with 500 instead of the chart.
+@pytest.mark.parametrize("break_one_manifest", _ALL_UNREADABLE_MANIFESTS.values(), ids=_ALL_UNREADABLE_MANIFESTS)
+def test_unreadable_manifest_costs_only_itself(
+    tmp_path: pathlib.Path,
+    break_one_manifest: typing.Callable[[pathlib.Path], None],
+) -> None:
     source_dir: typing.Final = _build_charted_project(tmp_path)
-    chart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH
-    (chart_dir / "broken.yaml").symlink_to(chart_dir / "never-existed.yaml")
-    (chart_dir.parent / generated_project.VALUES_FILE_NAME).symlink_to(chart_dir.parent / "never-existed-values.yaml")
+    break_one_manifest(tmp_path / _CHART_RELATIVE_PATH)
     arch_settings: typing.Final = factories.SettingsFactory.build(root_dir=source_dir, kubernetes_dir=None)
 
     rendered_diagram: typing.Final = diagram_rendering.render_diagram(arch_settings)
 
     assert f'{{"{arch_settings.service_name} (replicas {_NEIGHBOUR_CHART.replica_count}' in rendered_diagram
-    assert f"HTTPS {_NEIGHBOUR_CHART.ingress_host}" in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
+
+
+# Helm reads a subchart's values under the ones of the chart that pulls it in, so the chart the
+# diagram is drawn from is the outer one — even though `charts/` sorts before `values.yaml`.
+def test_subchart_values_lose_to_the_chart(tmp_path: pathlib.Path) -> None:
+    subchart_dir: typing.Final = tmp_path / _CHART_RELATIVE_PATH / "charts" / "redis"
+    arch_settings: typing.Final = factories.SettingsFactory.build(
+        root_dir=_build_charted_project(tmp_path),
+        kubernetes_dir=None,
+    )
+    subchart_dir.mkdir(parents=True)
+    (subchart_dir / "Chart.yaml").write_text("apiVersion: v2\nname: redis\n")
+    (subchart_dir / generated_project.VALUES_FILE_NAME).write_text(_SUBCHART_VALUES)
+
+    rendered_diagram: typing.Final = diagram_rendering.render_diagram(arch_settings)
+
+    assert f'{{"{arch_settings.service_name} (replicas {_NEIGHBOUR_CHART.replica_count}' in rendered_diagram
+    assert _NEIGHBOUR_HOST_EDGE in rendered_diagram
 
 
 # A mounted route keeps one engine alive, and a rescan on every request would walk the whole

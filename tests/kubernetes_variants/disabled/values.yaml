@@ -15,5 +15,9 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
 
+persistence:
+  enabled: false
+  size: 40Gi
+
 imagePullSecrets:
   - secretName: registry-credentials

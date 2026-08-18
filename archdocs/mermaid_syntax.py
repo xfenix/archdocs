@@ -8,7 +8,12 @@ from archdocs import diagram_model, settings
 
 
 DIAGRAM_HEADER: typing.Final = "graph TB"
-_DOUBLE_QUOTE: typing.Final = '"'
+# A quote closes the label it stands in, a pipe closes the edge label around it, and a line
+# break closes the whole statement: any of them arriving from a service name, a topic or a
+# manifest value breaks the render, and a broken render is not an error message but a page that
+# stays hidden.
+_REMOVED_FROM_NODE_LABEL: typing.Final = str.maketrans("", "", '"')
+_REMOVED_FROM_EDGE_LABEL: typing.Final = str.maketrans("", "", '"|')
 _GROUP_OPENING_TEMPLATE: typing.Final = 'subgraph group_{group_name}["{group_title}"]'
 _GROUP_CLOSING_LINE: typing.Final = "end"
 _SERVICE_ROW_ID: typing.Final = "service_row"
@@ -36,7 +41,7 @@ PLACEMENT_OF_NODE_GROUP: typing.Final = types.MappingProxyType(
         diagram_model.NodeGroup.data_stores: GroupPlacement.below_service,
     },
 )
-# The templates live next to the quote-stripping below: how a shape is written in mermaid and
+# The templates live next to the translation tables above: how a shape is written in mermaid and
 # what its label may contain is one piece of knowledge, and the model does not hold any of it.
 _TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
     {
@@ -46,28 +51,27 @@ _TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
 )
 
 
-# A label is written inside one mermaid statement, and a statement ends at the line break: a
-# service named across two lines, or a topic taken from a string that spans them, cuts the
-# diagram in half and the page renders nothing. Neither end of a label is a trusted one line.
-# Only the breaks are replaced — the rest of the whitespace is somebody's name as they wrote it.
-def render_label(raw_label: str, /) -> str:
-    return _LABEL_LINE_BREAK_PATTERN.sub(" ", raw_label.replace(_DOUBLE_QUOTE, ""))
+# A statement ends at the line break, so a service named across two lines or a topic taken from
+# a string that spans them cuts the diagram in half. Only the breaks are replaced — the rest of
+# the whitespace is somebody's name as they wrote it.
+def render_label(raw_label: str, removed_characters: typing.Mapping[int, int | None], /) -> str:
+    return _LABEL_LINE_BREAK_PATTERN.sub(" ", raw_label.translate(removed_characters))
 
 
 def render_node_definition(one_node: diagram_model.DiagramNode, /) -> str:
     return _TEMPLATE_OF_NODE_SHAPE[one_node.node_shape].format(
         defined_node_id=one_node.defined_node_id,
-        node_label=render_label(one_node.node_label),
+        node_label=render_label(one_node.node_label, _REMOVED_FROM_NODE_LABEL),
     )
 
 
 def render_edge(one_edge: diagram_model.DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
-    label_without_quotes: typing.Final = render_label(one_edge.edge_label)
-    if not label_without_quotes:
+    drawable_label: typing.Final = render_label(one_edge.edge_label, _REMOVED_FROM_EDGE_LABEL)
+    if not drawable_label:
         return f"{settings.LINE_INDENT}{source_node_id} --> {target_node_id}"
-    return f'{settings.LINE_INDENT}{source_node_id} --> |"{label_without_quotes}"| {target_node_id}'
+    return f'{settings.LINE_INDENT}{source_node_id} --> |"{drawable_label}"| {target_node_id}'
 
 
 # Mermaid has no coordinates: the page flows top to bottom, and a borderless row with its own

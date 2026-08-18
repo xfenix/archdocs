@@ -43,7 +43,7 @@ def render_redis_features(
     return tuple(
         diagram_model.DiagramEdge(
             source_node=service_node,
-            target_node=_build_redis_node(features_to_draw.connection_type or "", one_counter),
+            target_node=_build_redis_node(features_to_draw.connection_type, one_counter),
             edge_label=properties_on_arrow,
         )
         for one_counter in range(settings.VALUE_FOR_MASS_CONNECTIONS_ILLUSTRATION)
