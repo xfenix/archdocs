@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import re as py_re
 import types
 import typing
 
@@ -15,6 +16,7 @@ _SERVICE_ROW_OPENING: typing.Final = f'subgraph {_SERVICE_ROW_ID}[" "]'
 _SERVICE_ROW_DIRECTION_LINE: typing.Final = "direction LR"
 _SERVICE_ROW_STYLE_LINE: typing.Final = f"style {_SERVICE_ROW_ID} fill:none,stroke:none"
 _ROW_INDENT: typing.Final = settings.LINE_INDENT * 2
+_LABEL_WHITESPACE_PATTERN: typing.Final = py_re.compile(r"\s+")
 
 
 @typing.final
@@ -44,17 +46,24 @@ _TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
 )
 
 
+# A label is written inside one mermaid statement, and a statement ends at the newline: a
+# service named across two lines, or a topic taken from a string that spans them, cuts the
+# diagram in half and the page renders nothing. Neither end of a label is a trusted one line.
+def render_label(raw_label: str, /) -> str:
+    return _LABEL_WHITESPACE_PATTERN.sub(" ", raw_label.replace(_DOUBLE_QUOTE, "")).strip()
+
+
 def render_node_definition(one_node: diagram_model.DiagramNode, /) -> str:
     return _TEMPLATE_OF_NODE_SHAPE[one_node.node_shape].format(
         defined_node_id=one_node.defined_node_id,
-        node_label=one_node.node_label.replace(_DOUBLE_QUOTE, ""),
+        node_label=render_label(one_node.node_label),
     )
 
 
 def render_edge(one_edge: diagram_model.DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
-    label_without_quotes: typing.Final = one_edge.edge_label.replace(_DOUBLE_QUOTE, "")
+    label_without_quotes: typing.Final = render_label(one_edge.edge_label)
     if not label_without_quotes:
         return f"{settings.LINE_INDENT}{source_node_id} --> {target_node_id}"
     return f'{settings.LINE_INDENT}{source_node_id} --> |"{label_without_quotes}"| {target_node_id}'

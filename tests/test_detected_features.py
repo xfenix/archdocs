@@ -6,7 +6,7 @@ import hypothesis
 import pytest
 from hypothesis import strategies as st
 
-from tests import diagram_rendering
+from tests import diagram_rendering, factories, generated_project
 from tests.diagram_parts import EDGE_ARROW
 
 
@@ -159,6 +159,11 @@ _POOL_FAR_FROM_THE_ENGINE_SOURCE: typing.Final = (
     + "# padding that keeps the unrelated pool far away from the engine call\n" * _LINES_BETWEEN_ENGINE_AND_POOL
     + "adapter_settings = {'pool_maxsize': 10}\n"
 )
+_POOLED_SINGLE_HOST_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+orders_engine = create_engine("postgresql+psycopg://user:password@pg-primary:5432/orders", pool_size=10)
+"""
 _DATABASE_URL_BEHIND_A_CONSTANT_SOURCE: typing.Final = """from sqlalchemy import create_engine
 
 from src.config import DATABASE_URL
@@ -204,6 +209,17 @@ rabbit_broker = RabbitBroker("amqp://localhost:5672/")
 
 
 @rabbit_broker.subscriber(COMMANDS_QUEUE)
+async def handle_command(command: dict) -> None: ...
+"""
+_UNUSED_NEIGHBOUR_BROKER_SOURCE: typing.Final = """from faststream.kafka import KafkaBroker
+from faststream.rabbit import RabbitBroker
+
+
+rabbit_broker = RabbitBroker("amqp://localhost:5672/")
+kafka_broker = KafkaBroker("kafka.internal:9092")
+
+
+@rabbit_broker.subscriber("commands")
 async def handle_command(command: dict) -> None: ...
 """
 _BROKER_WITHOUT_A_FLOW_SOURCE: typing.Final = """from faststream.kafka import KafkaBroker
@@ -254,6 +270,7 @@ _REPLICA_DATABASE_EDGE: typing.Final = (
     'app_svc --> |"postgresql+psycopg://***@pg-replica-one:5432,pg-replica-two:5432/orders"| postgresql_psycopgdb0'
 )
 _PLAIN_REDIS_NODE_MARK: typing.Final = "redisdb["
+_KAFKA_MARK: typing.Final = "kafka"
 _CREDENTIALS_MARK: typing.Final = "user:password"
 _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
     {
@@ -346,11 +363,17 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             ('postgresql_psycopgdb0["postgresql+psycopg #0"]',),
             ("postgresql_psycopgdb1",),
         ),
+        # A pool is many connections to one host: numbered nodes are what replicas are for.
+        "pooled connections to one host": (
+            _POOLED_SINGLE_HOST_SOURCE,
+            ('postgresql_psycopgdb["postgresql+psycopg"]',),
+            ("postgresql_psycopgdb0", _CREDENTIALS_MARK),
+        ),
         "database url behind a constant": (_DATABASE_URL_BEHIND_A_CONSTANT_SOURCE, (), ('db["',)),
         "consumed messages": (
             _CONSUMER_SOURCE,
             ('rabbit --> |"commands"| app_svc', 'rabbit["rabbit"]'),
-            ("kafka", "nats", "user:password"),
+            (_KAFKA_MARK, "nats", "user:password"),
         ),
         "messages published by a decorator": (
             _PUBLISHER_DECORATOR_SOURCE,
@@ -363,7 +386,13 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             ("rabbit -->",),
         ),
         "topic behind a constant": (_TOPIC_BEHIND_A_CONSTANT_SOURCE, ("rabbit --> app_svc",), ('|"',)),
-        "broker without a flow": (_BROKER_WITHOUT_A_FLOW_SOURCE, (), ("kafka",)),
+        "broker without a flow": (_BROKER_WITHOUT_A_FLOW_SOURCE, (), (_KAFKA_MARK,)),
+        # A flow belongs to the broker it is written on: the neighbour brings its own arrows.
+        "broker next to a working one": (
+            _UNUSED_NEIGHBOUR_BROKER_SOURCE,
+            ('rabbit --> |"commands"| app_svc',),
+            (_KAFKA_MARK,),
+        ),
         "application server properties": (
             _GRANIAN_SOURCE,
             ('external_client --> |"Served by granian, 4 workers, port 8000, TLS, HTTP/2"| app_svc',),
@@ -466,6 +495,11 @@ _ALL_FEATURE_LITERALS: typing.Final = (
     "--worker-class",
 )
 _HYPOTHESIS_EXAMPLES: typing.Final = 30
+_GENERATED_EXAMPLES: typing.Final = 25
+_SERVICE_CONNECTIONS: typing.Final = factories.ServiceConnectionsFactory.build()
+_ALL_GENERATED_MARKS: typing.Final = frozenset(
+    generated_project.render_expected_marks(generated_project.ALL_TECHNOLOGIES, _SERVICE_CONNECTIONS),
+)
 _FIRST_PRINTABLE_CODE: typing.Final = 32
 _LAST_PRINTABLE_CODE: typing.Final = 126
 _LONGEST_RANDOM_SOURCE: typing.Final = 200
@@ -520,3 +554,30 @@ def test_showcase_shows_every_supported_feature(feature_mark: str) -> None:
 @hypothesis.given(source_code=_UNRELATED_SOURCE_STRATEGY)
 def test_unrelated_source_draws_the_service_alone(tmp_path: pathlib.Path, source_code: str) -> None:
     assert EDGE_ARROW not in diagram_rendering.render_source_diagram(tmp_path, source_code)
+
+
+# One technology per test file is not how anybody writes a service: parsers share the file they
+# read, and a pattern greedy enough to eat a neighbour's evidence is only visible in a mixture.
+@hypothesis.settings(
+    deadline=None,
+    max_examples=_GENERATED_EXAMPLES,
+    suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture],
+)
+@hypothesis.given(all_technologies=generated_project.TECHNOLOGY_SUBSET_STRATEGY)
+def test_project_draws_only_its_technologies(
+    tmp_path: pathlib.Path,
+    all_technologies: list[generated_project.OneTechnology],
+) -> None:
+    rendered_diagram: typing.Final = diagram_rendering.render_generated_diagram(
+        tmp_path,
+        all_technologies,
+        _SERVICE_CONNECTIONS,
+    )
+
+    expected_marks: typing.Final = frozenset(
+        generated_project.render_expected_marks(all_technologies, _SERVICE_CONNECTIONS),
+    )
+    for one_expected_mark in expected_marks:
+        assert one_expected_mark in rendered_diagram, one_expected_mark
+    for one_forbidden_mark in _ALL_GENERATED_MARKS - expected_marks:
+        assert one_forbidden_mark not in rendered_diagram, one_forbidden_mark
