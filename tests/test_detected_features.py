@@ -222,6 +222,15 @@ kafka_broker = KafkaBroker("kafka.internal:9092")
 @rabbit_broker.subscriber("commands")
 async def handle_command(command: dict) -> None: ...
 """
+_QUALIFIED_BROKER_SOURCE: typing.Final = """import faststream.rabbit
+
+
+message_broker = faststream.rabbit.RabbitBroker("amqp://localhost:5672/")
+
+
+@message_broker.subscriber("commands")
+async def handle_command(command: dict) -> None: ...
+"""
 _BROKER_WITHOUT_A_FLOW_SOURCE: typing.Final = """from faststream.kafka import KafkaBroker
 
 
@@ -387,6 +396,9 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
         ),
         "topic behind a constant": (_TOPIC_BEHIND_A_CONSTANT_SOURCE, ("rabbit --> app_svc",), ('|"',)),
         "broker without a flow": (_BROKER_WITHOUT_A_FLOW_SOURCE, (), (_KAFKA_MARK,)),
+        # A broker built through the package or through a renamed class is nobody's variable:
+        # the topic is out of reach, the arrow is not.
+        "broker behind a qualified constructor": (_QUALIFIED_BROKER_SOURCE, ("rabbit --> app_svc",), ('|"',)),
         # A flow belongs to the broker it is written on: the neighbour brings its own arrows.
         "broker next to a working one": (
             _UNUSED_NEIGHBOUR_BROKER_SOURCE,

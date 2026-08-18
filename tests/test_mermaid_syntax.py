@@ -93,9 +93,9 @@ def test_any_technology_mix_is_valid_mermaid(
 
 
 # A service name is a string from somebody's settings file, not an identifier: whatever is in
-# it, the diagram around it stays a diagram.
+# it — including nothing at all — the diagram around it stays a diagram.
 @hypothesis.settings(deadline=None, max_examples=_GENERATED_EXAMPLES)
-@hypothesis.given(service_name=st.text(min_size=1))
+@hypothesis.given(service_name=st.text())
 def test_any_service_name_keeps_the_diagram_valid(service_name: str) -> None:
     rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
         diagram_rendering.build_named_settings(service_name),

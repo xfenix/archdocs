@@ -62,6 +62,7 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("payments-api", "payments_api"),
     ("svc.v2", "svc_v2"),
     ("Billing Service", "Billing_Service"),
+    ("Two  Spaces", "Two_Spaces"),
     ("!!!", "archdocs_service"),
 )
 

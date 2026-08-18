@@ -16,7 +16,7 @@ _SERVICE_ROW_OPENING: typing.Final = f'subgraph {_SERVICE_ROW_ID}[" "]'
 _SERVICE_ROW_DIRECTION_LINE: typing.Final = "direction LR"
 _SERVICE_ROW_STYLE_LINE: typing.Final = f"style {_SERVICE_ROW_ID} fill:none,stroke:none"
 _ROW_INDENT: typing.Final = settings.LINE_INDENT * 2
-_LABEL_WHITESPACE_PATTERN: typing.Final = py_re.compile(r"\s+")
+_LABEL_LINE_BREAK_PATTERN: typing.Final = py_re.compile(r"[\r\n\u2028\u2029]+")
 
 
 @typing.final
@@ -46,11 +46,12 @@ _TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
 )
 
 
-# A label is written inside one mermaid statement, and a statement ends at the newline: a
+# A label is written inside one mermaid statement, and a statement ends at the line break: a
 # service named across two lines, or a topic taken from a string that spans them, cuts the
 # diagram in half and the page renders nothing. Neither end of a label is a trusted one line.
+# Only the breaks are replaced — the rest of the whitespace is somebody's name as they wrote it.
 def render_label(raw_label: str, /) -> str:
-    return _LABEL_WHITESPACE_PATTERN.sub(" ", raw_label.replace(_DOUBLE_QUOTE, "")).strip()
+    return _LABEL_LINE_BREAK_PATTERN.sub(" ", raw_label.replace(_DOUBLE_QUOTE, ""))
 
 
 def render_node_definition(one_node: diagram_model.DiagramNode, /) -> str:
