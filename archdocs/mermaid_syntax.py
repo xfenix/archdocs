@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import re as py_re
 import types
 import typing
 
@@ -7,9 +8,10 @@ from archdocs import diagram_model, settings
 
 
 DIAGRAM_HEADER: typing.Final = "graph TB"
-# A quote closes the label it stands in, and a pipe closes the edge label around it: either one
-# arriving from a topic name or a manifest value breaks the render, and a broken render is not an
-# error message but a page that stays hidden.
+# A quote closes the label it stands in, a pipe closes the edge label around it, and a line
+# break closes the whole statement: any of them arriving from a service name, a topic or a
+# manifest value breaks the render, and a broken render is not an error message but a page that
+# stays hidden.
 _REMOVED_FROM_NODE_LABEL: typing.Final = str.maketrans("", "", '"')
 _REMOVED_FROM_EDGE_LABEL: typing.Final = str.maketrans("", "", '"|')
 _GROUP_OPENING_TEMPLATE: typing.Final = 'subgraph group_{group_name}["{group_title}"]'
@@ -19,6 +21,7 @@ _SERVICE_ROW_OPENING: typing.Final = f'subgraph {_SERVICE_ROW_ID}[" "]'
 _SERVICE_ROW_DIRECTION_LINE: typing.Final = "direction LR"
 _SERVICE_ROW_STYLE_LINE: typing.Final = f"style {_SERVICE_ROW_ID} fill:none,stroke:none"
 _ROW_INDENT: typing.Final = settings.LINE_INDENT * 2
+_LABEL_LINE_BREAK_PATTERN: typing.Final = py_re.compile(r"[\r\n\u2028\u2029]+")
 
 
 @typing.final
@@ -48,17 +51,24 @@ _TEMPLATE_OF_NODE_SHAPE: typing.Final = types.MappingProxyType(
 )
 
 
+# A statement ends at the line break, so a service named across two lines or a topic taken from
+# a string that spans them cuts the diagram in half. Only the breaks are replaced — the rest of
+# the whitespace is somebody's name as they wrote it.
+def render_label(raw_label: str, removed_characters: typing.Mapping[int, int | None], /) -> str:
+    return _LABEL_LINE_BREAK_PATTERN.sub(" ", raw_label.translate(removed_characters))
+
+
 def render_node_definition(one_node: diagram_model.DiagramNode, /) -> str:
     return _TEMPLATE_OF_NODE_SHAPE[one_node.node_shape].format(
         defined_node_id=one_node.defined_node_id,
-        node_label=one_node.node_label.translate(_REMOVED_FROM_NODE_LABEL),
+        node_label=render_label(one_node.node_label, _REMOVED_FROM_NODE_LABEL),
     )
 
 
 def render_edge(one_edge: diagram_model.DiagramEdge, /) -> str:
     source_node_id: typing.Final = one_edge.source_node.defined_node_id
     target_node_id: typing.Final = one_edge.target_node.defined_node_id
-    drawable_label: typing.Final = one_edge.edge_label.translate(_REMOVED_FROM_EDGE_LABEL)
+    drawable_label: typing.Final = render_label(one_edge.edge_label, _REMOVED_FROM_EDGE_LABEL)
     if not drawable_label:
         return f"{settings.LINE_INDENT}{source_node_id} --> {target_node_id}"
     return f'{settings.LINE_INDENT}{source_node_id} --> |"{drawable_label}"| {target_node_id}'

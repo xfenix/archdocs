@@ -9,6 +9,12 @@ _GROUP_BLOCK_PATTERN: typing.Final = py_re.compile(
 )
 _DEFINED_NODE_PATTERN: typing.Final = py_re.compile(r'(?m)^\s*(?P<node_id>[A-Za-z0-9_]+)\["')
 _EDGE_ENDS_PATTERN: typing.Final = py_re.compile(r"(?m)^\s*(?P<source>\w+) -->.* (?P<target>\w+)$")
+# The page carries the diagram as text inside its `<pre>`, so what the browser is handed is
+# this block and not the diagram the renderer returned.
+_DIAGRAM_BLOCK_PATTERN: typing.Final = py_re.compile(
+    r'<pre class="archdoc__diagram">(?P<diagram_block>.*?)</pre>',
+    flags=py_re.DOTALL,
+)
 
 
 @typing.final
@@ -19,6 +25,11 @@ class EdgeEnds(typing.NamedTuple):
 
 def extract_edge_lines(rendered_diagram: str, /) -> list[str]:
     return [one_line.strip() for one_line in rendered_diagram.split("\n") if EDGE_ARROW in one_line]
+
+
+def extract_diagram_block(page_html: str, /) -> str:
+    block_match: typing.Final = _DIAGRAM_BLOCK_PATTERN.search(page_html)
+    return block_match.group("diagram_block") if block_match else ""
 
 
 def collect_group_of_every_node(rendered_diagram: str, /) -> dict[str, str]:

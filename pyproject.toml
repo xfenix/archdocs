@@ -36,6 +36,7 @@ dev = [
     "litestar>=2.24.0",
     "mypy>=2.3.0",
     "playwright>=1.62.0",
+    "polyfactory>=2.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",
@@ -102,7 +103,10 @@ exclude = ["tests/fastapi", "tests/litestar", "tests/showcase"]
 max-imports = 30
 # WPS202 counts the tests themselves as module members: a cap of seven functions per file caps
 # the number of checks in a suite, not the complexity of the code they check.
-per-file-ignores = ["tests/*.py:WPS218,WPS202"]
+# `factories.py` is a declaration of generated data: polyfactory binds a field to the method
+# named after it, so the providers are nouns and there are as many of them as the model has
+# fields — neither the verb rule nor the method cap can be met without breaking the binding.
+per-file-ignores = ["tests/*.py:WPS218,WPS202", "tests/factories.py:WPS218,WPS202,WPS214,COP009"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,10 +1,12 @@
+import pathlib
 import types
 import typing
 
+import hypothesis
 import pytest
 
 from archdocs.main import SettingsForArchdocs
-from tests import diagram_parts, diagram_rendering
+from tests import diagram_parts, diagram_rendering, factories, generated_project
 
 
 # Mermaid has no coordinates: a diagram is laid out from the direction of its arrows and from
@@ -15,6 +17,8 @@ _MESSAGING_GROUP: typing.Final = "Messaging & tasks"
 _DATA_STORES_GROUP: typing.Final = "Data stores"
 _CONFIGURATION_GROUP: typing.Final = "Configuration"
 _SHOWCASE_NODE_ID: typing.Final = "showcase_service"
+_GENERATED_EXAMPLES: typing.Final = 25
+_SERVICE_CONNECTIONS: typing.Final = factories.ServiceConnectionsFactory.build()
 _EXPECTED_SHOWCASE_GROUPS: typing.Final = types.MappingProxyType(
     {
         "external_client": _INBOUND_GROUP,
@@ -60,21 +64,44 @@ _ALL_SERVICE_NAMES: typing.Final = (
     ("Billing Service", "Billing_Service"),
     # Only the separators are stripped off the ends: a name may open and close with a letter.
     ("Xray-svc", "Xray_svc"),
+    # Whitespace inside a name is the name, and only a line break would end the statement early.
+    ("Two  Spaces", "Two_Spaces"),
     ("!!!", "archdocs_service"),
 )
+
+
+def assert_arrows_agree_with_their_side(rendered_diagram: str, /) -> None:
+    group_of_node: typing.Final = diagram_parts.collect_group_of_every_node(rendered_diagram)
+    all_edge_ends: typing.Final = diagram_parts.collect_edge_ends(rendered_diagram)
+    all_target_groups: typing.Final = {group_of_node.get(one_ends.target_id) for one_ends in all_edge_ends}
+    all_source_groups: typing.Final = {group_of_node.get(one_ends.source_id) for one_ends in all_edge_ends}
+    assert _INBOUND_GROUP not in all_target_groups
+    assert _OUTBOUND_GROUP not in all_source_groups
 
 
 @pytest.mark.parametrize(diagram_rendering.SETTINGS_ARGUMENT, diagram_rendering.ALL_EXAMPLE_SETTINGS)
 def test_arrows_agree_with_their_side(arch_settings: SettingsForArchdocs) -> None:
     rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(arch_settings)
 
-    group_of_node: typing.Final = diagram_parts.collect_group_of_every_node(rendered_diagram)
-    all_edge_ends: typing.Final = diagram_parts.collect_edge_ends(rendered_diagram)
-    all_target_groups: typing.Final = {group_of_node.get(one_ends.target_id) for one_ends in all_edge_ends}
-    all_source_groups: typing.Final = {group_of_node.get(one_ends.source_id) for one_ends in all_edge_ends}
-    assert all_edge_ends
-    assert _INBOUND_GROUP not in all_target_groups
-    assert _OUTBOUND_GROUP not in all_source_groups
+    assert diagram_parts.collect_edge_ends(rendered_diagram)
+    assert_arrows_agree_with_their_side(rendered_diagram)
+
+
+# An arrow into an inbound group drags the whole group to the other end of the page, so the
+# side a group lands on is decided by every technology the project happens to combine.
+@hypothesis.settings(
+    deadline=None,
+    max_examples=_GENERATED_EXAMPLES,
+    suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture],
+)
+@hypothesis.given(all_technologies=generated_project.TECHNOLOGY_SUBSET_STRATEGY)
+def test_generated_arrows_agree_with_their_side(
+    tmp_path: pathlib.Path,
+    all_technologies: list[generated_project.OneTechnology],
+) -> None:
+    assert_arrows_agree_with_their_side(
+        diagram_rendering.render_generated_diagram(tmp_path, all_technologies, _SERVICE_CONNECTIONS),
+    )
 
 
 def test_showcase_nodes_sit_in_their_groups() -> None:
@@ -102,7 +129,7 @@ def test_groups_sit_around_the_service() -> None:
 @pytest.mark.parametrize(("service_name", "expected_node_id"), _ALL_SERVICE_NAMES)
 def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: str) -> None:
     rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
-        diagram_rendering.build_named_settings(service_name)
+        diagram_rendering.build_named_settings(service_name),
     )
 
     all_edge_lines: typing.Final = diagram_parts.extract_edge_lines(rendered_diagram)
@@ -113,7 +140,7 @@ def test_service_name_becomes_the_node_id(service_name: str, expected_node_id: s
 
 def test_credentials_never_reach_the_diagram() -> None:
     rendered_diagram: typing.Final = diagram_rendering.render_example_diagram(
-        diagram_rendering.build_named_settings("secretive-svc")
+        diagram_rendering.build_named_settings("secretive-svc"),
     )
 
     assert "user:password" not in rendered_diagram

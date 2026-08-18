@@ -29,6 +29,22 @@ _BROKER_VARIABLE_PATTERN: typing.Final = py_re.compile(
     r"^[ \t]*(?P<variable>\w+)\s*(?::[^=\n]+)?=\s*(?P<broker_class>\w+)\s*\(",
     flags=settings.TYPICAL_RE_FLAGS,
 )
+# A flow belongs to the broker whose variable is decorated, not to the file: a broker somebody
+# imported next to a working one is not something the service consumes from, and an arrow drawn
+# for it is a dependency the reader has no way to disprove. It only works while the variable is
+# known — a qualified constructor or an aliased class is nobody's variable, and there the file's
+# own flows are the best answer there is: an arrow without a topic beats a dependency dropped.
+_FLOW_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
+    {
+        const.MessageDirection.consumed: (
+            py_re.compile(r"@(?P<variable>\w+)\.subscriber\(", flags=settings.TYPICAL_RE_FLAGS),
+        ),
+        const.MessageDirection.produced: (
+            py_re.compile(r"@(?P<variable>\w+)\.(?:publisher|producer)\(", flags=settings.TYPICAL_RE_FLAGS),
+            py_re.compile(r"\b(?P<variable>\w+)\.publish\(", flags=settings.TYPICAL_RE_FLAGS),
+        ),
+    },
+)
 _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
     {
         const.MessageDirection.consumed: (
@@ -49,6 +65,12 @@ _TOPIC_PATTERNS_OF_DIRECTION: typing.Final = types.MappingProxyType(
                 flags=settings.TYPICAL_RE_FLAGS,
             ),
         ),
+    },
+)
+_FILE_WIDE_PATTERN_OF_DIRECTION: typing.Final = types.MappingProxyType(
+    {
+        const.MessageDirection.consumed: _SUBSCRIBER_DECORATOR_PATTERN,
+        const.MessageDirection.produced: _PRODUCER_PATTERN,
     },
 )
 _BROKER_NAME_OF_CLASS: typing.Final = types.MappingProxyType(
@@ -83,6 +105,22 @@ def _collect_topics_of_broker(
     )
 
 
+def _has_any_flow(
+    raw_source: str,
+    broker_of_variable: typing.Mapping[str, str],
+    message_direction: const.MessageDirection,
+    broker_name: str,
+    /,
+) -> bool:
+    if broker_name not in broker_of_variable.values():
+        return bool(_FILE_WIDE_PATTERN_OF_DIRECTION[message_direction].search(raw_source))
+    return any(
+        broker_of_variable.get(one_match.group("variable")) == broker_name
+        for one_pattern in _FLOW_PATTERNS_OF_DIRECTION[message_direction]
+        for one_match in one_pattern.finditer(raw_source)
+    )
+
+
 def _build_broker_flow(
     raw_source: str,
     broker_of_variable: typing.Mapping[str, str],
@@ -91,8 +129,8 @@ def _build_broker_flow(
 ) -> const.BrokerFlow:
     return const.BrokerFlow(
         broker_name=broker_name,
-        consumes=bool(_SUBSCRIBER_DECORATOR_PATTERN.search(raw_source)),
-        produces=bool(_PRODUCER_PATTERN.search(raw_source)),
+        consumes=_has_any_flow(raw_source, broker_of_variable, const.MessageDirection.consumed, broker_name),
+        produces=_has_any_flow(raw_source, broker_of_variable, const.MessageDirection.produced, broker_name),
         consumed_topics=_collect_topics_of_broker(
             raw_source,
             broker_of_variable,
