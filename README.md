@@ -116,6 +116,35 @@ add_architecture_doc_routes(
 )
 ```
 
+Without internet access
+===
+The page loads mermaid from cdn.jsdelivr.net and the Inter font from fonts.googleapis.com. If
+your browsers cannot reach them, serve mermaid from your own static files and drop the font,
+the page falls back to the system sans-serif:
+
+```python
+SettingsForArchdocs(
+    root_dir="src/",
+    service_name="my-service",
+    mermaid_script_url="/static/mermaid.min.js",
+    font_stylesheet_url=None,
+)
+```
+
+`font_stylesheet_url` also takes a URL of your own stylesheet.
+
+Command line
+===
+The same diagram without starting the app, for CI, a wiki or the README of your service:
+
+```shell
+archdocs render --root-dir src/ --service-name my-service --format markdown --output ARCHITECTURE.md
+```
+
+`--format` is `mermaid` (the default), `markdown` (a ```` ```mermaid ```` block GitHub and GitLab
+render) or `html` (the same page the app serves). Without `--output` it prints to stdout.
+`--kubernetes-dir` and `--mermaid-script-url` mean the same as in the settings above.
+
 How it looks
 ===
 Your service sits in the middle of the page, every dependency around it, boxed by the role it

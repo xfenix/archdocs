@@ -39,6 +39,12 @@ TYPICAL_RE_FLAGS: typing.Final = py_re.IGNORECASE | py_re.MULTILINE | py_re.UNIC
 DEFAULT_PATH: typing.Final = "/docs/architecture/"
 DEFAULT_ROOT_DIR: typing.Final = pathlib.Path()
 DEFAULT_SERVICE_NAME: typing.Final = "example-service"
+DEFAULT_MERMAID_SCRIPT_URL: typing.Final = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
+DEFAULT_FONT_STYLESHEET_URL: typing.Final = "https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap"
+# The template names both assets literally so that it stays a page a browser opens as is: the
+# tags are swapped whole, as they read after the template is minified below.
+MERMAID_SCRIPT_TAG: typing.Final = '<script src="{}"></script>'
+FONT_STYLESHEET_TAG: typing.Final = '<link href="{}" rel="stylesheet" />'
 UI_PLACEHOLDER_PATTERN: typing.Final = py_re.compile(
     r"(?P<pre_open><pre[^>]*>)(?P<pre_body>.*?)(?P<pre_close></pre>)",
     flags=TYPICAL_RE_FLAGS,

@@ -4,8 +4,8 @@ import typing
 from litestar import Litestar, get
 from litestar.response import Response
 
-from archdocs import settings
-from archdocs.integrations.common import _create_architecture_engine, _render_architecture_html
+from archdocs import page, settings
+from archdocs.integrations.common import _create_architecture_engine
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 
 
@@ -16,7 +16,7 @@ class _LitestarArchDocRoute:
 
     async def __call__(self) -> Response[str]:
         return Response(
-            _render_architecture_html(self.arch_engine),
+            page.render_architecture_page(self.arch_engine),
             media_type="text/html",
         )
 

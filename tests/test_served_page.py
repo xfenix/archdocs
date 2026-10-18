@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 
 import hypothesis
@@ -25,6 +26,7 @@ _REQUIRED_PAGE_TAGS: typing.Final = (
     "<!DOCTYPE html>",
     '<html lang="en">',
     '<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js">',
+    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&amp;display=swap" rel="stylesheet" />',
     '<pre class="archdoc__diagram">',
     "graph TB",
 )
@@ -84,3 +86,34 @@ def test_any_service_name_and_route_are_served(
     page_html: typing.Final = render_page(build_named_settings(service_name), f"/{route_value}")
 
     assert service_name in page_html
+
+
+# A network that cannot reach the CDNs serves mermaid itself and goes without the font: neither
+# public host may be left on the page, or the browser still waits on it.
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
+def test_offline_page_names_no_public_host(render_page: served_page.PageRenderer) -> None:
+    offline_settings: typing.Final = dataclasses.replace(
+        build_named_settings(_SERVICE_NAME),
+        mermaid_script_url="/static/mermaid.min.js?v=11&lang=en",
+        font_stylesheet_url=None,
+    )
+
+    page_html: typing.Final = render_page(offline_settings, None)
+
+    assert '<script src="/static/mermaid.min.js?v=11&amp;lang=en"></script>' in page_html
+    assert "cdn.jsdelivr.net" not in page_html
+    assert "fonts.googleapis.com" not in page_html
+    assert _SERVICE_NAME in page_html
+
+
+@pytest.mark.parametrize(_RENDERER_ARGUMENT, served_page.ALL_PAGE_RENDERERS, ids=served_page.FRAMEWORK_IDS)
+def test_own_font_replaces_the_default(render_page: served_page.PageRenderer) -> None:
+    own_font_settings: typing.Final = dataclasses.replace(
+        build_named_settings(_SERVICE_NAME),
+        font_stylesheet_url="/static/inter.css",
+    )
+
+    page_html: typing.Final = render_page(own_font_settings, None)
+
+    assert '<link href="/static/inter.css" rel="stylesheet" />' in page_html
+    assert "fonts.googleapis.com" not in page_html
