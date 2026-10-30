@@ -1,37 +1,32 @@
+import ast
 import re as py_re
 import typing
 
-from archdocs import prefilter, settings
+from archdocs import prefilter, settings, syntax_tree
 from archdocs.features.sqlalchemy.const import SQLAlchemyFeatures
 
 
-_ASYNC_ENGINE_PATTERN: typing.Final = py_re.compile(r"sqlalchemy\.ext\.asyncio", settings.TYPICAL_RE_FLAGS)
-# The windows are what keep both patterns honest on somebody's whole project: an unbounded gap
-# reads "pool_ anywhere later in the file" as pooling and costs quadratic time on sources where
-# `create_engine(` repeats without a match, a killer measured in minutes on a single file.
-_POOLING_PATTERN: typing.Final = py_re.compile(r"create_engine\(.{0,2000}?pool_", settings.TYPICAL_RE_FLAGS)
-_MULTIPLE_HOSTS_PATTERN: typing.Final = py_re.compile(
-    r"create_engine\([^)'\"]{0,200}['\"](?:postgresql|mysql|mariadb|oracle|mssql)\+[^'\"]*://[^/,]+(?:,[^/,]+)+/",
+_ENGINE_FACTORY_NAMES: typing.Final = frozenset(("create_engine", "create_async_engine"))
+_ASYNC_ENGINE_MODULE: typing.Final = "sqlalchemy.ext.asyncio"
+_POOL_ARGUMENT_PREFIX: typing.Final = "pool_"
+_SESSION_ATTRS_NAME: typing.Final = "target_session_attrs"
+# Inside a string the attribute is a `key=value` pair of a dsn query or of libpq options; outside
+# of one it is an assignment, a keyword or a dict key, and those the syntax tree spells out itself.
+_SESSION_ATTRS_IN_STRING_PATTERN: typing.Final = py_re.compile(
+    r"target_session_attrs\s*=\s*(?P<attrs_value>[\w-]+)",
     settings.TYPICAL_RE_FLAGS,
 )
-# The attribute is written three ways and the value is hyphenated in the two that matter:
-# `?target_session_attrs=read-write` inside a dsn, `"target_session_attrs": "read-write"` in
-# `connect_args`, and a bare setting. Quotes around the key and around the value are optional
-# on purpose — demanding them is what used to make this pattern unable to match a dsn at all.
-_TARGET_SESSION_ATTRS_PATTERN: typing.Final = py_re.compile(
-    r"target_session_attrs['\"]?\s*[=:]\s*['\"]?(?P<attrs_value>[\w-]+)",
-    settings.TYPICAL_RE_FLAGS,
-)
-_DB_TYPE_PATTERN: typing.Final = py_re.compile(
-    r"['\"](postgresql(?:\+[^'\"]*)?|mysql(?:\+[^'\"]*)?|sqlite(?:\+[^'\"]*)?|oracle(?:\+[^'\"]*)?|"
-    r"mssql(?:\+[^'\"]*)?|mariadb(?:\+[^'\"]*)?|cockroachdb(?:\+[^'\"]*)?)['\"]",
+_DSN_HOSTS_PATTERN: typing.Final = py_re.compile(r"://(?:[^/@]*@)?(?P<dsn_hosts>[^/]*)", settings.TYPICAL_RE_FLAGS)
+_DATABASE_SCHEME_PATTERN: typing.Final = py_re.compile(
+    r"(?:postgresql|mysql|sqlite|oracle|mssql|mariadb|cockroachdb)(?:\+.*)?",
     settings.TYPICAL_RE_FLAGS,
 )
 # One union of literals for the whole feature: an engine is found not only by the package
-# name but by a bare DSN in a string, so the database schemes of `_DB_TYPE_PATTERN` belong here too.
+# name but by a bare DSN in a string, so the database schemes of `_DATABASE_SCHEME_PATTERN` belong here too.
 _SQLALCHEMY_LITERALS: typing.Final = (
     "sqlalchemy",
     "create_engine",
+    "create_async_engine",
     "target_session_attrs",
     "postgresql",
     "mysql",
@@ -50,15 +45,86 @@ _EMPTY_FEATURES: typing.Final = SQLAlchemyFeatures(
 )
 
 
+def _read_engine_hosts(engine_call: ast.Call) -> str:
+    match engine_call.args:
+        case [ast.Constant(value=str() as engine_dsn), *_]:
+            hosts_match: typing.Final = _DSN_HOSTS_PATTERN.search(engine_dsn)
+            return hosts_match.group("dsn_hosts") if hosts_match else ""
+        case _:
+            return ""
+
+
+def _read_named_string_values(one_node: ast.AST) -> tuple[tuple[str, str], ...]:
+    match one_node:
+        case ast.Assign(targets=every_target, value=ast.Constant(value=str() as assigned_value)):
+            return tuple(
+                (one_target.id, assigned_value) for one_target in every_target if isinstance(one_target, ast.Name)
+            )
+        case ast.AnnAssign(target=ast.Name(id=assigned_name), value=ast.Constant(value=str() as assigned_value)):
+            return ((assigned_name, assigned_value),)
+        case ast.keyword(arg=str() as keyword_name, value=ast.Constant(value=str() as keyword_value)):
+            return ((keyword_name, keyword_value),)
+        case ast.Dict(keys=every_key, values=every_value):
+            return tuple(
+                (dict_key.value, dict_value.value)
+                for dict_key, dict_value in zip(every_key, every_value, strict=True)
+                if isinstance(dict_key, ast.Constant)
+                and isinstance(dict_key.value, str)
+                and isinstance(dict_value, ast.Constant)
+                and isinstance(dict_value.value, str)
+            )
+        case _:
+            return ()
+
+
+def _read_session_attrs(one_node: ast.AST) -> str:
+    if isinstance(one_node, ast.Constant) and isinstance(one_node.value, str):
+        string_match: typing.Final = _SESSION_ATTRS_IN_STRING_PATTERN.search(one_node.value)
+        return string_match.group("attrs_value") if string_match else ""
+    return next(
+        (
+            one_value
+            for one_name, one_value in _read_named_string_values(one_node)
+            if one_name.lower() == _SESSION_ATTRS_NAME
+        ),
+        "",
+    )
+
+
+def _read_database_type(one_node: ast.AST) -> str:
+    match one_node:
+        case ast.Constant(value=str() as string_value) if _DATABASE_SCHEME_PATTERN.fullmatch(string_value):
+            return string_value
+        case _:
+            return ""
+
+
 def find_sqlalchemy_features(raw_source: str) -> SQLAlchemyFeatures:
     if not prefilter.contains_any_literal(raw_source.lower(), _SQLALCHEMY_LITERALS):
         return _EMPTY_FEATURES
-    target_session_attrs_match: typing.Final = _TARGET_SESSION_ATTRS_PATTERN.search(raw_source)
-    database_type_match: typing.Final = _DB_TYPE_PATTERN.search(raw_source)
+    # A python 2 leftover or a template that only looks like python costs that one file its
+    # databases: the rest of the project is still drawn.
+    parsed_tree: typing.Final = syntax_tree.parse_syntax_tree(raw_source)
+    if parsed_tree is None:
+        return _EMPTY_FEATURES
+    every_node: typing.Final = syntax_tree.list_nodes_in_source_order(parsed_tree)
+    engine_calls: typing.Final = [
+        one_node
+        for one_node in every_node
+        if isinstance(one_node, ast.Call) and syntax_tree.read_callee_name(one_node) in _ENGINE_FACTORY_NAMES
+    ]
     return SQLAlchemyFeatures(
-        async_used=_ASYNC_ENGINE_PATTERN.search(raw_source) is not None,
-        pooling_used=_POOLING_PATTERN.search(raw_source) is not None,
-        multiple_hosts=_MULTIPLE_HOSTS_PATTERN.search(raw_source) is not None,
-        target_session_attrs=target_session_attrs_match.group("attrs_value") if target_session_attrs_match else "",
-        database_type=database_type_match.group(1) if database_type_match else "",
+        async_used=any(
+            one_module.startswith(_ASYNC_ENGINE_MODULE)
+            for one_node in every_node
+            for one_module in syntax_tree.read_imported_modules(one_node)
+        ),
+        pooling_used=any(
+            (one_keyword.arg or "").startswith(_POOL_ARGUMENT_PREFIX)
+            for one_call in engine_calls
+            for one_keyword in one_call.keywords
+        ),
+        multiple_hosts=any("," in _read_engine_hosts(one_call) for one_call in engine_calls),
+        target_session_attrs=next(filter(None, map(_read_session_attrs, every_node)), ""),
+        database_type=next(filter(None, map(_read_database_type, every_node)), ""),
     )

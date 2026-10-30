@@ -13,6 +13,10 @@ class SettingsForArchdocs:
     root_dir: str | pathlib.Path
     service_name: str
     kubernetes_dir: str | pathlib.Path | None = None
+    # Both assets come from public CDNs by default; a network that cannot reach them serves its
+    # own copy of mermaid and drops the font, which falls back to the system sans-serif.
+    mermaid_script_url: str = settings.DEFAULT_MERMAID_SCRIPT_URL
+    font_stylesheet_url: str | None = settings.DEFAULT_FONT_STYLESHEET_URL
 
 
 type _ParsedManifests = tuple[tuple[mapping.ManifestFeatureFunctions[typing.Any], typing.Any], ...]

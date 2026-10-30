@@ -196,6 +196,26 @@ from src.config import DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 """
+_POOLED_ASYNC_ENGINE_SOURCE: typing.Final = """from sqlalchemy.ext.asyncio import create_async_engine
+
+
+async_engine = create_async_engine(
+    "postgresql+asyncpg://pg-one:5432,pg-two:5432/orders",
+    pool_size=10,
+    target_session_attrs="prefer-standby",
+)
+"""
+_ENGINE_FROM_A_FACTORY_TABLE_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+ENGINE_FACTORIES = {"primary": create_engine}
+primary_engine = ENGINE_FACTORIES["primary"]("postgresql+psycopg://pg-one:5432,pg-two:5432/orders", pool_size=10)
+"""
+_UNPARSEABLE_DATABASE_SOURCE: typing.Final = """from sqlalchemy import create_engine
+
+
+primary_engine = create_engine("postgresql+psycopg://pg-primary:5432/orders"
+"""
 _CONSUMER_SOURCE: typing.Final = """from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 
@@ -436,6 +456,24 @@ _ALL_FEATURE_CASES: typing.Final = types.MappingProxyType(
             ("postgresql_psycopgdb1",),
         ),
         "database url behind a constant": (_DATABASE_URL_BEHIND_A_CONSTANT_SOURCE, (), ('db["',)),
+        "pooled async engine": (
+            _POOLED_ASYNC_ENGINE_SOURCE,
+            (
+                (
+                    'app_svc --> |"async, postgresql+asyncpg://pg-one:5432,pg-two:5432/orders, prefer-standby"| '
+                    "postgresql_asyncpgdb2"
+                ),
+            ),
+            (),
+        ),
+        # An engine called through anything but its name is not recognised as one: the dsn is still
+        # drawn, the pool and the replicas behind it are not.
+        "engine from a factory table": (
+            _ENGINE_FROM_A_FACTORY_TABLE_SOURCE,
+            ('postgresql_psycopgdb["postgresql+psycopg"]',),
+            ("postgresql_psycopgdb0",),
+        ),
+        "unparseable database source": (_UNPARSEABLE_DATABASE_SOURCE, (), ('db["',)),
         "consumed messages": (
             _CONSUMER_SOURCE,
             ('rabbit --> |"commands"| app_svc', 'rabbit["rabbit"]'),

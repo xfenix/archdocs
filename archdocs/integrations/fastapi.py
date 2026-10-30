@@ -4,8 +4,8 @@ import fastapi
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import HTMLResponse as StarletteHtmlResponse
 
-from archdocs import settings
-from archdocs.integrations.common import _create_architecture_engine, _render_architecture_html
+from archdocs import page, settings
+from archdocs.integrations.common import _create_architecture_engine
 from archdocs.main import ArchitectureParserAndRenderer, SettingsForArchdocs
 
 
@@ -13,7 +13,7 @@ async def _handle_fastapi_arch_doc_route(
     _incoming_request: StarletteRequest,
     arch_engine: ArchitectureParserAndRenderer,
 ) -> StarletteHtmlResponse:
-    return StarletteHtmlResponse(_render_architecture_html(arch_engine))
+    return StarletteHtmlResponse(page.render_architecture_page(arch_engine))
 
 
 def add_architecture_doc_routes(
